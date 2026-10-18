@@ -83,6 +83,7 @@ go install github.com/rossedman/guardrails/cmd/guardrails@latest
 guardrails doctor   # check config and runtimes
 guardrails init     # write .guardrails.yaml and .claude/rules/*.md
 guardrails gate     # run the same gate Claude faces, on your changes
+guardrails harden   # mutation-test and fuzz what you changed
 ```
 
 ## How it works

@@ -99,3 +99,13 @@ guardrails gate            # files changed against HEAD
 guardrails gate --all      # every package
 guardrails explain         # the full report from the last gate
 ```
+
+Before committing, check that the tests behind your changes really assert
+something — ask Claude to run `/guardrails:harden`, or run it yourself:
+
+```bash
+guardrails harden              # mutation-test and fuzz what changed since HEAD
+guardrails harden --base main  # the whole branch
+```
+
+See [Hardening tests](harden.md).

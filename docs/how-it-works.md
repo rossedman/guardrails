@@ -53,6 +53,13 @@ suppression comments are protected by PreToolUse guards.
 **Dogfood.** The binary holds itself to its own gate in CI: 90% coverage,
 race tests and golangci-lint.
 
+## On demand: hardening
+
+The gate runs on every turn, so it sticks to checks that are fast and
+unambiguous. Deeper checks run when you ask: `guardrails harden` (or the
+`/guardrails:harden` skill) mutation-tests the Go functions you changed and
+briefly fuzzes their fuzz targets. See [Hardening tests](harden.md).
+
 ## State
 
 State lives under `${CLAUDE_PLUGIN_DATA}` (or `~/.local/share/guardrails`
