@@ -86,6 +86,7 @@ nav:
       - How it works: how-it-works.md
       - Hook events: hooks.md
       - Feedback format: feedback.md
+      - Test depth: test-depth.md
   - Languages:
       - Go: go.md
       - Python: python.md

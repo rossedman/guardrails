@@ -8,6 +8,15 @@ generated from Conventional Commit messages.
 
 ### Added
 
+- Test depth for Go: built-in mutation testing of changed functions,
+  benchmark requirements and regression checks, fuzz target requirements
+  and short fuzz runs; `guardrails:hot`, `guardrails:nobench` and
+  `guardrails:nofuzz` directives.
+
+## 0.2.0
+
+### Added
+
 - Python, Shell, YAML, Terraform and Docker modules.
 - Tool provisioning: pinned, checksum-verified tools installed on demand
   (archives, PyPI wheels, uv-managed venvs, `go install`), with background

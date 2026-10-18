@@ -9,8 +9,8 @@ treats as a non-blocking error.
 | SessionStart | `startup\|resume\|clear\|compact` | Detect toolchains, verify tools, inject the repo's standards and baseline as `additionalContext` | Context only; missing tools go to `systemMessage` | 10s |
 | PreToolUse | `Edit\|Write\|MultiEdit\|NotebookEdit\|Bash` | [Policy guards](guards.md) | `permissionDecision: deny` or `ask`, with a reason | 5s |
 | PostToolUse | `Edit\|Write\|MultiEdit` | Auto-format the file, then fast lint on its package; record it as touched | `decision: block` with the report (the edit already happened) | 5s |
-| Stop | — | Full gate over touched packages | `decision: block`; after 3 consecutive blocks, hands off to you | 120s |
-| SubagentStop | `test-writer\|implementer` | Same gate, scoped to the files that subagent touched | Same as Stop | 120s |
+| Stop | — | Full gate over touched packages, then [test depth](test-depth.md) | `decision: block`; after 3 consecutive blocks, hands off to you | 200s |
+| SubagentStop | `test-writer\|implementer` | Same gate, scoped to the files that subagent touched | Same as Stop | 200s |
 | SessionEnd | `*` | Append a session record to `runs.jsonl` | None | 3s |
 
 SessionStart's timeout is generous because the first call may download the

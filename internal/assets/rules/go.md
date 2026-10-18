@@ -33,13 +33,19 @@ bar up front instead of on request.
 - Cover error paths: the coverage gate lists uncovered functions by
   file:line, and lines you changed this session must be covered too.
 
-## Benchmarks and fuzzing
+## Benchmarks, fuzzing and mutation testing
+
+The Stop gate mutates the lines you changed (`>` to `>=`, `+` to `-`, ...)
+and runs the tests: a mutant that survives means a behavior nobody checks.
 
 - Add a `Benchmark*` for hot paths: parsing, encoding, hashing, sorting, loops
   over caller-sized input, or anything you were asked to optimize.
 - Add a `Fuzz*` target for functions that parse untrusted or loosely
   structured input (bytes, strings, files, wire formats), especially where a
-  round-trip property holds.
+  round-trip property holds. Give it a seed corpus with `f.Add`.
+- Mark code you know is hot with `// guardrails:hot`. Only the human may
+  add `// guardrails:nobench` or `// guardrails:nofuzz`; if you think one
+  is warranted, say so in one line instead.
 
 ## Never
 

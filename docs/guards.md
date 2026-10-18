@@ -33,7 +33,8 @@ rng := rand.New(rand.NewSource(seed)) //nolint:gosec
 ```
 
 Claude adding a `guardrails:allow` tag is itself denied, so the escape hatch
-stays yours.
+stays yours. The same goes for `guardrails:nobench` and `guardrails:nofuzz`,
+the [test depth](test-depth.md#opting-out) opt-outs.
 
 ## Blast radius
 

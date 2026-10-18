@@ -39,10 +39,21 @@ go:
     on_edit: fast          # fast | full | off
   race: true
   vuln: true
-  # Accepted now, enforced in an upcoming release:
-  mutation: { tool: gremlins, min_score: 70, budget_seconds: 45 }
-  bench: { require_on_hot_paths: true, regression_pct: 10, count: 6 }
-  fuzz: { require_on_parsers: true, fuzztime: 10s }
+  mutation:              # see Test depth
+    tool: builtin        # builtin | off
+    min_score: 70
+    budget_seconds: 45
+  bench:
+    require_on_hot_paths: true
+    regression_pct: 10
+    count: 6
+    benchtime: 100ms
+    packages: []         # performance-critical packages, e.g. internal/codec/...
+    budget_seconds: 40
+  fuzz:
+    require_on_parsers: true
+    fuzztime: 10s
+    budget_seconds: 30
 
 python:
   coverage: { total: 90, ratchet: true }
@@ -81,7 +92,7 @@ guards:
 
 gate:
   max_consecutive_blocks: 3   # then hand off to the human
-  timeout_seconds: 90
+  timeout_seconds: 170
 ```
 
 ## Recipes
