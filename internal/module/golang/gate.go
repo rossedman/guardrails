@@ -2,13 +2,13 @@ package golang
 
 import (
 	"context"
-	"time"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/rossedman/guardrails/internal/config"
 	"github.com/rossedman/guardrails/internal/coverage"
