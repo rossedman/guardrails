@@ -99,7 +99,7 @@ guardrails harden   # mutation-test and fuzz what you changed
 
 | Language | On edit | At Stop |
 |---|---|---|
-| [Go](https://rossedman.github.io/guardrails/go/) | gofumpt, goimports, go vet, golangci-lint | build, `go test -race`, coverage, golangci-lint, `go mod tidy`, govulncheck |
+| [Go](https://rossedman.github.io/guardrails/go/) | gofumpt, goimports, go vet, golangci-lint | build, `go test -race` on touched packages and their dependents, coverage, golangci-lint, `go mod tidy`, govulncheck |
 | [Python](https://rossedman.github.io/guardrails/python/) | ruff format + fix, ruff, mypy | pytest + coverage, mypy, ruff, `uv lock --check` |
 | [Shell](https://rossedman.github.io/guardrails/shell/) | shfmt, shellcheck | shellcheck, shfmt diff |
 | [YAML](https://rossedman.github.io/guardrails/yaml/) | yamllint, actionlint, kubeconform | the same, over every touched file |

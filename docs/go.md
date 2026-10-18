@@ -6,10 +6,20 @@ The Go module owns `*.go` files and `go.mod`.
 |---|---|
 | **On edit: auto-fix** | `goimports -w`, then `gofumpt -w` (gofmt if gofumpt is missing). Generated files are skipped. |
 | **On edit: check** | `go vet` and `golangci-lint run --fast-only` on the edited file's package, reporting issues in that file. Type errors anywhere in the package are always reported, because the edit may have broken another file. |
-| **At Stop: gate** | `go build ./...`, `go test -race -count=1 -covermode=atomic -coverprofile` on touched packages, coverage checks, full golangci-lint, `go mod tidy -diff`, `govulncheck ./...` |
+| **At Stop: gate** | `go build ./...`, `go test -race -count=1 -covermode=atomic -coverprofile` on touched packages, then the tests of every package that imports them, coverage checks, full golangci-lint, `go mod tidy -diff`, `govulncheck ./...` |
 
 Packages are grouped by their nearest `go.mod`, so multi-module repositories
 are gated module by module.
+
+## Dependent packages
+
+A change can pass its own package's tests and still break a caller. After
+the touched packages pass, the gate runs the tests of every package in the
+module that imports them — directly or transitively, including through test
+imports. These run without `-count=1`, so Go's test cache skips any package
+whose dependencies didn't actually change; only the ones your change can
+affect re-run. A failure is reported as `[dependents]`, with the caller's
+test file and line.
 
 ## Coverage rules
 
