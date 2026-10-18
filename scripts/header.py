@@ -1,7 +1,7 @@
 """Generate the README header and social preview images.
 
 Usage: python3 scripts/header.py   (requires: pip install cairosvg)
-Writes docs/assets/header.svg, docs/assets/header.png and
+Writes docs/assets/header.svg, header.png, header@2x.png and
 docs/assets/social-preview.png. Fonts: Inter and DejaVu Sans Mono.
 """
 
@@ -171,6 +171,8 @@ def main():
     header = svg(1600, 600)
     (OUT / "header.svg").write_text(header)
     cairosvg.svg2png(bytestring=header.encode(), write_to=str(OUT / "header.png"))
+    # Retina render for the full-width docs hero.
+    cairosvg.svg2png(bytestring=header.encode(), write_to=str(OUT / "header@2x.png"), scale=2)
     social = svg(1600, 600, social=True)
     cairosvg.svg2png(bytestring=social.encode(), write_to=str(OUT / "social-preview.png"),
                      output_width=1280, output_height=480)
