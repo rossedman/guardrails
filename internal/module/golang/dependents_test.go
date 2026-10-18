@@ -47,7 +47,7 @@ func TestDependents(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !slices.Equal(got, tc.want) && !(len(got) == 0 && len(tc.want) == 0) {
+			if !slices.Equal(got, tc.want) && (len(got) != 0 || len(tc.want) != 0) {
 				t.Errorf("dependents(%v) = %v, want %v", tc.pkgs, got, tc.want)
 			}
 		})
