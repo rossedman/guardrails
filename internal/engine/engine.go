@@ -18,6 +18,7 @@ import (
 	"github.com/rossedman/guardrails/internal/hook"
 	"github.com/rossedman/guardrails/internal/module"
 	"github.com/rossedman/guardrails/internal/module/golang"
+	"github.com/rossedman/guardrails/internal/module/shell"
 	"github.com/rossedman/guardrails/internal/runlog"
 	"github.com/rossedman/guardrails/internal/runner"
 	"github.com/rossedman/guardrails/internal/state"
@@ -45,7 +46,7 @@ func New(store *state.Store, r runner.Runner, globalConfig string) *Engine {
 	return &Engine{
 		Store:        store,
 		Runner:       r,
-		Modules:      []module.Module{golang.New()},
+		Modules:      []module.Module{golang.New(), shell.New()},
 		GlobalConfig: globalConfig,
 		Now:          time.Now,
 	}

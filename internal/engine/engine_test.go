@@ -301,8 +301,12 @@ func TestRepoRootFallsBackToCwd(t *testing.T) {
 	if got := e.RepoRoot(context.Background(), ""); got != wd {
 		t.Errorf("RepoRoot(\"\") = %q, want %q", got, wd)
 	}
-	if len(e.Modules) != 1 || e.Modules[0].Name() != "go" {
-		t.Errorf("default modules = %v", e.Modules)
+	var names []string
+	for _, m := range e.Modules {
+		names = append(names, m.Name())
+	}
+	if len(names) == 0 || names[0] != "go" {
+		t.Errorf("default modules = %v, want go first", names)
 	}
 }
 
