@@ -123,14 +123,14 @@ Read more in [How it works](https://rossedman.github.io/guardrails/how-it-works/
 # .github/workflows/guardrails.yml
 - uses: actions/checkout@v5
   with: { fetch-depth: 0 }
-- uses: rossedman/guardrails@v0.4.0
+- uses: rossedman/guardrails@v0.6.0
 ```
 
 ```yaml
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/rossedman/guardrails
-    rev: v0.4.0
+    rev: v0.6.0
     hooks:
       - id: guardrails
 ```

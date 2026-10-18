@@ -41,6 +41,10 @@ docs: ## Serve the docs locally
 header: ## Render the README and social graphics from docs/assets/src
 	docs/assets/render.sh
 
+.PHONY: version
+version: ## Set the release version everywhere it's pinned (VERSION=X.Y.Z)
+	scripts/bump-version.sh $(VERSION)
+
 .PHONY: snapshot
 snapshot: ## Build a local release snapshot with GoReleaser
 	goreleaser release --snapshot --clean

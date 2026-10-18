@@ -23,7 +23,7 @@
   tests the packages that import changed code; `/guardrails:insights`
   drafts rule updates from `runs.jsonl`; a GitHub Action and a pre-commit
   hook run the identical binary and config.
-- [x] **v0.5 — Supply chain and memory.** A dependency check on every
+- [x] **v0.6 — Supply chain and memory.** A dependency check on every
   install command and manifest edit, lessons captured from your corrections
   with `/guardrails:learn`, and a Cobra/Viper CLI.
 - [ ] **Companion tools.** `/guardrails:tf-review`, `/guardrails:pr-ready`,

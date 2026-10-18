@@ -78,12 +78,15 @@ from them.
 
 Maintainers:
 
-1. Bump `version` in `.claude-plugin/plugin.json` (the launcher downloads
-   the binary matching it).
-2. Merge to `main`, then tag the same version:
+1. Set the version everywhere it's pinned (the plugin manifest, which the
+   launcher uses to pick the binary, the install snippets in the README and
+   docs, and the changelog's Unreleased heading), then open a PR:
+   `make version VERSION=X.Y.Z`.
+2. Merge to `main`, then tag the merge commit with the same version:
    `git tag vX.Y.Z && git push origin vX.Y.Z`.
 3. The release workflow verifies the plugin version matches the tag and
-   runs GoReleaser.
+   runs GoReleaser. A tag pushed without step 1 fails that check; bump,
+   merge, and tag again.
 
 ## Regenerating the graphics
 
