@@ -1,167 +1,310 @@
+{#- The landing page. Everything renders in the tabs block, outside Material's
+    content grid, so sections can run edge to edge. Styles: docs/assets/site/landing.css. -#}
 {% extends "main.html" %}
 
-{% block hero %}
-<div class="gr-home">
+{% set gh = "https://github.com/rossedman/guardrails" %}
+{% set add = "/plugin marketplace add rossedman/guardrails" %}
+{% set install = "/plugin install guardrails@guardrails" %}
+{% set copy_icon %}{% include ".icons/material/content-copy.svg" %}{% endset %}
+{% set arrow %}{% include ".icons/material/arrow-right.svg" %}{% endset %}
 
-  <!-- Full-bleed header -->
+{% block tabs %}
+{{ super() }}
+<div class="gr">
+
+  <!-- Hero -->
   <section class="gr-hero">
-    <img src="{{ 'assets/header@2x.png' | url }}" alt="guardrails — quality gates for Claude Code" width="3200" height="1200">
-  </section>
-
-  <!-- Install strip -->
-  <section class="gr-band gr-cta">
-    <div class="gr-wrap gr-cta__inner">
-      <div class="gr-cmd" title="Run in Claude Code">
-        <span class="gr-cmd__prompt">›</span>
-        <code>/plugin marketplace add rossedman/guardrails</code>
+    <div class="gr-grid" aria-hidden="true"></div>
+    <div class="gr-wrap gr-hero__inner">
+      <div class="gr-hero__text">
+        <img class="gr-hero__logo" src="{{ 'assets/site/logo.svg' | url }}" alt="">
+        <h1 class="gr-title">guard<span>rails</span></h1>
+        <p class="gr-tagline">Quality gates for Claude Code.<br><b>Format every edit. Gate every turn.</b></p>
+        <div class="gr-install" title="Run in Claude Code">
+          <span class="gr-install__prompt">›</span>
+          <code>{{ add }}</code>
+          <button class="gr-copy" data-copy="{{ add }}" aria-label="Copy marketplace command">{{ copy_icon }}</button>
+        </div>
+        <div class="gr-install" title="Run in Claude Code">
+          <span class="gr-install__prompt">›</span>
+          <code>{{ install }}</code>
+          <button class="gr-copy" data-copy="{{ install }}" aria-label="Copy install command">{{ copy_icon }}</button>
+        </div>
+        <div class="gr-cta">
+          <a class="gr-btn gr-btn--primary" href="#quick-start">Get started {{ arrow }}</a>
+          <a class="gr-btn" href="{{ 'how-it-works/' | url }}">{% include ".icons/material/sync.svg" %} How it works</a>
+        </div>
       </div>
-      <div class="gr-actions">
-        <a class="md-button md-button--primary" href="{{ 'getting-started/' | url }}">Get started</a>
-        <a class="md-button" href="{{ 'how-it-works/' | url }}">How it works</a>
+
+      <div class="gr-term" aria-label="Guardrails formatting an edit, blocking a turn at the gate, then passing it">
+        <div class="gr-term__bar"><i></i><i></i><i></i><span>claude — ~/code/api</span></div>
+        <div class="gr-term__body" data-typing>
+          <div><span class="p">›</span> <span class="c" data-type>Add a Drain method to the queue</span></div>
+          <div><span class="d">  Edit</span> internal/sched/queue.go</div>
+          <div><span class="d">  PostToolUse</span> <span class="ok">✓</span> gofumpt <span class="d">·</span> goimports <span class="d">·</span> golangci-lint <span class="d">0.9s</span></div>
+          <div data-pause="600"><span class="d">  Stop</span> <span class="bad">✗ go gate failed (1 of 6 checks)</span></div>
+          <div><span class="p">    [coverage]</span> 84.2% <span class="d">&lt;</span> 90.0%</div>
+          <div><span class="d">    queue.go:41</span>  <span class="s">(*Queue).Drain</span>  0/14 stmts</div>
+          <div data-pause="500"><span class="d">  Claude</span> <span class="c" data-type>Adding table-driven tests for Drain…</span></div>
+          <div><span class="d">  Edit</span> internal/sched/queue_test.go</div>
+          <div><span class="d">  Stop</span> <span class="ok">✓ go gate passed (6 checks)</span> <span class="d">· cov 92.6%</span></div>
+          <div><span class="p">›</span> <span class="gr-caret"></span></div>
+        </div>
       </div>
     </div>
+
+    <ul class="gr-wrap gr-stats">
+      <li><b>90<em>%</em></b><span>coverage on touched code</span></li>
+      <li><b>90<em>%</em></b><span>of changed lines covered</span></li>
+      <li><b>~2<em>s</em></b><span>fix and check per edit</span></li>
+      <li><b>0</b><span>tools to install</span></li>
+    </ul>
   </section>
 
   <!-- The loop -->
-  <section class="gr-band">
+  <section class="gr-section gr-section--alt" id="loop">
     <div class="gr-wrap">
       <p class="gr-eyebrow">The loop</p>
-      <h2 class="gr-title">Every edit fixed. Every turn gated.</h2>
-      <ol class="gr-steps">
+      <h2>Every edit fixed.<br><span>Every turn gated.</span></h2>
+      <p class="gr-lede gr-lede--center">Guardrails is one Go binary wired into Claude Code's hooks. A fast inner loop on every edit, and a hard gate before Claude can call the work done.</p>
+      <ol class="gr-loop">
         <li>
-          <span class="gr-step__icon">{% include ".icons/material/pencil-outline.svg" %}</span>
-          <span class="gr-step__name">Edit</span>
-          <span class="gr-step__desc">Claude writes code</span>
+          <span class="gr-loop__event">SessionStart</span>
+          <h3>{% include ".icons/material/book-open-variant.svg" %} Brief</h3>
+          <p>Claude learns the standards for the languages this repo uses before it writes a line.</p>
+          <span class="gr-loop__badge">standards</span>
         </li>
         <li>
-          <span class="gr-step__icon">{% include ".icons/material/auto-fix.svg" %}</span>
-          <span class="gr-step__name">Fix</span>
-          <span class="gr-step__desc">gofumpt · ruff · shfmt · fmt</span>
-          <span class="gr-badge">in place</span>
+          <span class="gr-loop__event">PreToolUse</span>
+          <h3>{% include ".icons/material/shield-lock-outline.svg" %} Guard</h3>
+          <p>Suppressions, skipped tests, lowered thresholds and risky commands are stopped before they run.</p>
+          <span class="gr-loop__badge">deny · ask</span>
         </li>
         <li>
-          <span class="gr-step__icon">{% include ".icons/material/magnify-scan.svg" %}</span>
-          <span class="gr-step__name">Check</span>
-          <span class="gr-step__desc">linters · type checkers</span>
-          <span class="gr-badge">&lt; 2s</span>
+          <span class="gr-loop__event">PostToolUse</span>
+          <h3>{% include ".icons/material/auto-fix.svg" %} Fix</h3>
+          <p>Every edited file is formatted in place, then linted and type-checked.</p>
+          <span class="gr-loop__badge">&lt; 2s</span>
         </li>
-        <li class="gr-step--gate">
-          <span class="gr-step__icon">{% include ".icons/material/gate.svg" %}</span>
-          <span class="gr-step__name">Gate</span>
-          <span class="gr-step__desc">tests · coverage · lint</span>
-          <span class="gr-badge">at Stop</span>
+        <li class="is-gate">
+          <span class="gr-loop__event">Stop</span>
+          <h3>{% include ".icons/material/gate.svg" %} Gate</h3>
+          <p>Touched code must build, pass tests, hold coverage and pass every linter before the turn ends.</p>
+          <span class="gr-loop__badge">block · pass</span>
         </li>
       </ol>
     </div>
   </section>
 
-  <!-- Numbers -->
-  <section class="gr-band gr-stats">
-    <div class="gr-wrap gr-stats__grid">
-      <div><strong>90%</strong><span>coverage on touched code</span></div>
-      <div><strong>90%</strong><span>of changed lines covered</span></div>
-      <div><strong>0</strong><span>new <code>//nolint</code> allowed</span></div>
-      <div><strong>3</strong><span>retries, then hand-off</span></div>
+  <!-- What Claude sees -->
+  <section class="gr-section">
+    <div class="gr-wrap gr-split gr-split--center">
+      <div>
+        <p class="gr-eyebrow">What Claude sees</p>
+        <h2>One report.<br><span>Exactly where to look.</span></h2>
+        <p class="gr-lede">Failures name the file, the function and the fix. Claude keeps working until the gate passes, and after three blocks in a row hands the turn back to you with a summary.</p>
+        <ul class="gr-verdicts">
+          <li><span class="gr-chip gr-chip--block">block</span> the gate failed, keep working</li>
+          <li><span class="gr-chip gr-chip--deny">deny</span> an edit that weakens the standards</li>
+          <li><span class="gr-chip gr-chip--ask">ask</span> irreversible infrastructure actions</li>
+          <li><span class="gr-chip gr-chip--pass">pass</span> the turn ends</li>
+        </ul>
+        <a class="gr-link" href="{{ 'feedback/' | url }}">The feedback format {{ arrow }}</a>
+      </div>
+      <div class="gr-term">
+        <div class="gr-term__bar"><i></i><i></i><i></i><span>Stop hook</span></div>
+<pre class="gr-report"><span class="d">guardrails: go gate failed (2 of 6 checks)</span>
+
+<span class="p">[coverage]</span> 84.2% <span class="d">&lt;</span> 90.0%
+  internal/sched/queue.go:41  <span class="s">(*Queue).Drain</span>  0/14
+  internal/api/handler.go:88  <span class="s">decodeRequest</span>   3/11
+  <span class="ok">fix:</span> add table-driven tests
+
+<span class="p">[lint]</span> 1 issue
+  internal/api/handler.go:102:5  <span class="bad">errcheck</span>
+  <span class="ok">fix:</span> suppression comments are not allowed
+
+<span class="d">attempt 1 of 3 · guardrails explain</span></pre>
+      </div>
     </div>
   </section>
 
   <!-- Features -->
-  <section class="gr-band">
+  <section class="gr-section gr-section--alt">
     <div class="gr-wrap">
       <p class="gr-eyebrow">What you get</p>
-      <h2 class="gr-title">Standards Claude can't talk its way around</h2>
-      <div class="gr-tiles">
-        <a class="gr-tile" href="{{ 'go/' | url }}">
-          <span class="gr-tile__icon">{% include ".icons/material/chart-line.svg" %}</span>
-          <h3>Coverage ratchet</h3>
-          <p>Total, per-package floor and patch coverage. Never below where it started.</p>
+      <h2>Standards Claude<br><span>can't talk its way around.</span></h2>
+      <div class="gr-features">
+        <a class="gr-card" href="{{ 'go/' | url }}">
+          <div class="gr-card__icon">{% include ".icons/material/chart-line.svg" %}</div>
+          <h3>Coverage with a ratchet</h3>
+          <p>Total, per-package and patch coverage on what Claude touched. Never lower than where the session started.</p>
         </a>
-        <a class="gr-tile" href="{{ 'guards/' | url }}">
-          <span class="gr-tile__icon">{% include ".icons/material/shield-lock-outline.svg" %}</span>
-          <h3>Anti-gaming guards</h3>
-          <p>No suppressions, skipped tests, lowered thresholds or config edits.</p>
+        <a class="gr-card" href="{{ 'guards/' | url }}">
+          <div class="gr-card__icon">{% include ".icons/material/shield-lock-outline.svg" %}</div>
+          <h3>No moving the goalposts</h3>
+          <p>New <code>//nolint</code>, <code># noqa</code>, <code>t.Skip</code>, lowered thresholds and config edits are denied before they happen.</p>
         </a>
-        <a class="gr-tile" href="{{ 'guards/#blast-radius' | url }}">
-          <span class="gr-tile__icon">{% include ".icons/material/alert-octagon-outline.svg" %}</span>
+        <a class="gr-card" href="{{ 'guards/' | url }}">
+          <div class="gr-card__icon">{% include ".icons/material/alert-octagon-outline.svg" %}</div>
           <h3>Blast-radius guards</h3>
-          <p><code>terraform apply</code>, force pushes and prod clusters stay yours.</p>
+          <p><code>terraform apply</code>, force pushes and pushes to <code>main</code> are denied; registry pushes and cluster writes ask first.</p>
         </a>
-        <a class="gr-tile" href="{{ 'harden/' | url }}">
-          <span class="gr-tile__icon">{% include ".icons/material/bug-check-outline.svg" %}</span>
+        <a class="gr-card" href="{{ 'harden/' | url }}">
+          <div class="gr-card__icon">{% include ".icons/material/bug-check-outline.svg" %}</div>
           <h3>Tests that test</h3>
-          <p><code>guardrails harden</code> mutation-tests and fuzzes what you changed.</p>
+          <p><code>guardrails harden</code> mutation-tests and fuzzes the Go code you changed, so coverage can't hide empty tests.</p>
         </a>
-        <a class="gr-tile" href="{{ 'tools/' | url }}">
-          <span class="gr-tile__icon">{% include ".icons/material/package-variant-closed-check.svg" %}</span>
-          <h3>Zero setup</h3>
-          <p>Pinned, checksum-verified tools download themselves. Defaults just work.</p>
+        <a class="gr-card" href="{{ 'tools/' | url }}">
+          <div class="gr-card__icon">{% include ".icons/material/package-variant-closed-check.svg" %}</div>
+          <h3>Nothing to install</h3>
+          <p>ruff, mypy, shellcheck, tflint, trivy, golangci-lint and more: pinned, checksum-verified, downloaded on first use.</p>
         </a>
-        <a class="gr-tile" href="{{ 'cli/' | url }}">
-          <span class="gr-tile__icon">{% include ".icons/material/console.svg" %}</span>
-          <h3>Same gate, everywhere</h3>
-          <p>Run <code>guardrails gate</code> yourself and get identical results.</p>
+        <a class="gr-card" href="{{ 'insights/' | url }}">
+          <div class="gr-card__icon">{% include ".icons/material/lightbulb-on-outline.svg" %}</div>
+          <h3>Learns from its blocks</h3>
+          <p><code>guardrails insights</code> finds the rules Claude trips most and drafts them into <code>.claude/rules/</code>.</p>
         </a>
       </div>
     </div>
   </section>
 
-  <!-- What Claude sees -->
-  <section class="gr-band gr-split-band">
+  <!-- Quick start -->
+  <section class="gr-section" id="quick-start">
     <div class="gr-wrap gr-split">
-      <div class="gr-split__text">
-        <p class="gr-eyebrow">What Claude sees</p>
-        <h2 class="gr-title">One report. Exactly where to look.</h2>
-        <ul class="gr-checks">
-          <li><span class="gr-chip gr-chip--block">block</span> gate failed, keep working</li>
-          <li><span class="gr-chip gr-chip--deny">deny</span> weakening the standards</li>
-          <li><span class="gr-chip gr-chip--ask">ask</span> irreversible infra actions</li>
-          <li><span class="gr-chip gr-chip--pass">pass</span> turn ends</li>
-        </ul>
+      <div>
+        <p class="gr-eyebrow">Quick start</p>
+        <h2>Installed in<br><span>two commands.</span></h2>
+        <p class="gr-lede">The plugin's launcher downloads the release binary for your platform, verifies its checksum and caches it. Linters and scanners arrive the same way the first time they're needed. macOS and Linux, amd64 and arm64.</p>
+        <a class="gr-btn" href="{{ 'getting-started/' | url }}">{% include ".icons/material/book-open-page-variant-outline.svg" %} Full getting-started guide</a>
       </div>
-      <div class="gr-term">
-        <div class="gr-term__bar"><i></i><i></i><i></i><span>Stop hook</span></div>
-<pre><span class="t-dim">guardrails: go gate failed (2 of 6 checks)</span>
-
-<span class="t-amber">[coverage]</span> 84.2% &lt; 90.0%
-  internal/sched/queue.go:41  <span class="t-blue">(*Queue).Drain</span>  0/14
-  internal/api/handler.go:88  <span class="t-blue">decodeRequest</span>   3/11
-  <span class="t-green">fix:</span> add table-driven tests
-
-<span class="t-amber">[lint]</span> 1 issue
-  internal/api/handler.go:102:5  <span class="t-red">errcheck</span>
-  <span class="t-green">fix:</span> suppression comments are not allowed
-
-<span class="t-dim">attempt 1 of 3</span></pre>
-      </div>
+      <ol class="gr-steps">
+        <li>
+          <h4>Add the plugin in Claude Code</h4>
+          <pre class="gr-code"><button class="gr-copy" aria-label="Copy">{{ copy_icon }}</button><code><span class="p">›</span> {{ add }}
+<span class="p">›</span> {{ install }}</code></pre>
+        </li>
+        <li>
+          <h4>Check your setup</h4>
+          <p>Shows your config, runtimes and where every tool resolves from.</p>
+          <pre class="gr-code"><button class="gr-copy" aria-label="Copy">{{ copy_icon }}</button><code><span class="p">$</span> guardrails doctor</code></pre>
+        </li>
+        <li>
+          <h4>Optional: tune it for the repo</h4>
+          <p>Writes <code>.guardrails.yaml</code> and path-scoped Claude rules. With no config, the defaults apply.</p>
+          <pre class="gr-code"><button class="gr-copy" aria-label="Copy">{{ copy_icon }}</button><code><span class="p">$</span> guardrails init</code></pre>
+        </li>
+        <li>
+          <h4>Run the same gate in CI</h4>
+          <p>The GitHub Action and the pre-commit hook run the same binary and config.</p>
+          <pre class="gr-code"><button class="gr-copy" aria-label="Copy">{{ copy_icon }}</button><code><span class="p">$</span> guardrails gate --base origin/main</code></pre>
+        </li>
+      </ol>
     </div>
   </section>
 
   <!-- Languages -->
-  <section class="gr-band">
-    <div class="gr-wrap gr-langs">
-      <a class="gr-lang gr-lang--live" href="{{ 'go/' | url }}">Go</a>
-      <a class="gr-lang gr-lang--live" href="{{ 'python/' | url }}">Python</a>
-      <a class="gr-lang gr-lang--live" href="{{ 'shell/' | url }}">Shell</a>
-      <a class="gr-lang gr-lang--live" href="{{ 'yaml/' | url }}">YAML</a>
-      <a class="gr-lang gr-lang--live" href="{{ 'terraform/' | url }}">Terraform</a>
-      <a class="gr-lang gr-lang--live" href="{{ 'docker/' | url }}">Docker</a>
-      <a class="gr-lang gr-lang--tools" href="{{ 'tools/' | url }}">0 tools to install <em>→</em></a>
-    </div>
-  </section>
-
-  <!-- Closing CTA -->
-  <section class="gr-band gr-final">
+  <section class="gr-section gr-section--alt">
     <div class="gr-wrap">
-      <h2 class="gr-title">Let Claude ship work you'd merge.</h2>
-      <div class="gr-actions">
-        <a class="md-button md-button--primary" href="{{ 'getting-started/' | url }}">Install the plugin</a>
-        <a class="md-button" href="https://github.com/rossedman/guardrails">Star on GitHub</a>
+      <p class="gr-eyebrow">Languages</p>
+      <h2>Six languages.<br><span>One gate.</span></h2>
+      <p class="gr-lede gr-lede--center">Each language module fixes on edit, checks in about two seconds, and adds its own checks to the Stop gate. Modules switch on when the repo uses the language.</p>
+      <div class="gr-langs">
+        {% for path, name, tools in [
+          ("go/", "Go", "gofumpt · golangci-lint · race tests · govulncheck"),
+          ("python/", "Python", "ruff · mypy · pytest · coverage"),
+          ("shell/", "Shell", "shfmt · shellcheck"),
+          ("yaml/", "YAML", "yamllint · actionlint · schemas"),
+          ("terraform/", "Terraform", "fmt · validate · tflint · trivy"),
+          ("docker/", "Docker", "native rules · build --check"),
+        ] %}
+        <a class="gr-lang" href="{{ path | url }}"><b>{{ name }}</b><span>{{ tools }}</span></a>
+        {% endfor %}
       </div>
     </div>
   </section>
 
+  <!-- Commands -->
+  <section class="gr-section">
+    <div class="gr-wrap">
+      <p class="gr-eyebrow">Commands</p>
+      <h2>The same gate,<br><span>from your terminal.</span></h2>
+      <p class="gr-lede gr-lede--center">Everything the hooks do, you can run yourself. Every command has <code>--help</code> with examples.</p>
+      <div class="gr-cmds">
+        <div class="gr-cmdgroup">
+          <h3>Gates</h3>
+          <dl>
+            <dt>gate</dt><dd>Run the full gate on changed files, or <code>--all</code></dd>
+            <dt>gate --staged</dt><dd>Gate what's staged, for pre-commit</dd>
+            <dt>harden</dt><dd>Mutation-test and fuzz the Go you changed</dd>
+            <dt>explain</dt><dd>The full report from the last gate</dd>
+            <dt>insights</dt><dd>Gate history and rules worth teaching</dd>
+          </dl>
+        </div>
+        <div class="gr-cmdgroup">
+          <h3>Setup</h3>
+          <dl>
+            <dt>init</dt><dd>Write <code>.guardrails.yaml</code> and Claude rules</dd>
+            <dt>doctor</dt><dd>Check config, runtimes and tools</dd>
+            <dt>tools list</dt><dd>Every tool, its pin and where it resolves</dd>
+            <dt>tools install</dt><dd>Download pinned tools up front</dd>
+            <dt>config</dt><dd>Print the effective configuration</dd>
+            <dt>schema</dt><dd>The config's JSON Schema, for editors</dd>
+          </dl>
+        </div>
+        <div class="gr-cmdgroup">
+          <h3>Claude Code</h3>
+          <dl>
+            <dt>hook &lt;event&gt;</dt><dd>Handle a hook event from stdin</dd>
+            <dt>statusline</dt><dd>Gate status for Claude Code's status line</dd>
+            <dt>completion</dt><dd>Shell completion for bash, zsh and fish</dd>
+            <dt>version</dt><dd>Version, commit and build date</dd>
+          </dl>
+        </div>
+      </div>
+      <p class="gr-center"><a class="gr-link" href="{{ 'cli/' | url }}">Full CLI reference {{ arrow }}</a></p>
+    </div>
+  </section>
+
+  <!-- Docs -->
+  <section class="gr-section gr-section--alt">
+    <div class="gr-wrap">
+      <p class="gr-eyebrow">Documentation</p>
+      <h2>Go deeper.</h2>
+      <div class="gr-docs">
+        {% for path, name, blurb in [
+          ("getting-started/", "Getting started", "Install, check, configure"),
+          ("how-it-works/", "How it works", "Hooks, state and design"),
+          ("guards/", "Policy guards", "What's denied, what asks first"),
+          ("configuration/", "Configuration", "Every setting in .guardrails.yaml"),
+          ("tools/", "Tool provisioning", "Pinned tools, zero installs"),
+          ("harden/", "Hardening tests", "Mutation testing and fuzzing"),
+          ("ci/", "CI and pre-commit", "The same gate everywhere"),
+          ("cli/", "CLI reference", "Every command and flag"),
+        ] %}
+        <a class="gr-doc" href="{{ path | url }}">
+          <b>{{ name }}</b><span>{{ blurb }}</span>
+          {{ arrow }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing call to action -->
+  <section class="gr-final">
+    <div class="gr-grid" aria-hidden="true"></div>
+    <div class="gr-wrap">
+      <img class="gr-final__logo" src="{{ 'assets/site/logo.svg' | url }}" alt="">
+      <h2>Let Claude ship work<br><span>you'd merge.</span></h2>
+      <p class="gr-lede gr-lede--center">Free and open source under the MIT license.</p>
+      <div class="gr-cta gr-cta--center">
+        <a class="gr-btn gr-btn--primary" href="#quick-start">Install the plugin {{ arrow }}</a>
+        <a class="gr-btn" href="{{ gh }}">{% include ".icons/fontawesome/brands/github.svg" %} Star on GitHub</a>
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}
 
 {% block content %}{% endblock %}
-{% block site_nav %}{% endblock %}

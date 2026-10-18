@@ -4,5 +4,5 @@
 version: 1
 
 python:
-  # The only Python here is scripts/header.py, a dev-only image generator.
+  # There is no Python in this repository.
   enabled: false

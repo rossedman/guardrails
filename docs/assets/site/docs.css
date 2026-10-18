@@ -1,0 +1,166 @@
+/* Doc pages: Material's dark scheme in the brand colors from
+   docs/assets/src/brand.css; landing.css defines the tokens. */
+
+[data-md-color-scheme="slate"] {
+  --md-typeset-color: var(--mist);
+  --md-default-fg-color--light: var(--mist);
+  --md-default-fg-color--lighter: var(--dim);
+  --md-default-fg-color--lightest: var(--ink-3);
+  --md-code-bg-color: var(--well);
+  --md-code-fg-color: var(--cream);
+  --md-code-hl-color: rgba(245, 184, 61, 0.12);
+  --md-code-hl-keyword-color: var(--amber);
+  --md-code-hl-string-color: var(--pass);
+  --md-code-hl-comment-color: var(--dim);
+  --md-code-hl-number-color: var(--amber-2);
+  --md-code-hl-function-color: var(--sky);
+  --md-code-hl-name-color: var(--cream);
+  --md-code-hl-variable-color: var(--cream);
+  --md-code-hl-punctuation-color: var(--mist);
+  --md-code-hl-operator-color: var(--mist);
+  --md-code-hl-constant-color: var(--amber-2);
+  --md-typeset-kbd-color: var(--ink-2);
+  --md-typeset-table-color: var(--ink-3);
+  --md-typeset-table-color--light: rgba(245, 184, 61, 0.04);
+  --md-admonition-bg-color: var(--ink-2);
+  --md-footer-fg-color--light: var(--mist);
+  --md-shadow-z1: none;
+}
+
+/* Header tabs */
+.md-tabs {
+  background: rgba(10, 15, 30, 0.72);
+  border-bottom: 1px solid rgba(245, 184, 61, 0.08);
+}
+.md-tabs__link { color: var(--mist); opacity: 1; font-weight: 500; }
+.md-tabs__link:hover, .md-tabs__item--active .md-tabs__link { color: var(--amber); }
+
+/* Sidebars */
+.md-nav__title { color: var(--cream); }
+.md-nav__item--section > .md-nav__link {
+  color: var(--dim) !important;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.md-nav__link--active, .md-nav__link:hover { color: var(--amber) !important; }
+
+/* Text */
+.md-typeset { font-size: 0.8rem; line-height: 1.7; }
+.md-typeset h1 {
+  color: var(--cream); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1rem;
+}
+.md-typeset h2 {
+  color: var(--cream); font-weight: 700; letter-spacing: -0.02em;
+  margin-top: 2.2em; padding-top: 0.6em; border-top: 1px solid var(--ink-3);
+}
+.md-typeset h3 { color: var(--amber-2); font-weight: 600; }
+.md-typeset strong { color: var(--cream); }
+.md-typeset a { color: var(--amber); }
+.md-typeset a:hover { color: var(--amber-2); }
+.md-typeset .headerlink { color: var(--dim); }
+
+/* Code */
+.md-typeset code {
+  border-radius: 0.3em;
+  font-variant-ligatures: none;
+}
+.md-typeset :not(pre) > code { color: var(--amber-2); background: rgba(245, 184, 61, 0.08); }
+.md-typeset pre > code {
+  border: 1px solid var(--ink-3);
+  border-radius: 0.6rem;
+}
+.md-typeset .md-clipboard { color: var(--dim); }
+.md-typeset .md-clipboard:hover { color: var(--amber); }
+
+/* Tables */
+.md-typeset table:not([class]) {
+  border: 1px solid var(--ink-3);
+  border-radius: 0.6rem;
+  overflow: hidden;
+  font-size: 0.74rem;
+}
+.md-typeset table:not([class]) th {
+  background: var(--ink-2); color: var(--cream); font-weight: 600;
+}
+.md-typeset table:not([class]) td { border-top: 1px solid var(--ink-3); }
+
+/* Quotes, used for example prompts */
+.md-typeset blockquote {
+  color: var(--cream);
+  border-left: 3px solid var(--amber);
+  background: rgba(245, 184, 61, 0.06);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 0.6rem 1rem;
+}
+
+/* Admonitions */
+.md-typeset .admonition, .md-typeset details {
+  border: 1px solid var(--ink-3) !important;
+  border-left: 3px solid var(--amber) !important;
+  border-radius: 0.5rem;
+  box-shadow: none;
+  font-size: 0.78rem;
+}
+.md-typeset .admonition-title, .md-typeset summary {
+  background: rgba(245, 184, 61, 0.08) !important;
+  color: var(--cream);
+}
+.md-typeset .admonition-title::before, .md-typeset summary::before {
+  background-color: var(--amber) !important;
+}
+
+/* Footer */
+.md-footer { border-top: 1px solid rgba(245, 184, 61, 0.08); }
+.md-footer__link { color: var(--mist); }
+.md-footer__link:hover { color: var(--amber); }
+
+/* Admonition kinds: amber by default, status colors where they mean something */
+.md-typeset :is(.admonition, details):is(.tip, .success, .check, .done) { border-left-color: var(--pass) !important; }
+.md-typeset :is(.tip, .success, .check, .done) > :is(.admonition-title, summary)::before { background-color: var(--pass) !important; }
+.md-typeset :is(.admonition, details):is(.warning, .danger, .failure, .bug, .error) { border-left-color: var(--block) !important; }
+.md-typeset :is(.warning, .danger, .failure, .bug, .error) > :is(.admonition-title, summary)::before { background-color: var(--block) !important; }
+.md-typeset :is(.admonition, details):is(.info, .example, .question) { border-left-color: var(--sky) !important; }
+.md-typeset :is(.info, .example, .question) > :is(.admonition-title, summary)::before { background-color: var(--sky) !important; }
+
+/* Tabs */
+.md-typeset .tabbed-labels > label { color: var(--dim); font-weight: 600; }
+.md-typeset .tabbed-labels > label:hover { color: var(--amber-2); }
+.md-typeset .tabbed-set > input:checked + label, .md-typeset .tabbed-labels > label.tabbed-labels__active { color: var(--amber); }
+.md-typeset .tabbed-labels::before { background: var(--amber); }
+
+/* Buttons */
+.md-typeset .md-button {
+  color: var(--cream); border: 1px solid var(--ink-3); background: var(--ink-2);
+  border-radius: 0.6rem; font-weight: 600;
+}
+.md-typeset .md-button:hover { color: var(--cream); border-color: var(--amber-3); background: var(--ink-2); }
+.md-typeset .md-button--primary {
+  color: var(--ink); border-color: transparent;
+  background: linear-gradient(180deg, var(--amber-2), var(--amber));
+}
+.md-typeset .md-button--primary:hover { color: var(--ink); background: linear-gradient(180deg, var(--amber-2), var(--amber)); }
+
+/* Definition lists, used for flags and settings */
+.md-typeset dl dt { color: var(--cream); font-weight: 600; }
+
+/* Task lists */
+.md-typeset .task-list-indicator::before { background-color: var(--ink-3); }
+.md-typeset [type="checkbox"]:checked + .task-list-indicator::before { background-color: var(--pass); }
+
+/* Mermaid diagrams */
+.mermaid {
+  --md-mermaid-font-family: var(--md-text-font-family);
+  --md-mermaid-edge-color: var(--dim);
+  --md-mermaid-node-bg-color: var(--ink-2);
+  --md-mermaid-node-fg-color: var(--cream);
+  --md-mermaid-label-bg-color: var(--ink);
+  --md-mermaid-label-fg-color: var(--mist);
+}
+
+/* Search */
+.md-search__form { background: rgba(255, 255, 255, 0.05); border-radius: 0.5rem; }
+.md-search-result mark { color: var(--amber); }
+
+/* Narrow screens: keep wide code and tables inside the page */
+@media (max-width: 40em) {
+  .md-typeset pre > code { font-size: 0.7rem; }
+}
