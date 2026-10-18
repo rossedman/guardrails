@@ -18,11 +18,11 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - uses: golangci/golangci-lint-action@v8
+      - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.15.0
       - name: actionlint
@@ -36,8 +36,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       - name: Test
@@ -52,8 +52,8 @@ jobs:
     name: Guardrails gate (dogfood)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       - name: Install tools
@@ -72,7 +72,7 @@ jobs:
     name: Plugin package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Validate JSON manifests
         run: |
           for f in .claude-plugin/plugin.json .claude-plugin/marketplace.json hooks/hooks.json internal/config/schema.json; do
@@ -93,14 +93,14 @@ jobs:
     name: GoReleaser snapshot
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       - uses: anchore/sbom-action/download-syft@v0
-      - uses: goreleaser/goreleaser-action@v6
+      - uses: goreleaser/goreleaser-action@v7
         with:
           version: "~> v2"
           args: release --snapshot --clean
