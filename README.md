@@ -84,6 +84,7 @@ guardrails doctor   # check config and runtimes
 guardrails init     # write .guardrails.yaml and .claude/rules/*.md
 guardrails gate     # run the same gate Claude faces, on your changes
 guardrails harden   # mutation-test and fuzz what you changed
+guardrails insights # what Claude trips on most, and rules to prevent it
 ```
 
 ## How it works
@@ -99,7 +100,7 @@ guardrails harden   # mutation-test and fuzz what you changed
 
 | Language | On edit | At Stop |
 |---|---|---|
-| [Go](https://rossedman.github.io/guardrails/go/) | gofumpt, goimports, go vet, golangci-lint | build, `go test -race`, coverage, golangci-lint, `go mod tidy`, govulncheck |
+| [Go](https://rossedman.github.io/guardrails/go/) | gofumpt, goimports, go vet, golangci-lint | build, `go test -race` on touched packages and their dependents, coverage, golangci-lint, `go mod tidy`, govulncheck |
 | [Python](https://rossedman.github.io/guardrails/python/) | ruff format + fix, ruff, mypy | pytest + coverage, mypy, ruff, `uv lock --check` |
 | [Shell](https://rossedman.github.io/guardrails/shell/) | shfmt, shellcheck | shellcheck, shfmt diff |
 | [YAML](https://rossedman.github.io/guardrails/yaml/) | yamllint, actionlint, kubeconform | the same, over every touched file |
@@ -107,6 +108,27 @@ guardrails harden   # mutation-test and fuzz what you changed
 | [Docker](https://rossedman.github.io/guardrails/docker/) | built-in Dockerfile checks | built-in checks, digest-pinned bases, non-root `USER`, `docker build --check` |
 
 Read more in [How it works](https://rossedman.github.io/guardrails/how-it-works/).
+
+## Same gate in CI and pre-commit
+
+```yaml
+# .github/workflows/guardrails.yml
+- uses: actions/checkout@v5
+  with: { fetch-depth: 0 }
+- uses: rossedman/guardrails@v0.4.0
+```
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/rossedman/guardrails
+    rev: v0.4.0
+    hooks:
+      - id: guardrails
+```
+
+Same binary, same config, same result as Claude's hooks. See
+[CI and pre-commit](https://rossedman.github.io/guardrails/ci/).
 
 ## Configuration
 
@@ -132,7 +154,7 @@ See the [configuration reference](https://rossedman.github.io/guardrails/configu
 
 ## Status
 
-Guardrails is **early (v0.3)**. All six language modules, tool
+Guardrails is **early (v0.4)**. All six language modules, tool
 provisioning, the policy guards and on-demand hardening (mutation testing
 and fuzzing) are implemented; Python mutation testing and benchmark
 regression checks are next on the

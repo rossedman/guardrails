@@ -4,6 +4,25 @@ Release notes for each version are published on
 [GitHub Releases](https://github.com/rossedman/guardrails/releases),
 generated from Conventional Commit messages.
 
+## 0.4.0
+
+### Added
+
+- The Go gate tests every package that imports the changed code
+  (`[dependents]`), using Go's test cache so only affected packages re-run.
+- `guardrails insights` and `/guardrails:insights`: first-pass rate, top
+  rules, timeouts and drafted rule additions from the gate history.
+- GitHub Action (`uses: rossedman/guardrails@v0.4.0`), a pre-commit hook,
+  and `guardrails gate --staged`.
+
+### Changed
+
+- `.claude/rules/*.md` are protected; Claude proposes rule changes as diffs.
+
+### Fixed
+
+- Go test failures show the package path (`a/a_test.go:7`, not `a_test.go:7`).
+
 ## 0.3.0
 
 ### Added

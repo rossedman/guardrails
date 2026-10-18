@@ -62,8 +62,16 @@ func (a *App) gate(ctx context.Context, args []string) int {
 	base := fl.String("base", "HEAD", "git ref that changes and patch coverage are measured against")
 	explain := fl.Bool("explain", false, "print the full, untruncated report")
 	asJSON := fl.Bool("json", false, "print checks as JSON")
+	staged := fl.Bool("staged", false, "gate only files staged for commit (for pre-commit hooks); patch coverage is measured against HEAD")
 	if err := fl.Parse(args); err != nil {
 		return 2
+	}
+	if *staged && *all {
+		fmt.Fprintln(a.Stderr, "guardrails: --staged and --all are mutually exclusive")
+		return 2
+	}
+	if *staged {
+		*base = "HEAD"
 	}
 	e := a.engine()
 	wd, err := a.Getwd()
@@ -78,7 +86,14 @@ func (a *App) gate(ctx context.Context, args []string) int {
 		return 1
 	}
 	var files []string
-	if !*all {
+	switch {
+	case *staged:
+		files = a.stagedFiles(ctx, repo)
+		if len(files) == 0 {
+			fmt.Fprintln(a.Stdout, "guardrails: no staged changes")
+			return 0
+		}
+	case !*all:
 		files = a.changedFiles(ctx, repo, *base)
 		if len(files) == 0 {
 			fmt.Fprintf(a.Stdout, "guardrails: no changes against %s; use --all to gate everything\n", *base)
@@ -156,6 +171,21 @@ func (a *App) changedFiles(ctx context.Context, repo, base string) []string {
 	}
 	if res, err := a.Runner.Run(ctx, repo, "git", "ls-files", "--others", "--exclude-standard"); err == nil && res.ExitCode == 0 {
 		add(res.Stdout)
+	}
+	return out
+}
+
+// stagedFiles lists files staged for commit, excluding deletions, as
+// absolute paths. Tests and coverage still run on the working tree, so
+// unstaged edits in the same packages are part of what gets checked.
+func (a *App) stagedFiles(ctx context.Context, repo string) []string {
+	res, err := a.Runner.Run(ctx, repo, "git", "diff", "--cached", "--name-only", "--diff-filter=d")
+	if err != nil || res.ExitCode != 0 {
+		return nil
+	}
+	var out []string
+	for _, rel := range trimLines(res.Stdout) {
+		out = append(out, filepath.Join(repo, filepath.FromSlash(rel)))
 	}
 	return out
 }

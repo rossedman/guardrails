@@ -87,6 +87,7 @@ nav:
       - Hook events: hooks.md
       - Feedback format: feedback.md
       - Hardening tests: harden.md
+      - Insights: insights.md
   - Languages:
       - Go: go.md
       - Python: python.md
@@ -99,6 +100,7 @@ nav:
       - Tool provisioning: tools.md
       - Configuration: configuration.md
       - CLI: cli.md
+      - CI and pre-commit: ci.md
       - Companion tools: companion-tools.md
   - Project:
       - Roadmap: roadmap.md

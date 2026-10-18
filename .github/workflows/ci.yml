@@ -91,6 +91,30 @@ jobs:
           ./guardrails tools install
           ./guardrails tools list
 
+  action:
+    # Exercises action.yml on every PR with a binary built from this commit.
+    name: Action (self-test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Build
+        run: go build -o "$RUNNER_TEMP/guardrails" ./cmd/guardrails
+      - name: Run the action
+        id: guardrails
+        uses: ./
+        with:
+          binary: ${{ runner.temp }}/guardrails
+          args: gate --all --explain
+      - name: Output is set
+        env:
+          PASSED: ${{ steps.guardrails.outputs.passed }}
+        run: test "$PASSED" = true
+
   plugin:
     name: Plugin package
     runs-on: ubuntu-latest

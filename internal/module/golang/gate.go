@@ -105,6 +105,9 @@ func (m *Module) gateModule(ctx context.Context, env module.Env, root string, fi
 	if len(pkgs) > 0 {
 		out.ran = append(out.ran, "tests", "coverage")
 		m.testAndCover(ctx, env, root, modPath, pkgs, files, in, &out)
+		if !in.All && !hasCheck(out.checks, "tests") {
+			m.testDependents(ctx, env, root, modPath, pkgs, &out)
+		}
 	}
 
 	// 3. Full lint on touched packages.
@@ -181,7 +184,7 @@ func (m *Module) testAndCover(ctx context.Context, env module.Env, root, modPath
 		return
 	}
 	if test.ExitCode != 0 {
-		out.checks = append(out.checks, testFailure(env.Repo, root, test.Combined()))
+		out.checks = append(out.checks, testFailure(env.Repo, root, modPath, test.Combined()))
 		return
 	}
 
@@ -369,14 +372,14 @@ func excluded(root, local string, patterns []string) bool {
 
 var failRe = regexp.MustCompile(`^\s*--- FAIL: (\S+)`)
 
-func testFailure(repo, root, out string) feedback.Check {
+func testFailure(repo, root, modPath, out string) feedback.Check {
 	var failed []string
 	for _, l := range strings.Split(out, "\n") {
 		if m := failRe.FindStringSubmatch(l); m != nil {
 			failed = append(failed, m[1])
 		}
 	}
-	issues := relIssues(repo, root, module.ParseLocations(out, "test"))
+	issues := relIssues(repo, root, testLocations(root, modPath, out))
 	summary := "go test failed"
 	if len(failed) > 0 {
 		summary = fmt.Sprintf("%d failing test%s: %s", len(failed), plural(len(failed)), strings.Join(capList(failed, 8), ", "))
@@ -389,6 +392,37 @@ func testFailure(repo, root, out string) feedback.Check {
 		c.Lines = lastLines(out, 15)
 	}
 	return c
+}
+
+var pkgResultRe = regexp.MustCompile(`^(?:FAIL|ok)\s+(\S+)`)
+
+// testLocations parses file:line issues from go test output. go test prints
+// test file names relative to the package directory, so a bare file name is
+// resolved against the package named by the FAIL/ok line that ends its
+// package's output.
+func testLocations(root, modPath, out string) []feedback.Issue {
+	var issues, pending []feedback.Issue
+	flush := func(dir string) {
+		for _, is := range pending {
+			if dir != "" && !strings.ContainsAny(is.File, `/\`) {
+				is.File = filepath.Join(dir, is.File)
+			}
+			issues = append(issues, is)
+		}
+		pending = nil
+	}
+	for _, l := range strings.Split(out, "\n") {
+		if m := pkgResultRe.FindStringSubmatch(l); m != nil {
+			ip := m[1]
+			if ip == modPath || strings.HasPrefix(ip, modPath+"/") {
+				flush(filepath.Join(root, filepath.FromSlash(strings.TrimPrefix(strings.TrimPrefix(ip, modPath), "/"))))
+				continue
+			}
+		}
+		pending = append(pending, module.ParseLocations(l, "test")...)
+	}
+	flush("")
+	return issues
 }
 
 func vulnLines(out string) []string {
@@ -509,4 +543,13 @@ func appendUnique(dst []string, items ...string) []string {
 		}
 	}
 	return dst
+}
+
+func hasCheck(checks []feedback.Check, name string) bool {
+	for _, c := range checks {
+		if c.Name == name {
+			return true
+		}
+	}
+	return false
 }

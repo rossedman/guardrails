@@ -8,7 +8,7 @@ operations with you. Guards always apply, including in `mode: warn`.
 
 | Guard | Trigger | Decision |
 |---|---|---|
-| `protected-config` | Edit/Write to `.guardrails.yaml`, `.golangci.{yml,yaml,toml,json}`, `.claude/settings*.json`, or changes to `[tool.ruff]`, `[tool.mypy]`, `[tool.coverage]`, `[tool.pytest]` in `pyproject.toml`. Also shell writes to those files (`>`, `>>`, `tee`, `sed -i`, `perl -pi`, `rm`, `mv`, `cp`, …). | deny |
+| `protected-config` | Edit/Write to `.guardrails.yaml`, `.golangci.{yml,yaml,toml,json}`, `.claude/settings*.json`, `.claude/rules/*.md`, or changes to `[tool.ruff]`, `[tool.mypy]`, `[tool.coverage]`, `[tool.pytest]` in `pyproject.toml`. Also shell writes to those files (`>`, `>>`, `tee`, `sed -i`, `perl -pi`, `rm`, `mv`, `cp`, …). | deny |
 | `suppression` | New lines adding `//nolint`, `# noqa`, `# type: ignore`, `# pragma: no cover`, `//go:build ignore`, `# tflint-ignore`, `# hadolint ignore`, `# shellcheck disable`, `//lint:ignore` | deny, unless the line directly above is a `guardrails:allow <reason>` comment **you** wrote |
 | `skipped-test` | New `t.Skip`/`t.Skipf`/`t.SkipNow`, `@pytest.mark.skip`/`skipif`, `pytest.skip(`, `@unittest.skip` | deny, unless guarded by `testing.Short()` |
 | `skipped-test` | New `xfail` without a linked issue (URL to an issue/PR, or a `PROJ-123` key) | deny |

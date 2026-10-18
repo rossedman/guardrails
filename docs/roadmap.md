@@ -19,10 +19,15 @@
 - [ ] **Python mutation testing** without writing into the project
   directory.
 - [ ] **Benchmark regression checks** against the session's base commit.
-- [ ] **v0.5 — Companion tools.** `/guardrails:tf-review`,
-  `/guardrails:insights` over `runs.jsonl` with drafted rule updates.
-- [ ] **v1.0 — Same gate everywhere.** A pre-commit hook and a GitHub Action
-  that call the identical binary and config.
+- [x] **v0.4 — Dependents, insights, same gate everywhere.** The Go gate
+  tests the packages that import changed code; `/guardrails:insights`
+  drafts rule updates from `runs.jsonl`; a GitHub Action and a pre-commit
+  hook run the identical binary and config.
+- [ ] **Companion tools.** `/guardrails:tf-review`, `/guardrails:pr-ready`,
+  `/guardrails:flaky`, `/guardrails:deps`.
+- [ ] **TypeScript / JavaScript module.** eslint, prettier, tsc, vitest/jest.
+- [ ] **Per-module warn mode**, test-result caching across edits, and shared
+  org config.
 
 ## Open questions
 

@@ -1,0 +1,8 @@
+- id: guardrails
+  name: guardrails
+  description: Run the Guardrails quality gate on staged changes — the same checks Claude Code faces.
+  entry: bin/guardrails gate --staged
+  language: script
+  pass_filenames: false
+  require_serial: true
+  stages: [pre-commit]
