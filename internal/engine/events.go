@@ -41,7 +41,7 @@ func (e *Engine) sessionStart(ctx context.Context, in hook.Input) (hook.Output, 
 			s.Baseline = copyMap(rc.Coverage)
 			s.Touched, s.AgentTouched = nil, nil
 			s.StopBlocks, s.AgentBlocks = 0, nil
-			s.Reported = nil
+			s.Reported, s.Asked = nil, nil
 		}
 		return nil
 	})
