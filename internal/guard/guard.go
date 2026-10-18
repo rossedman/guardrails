@@ -37,6 +37,9 @@ func severity(action string) int {
 	}
 }
 
+// Worst returns the most severe decision; ties keep the first.
+func Worst(ds ...Decision) Decision { return worst(ds...) }
+
 // worst returns the most severe decision; ties keep the first.
 func worst(ds ...Decision) Decision {
 	out := Allowed

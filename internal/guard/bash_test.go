@@ -2,6 +2,7 @@ package guard
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/rossedman/guardrails/internal/config"
@@ -230,5 +231,15 @@ func TestIsProtected(t *testing.T) {
 		if got := IsProtected(rel); got != want {
 			t.Errorf("IsProtected(%q) = %v, want %v", rel, got, want)
 		}
+	}
+}
+
+func TestCommands(t *testing.T) {
+	got := Commands(`FOO=1 sudo npm install left-pad && ; echo "a b"`)
+	if len(got) != 2 || strings.Join(got[0], " ") != "npm install left-pad" || got[1][1] != "a b" {
+		t.Errorf("Commands = %q", got)
+	}
+	if d := Worst(Allowed, ask("a", "x"), deny("b", "y"), deny("c", "z")); d.Guard != "b" {
+		t.Errorf("Worst = %+v", d)
 	}
 }

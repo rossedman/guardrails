@@ -16,6 +16,8 @@ const (
 	Stop         = "Stop"
 	SubagentStop = "SubagentStop"
 	SessionEnd   = "SessionEnd"
+	// UserPromptSubmit fires when the user sends a prompt.
+	UserPromptSubmit = "UserPromptSubmit"
 )
 
 // Input is the JSON Claude Code writes to a hook's stdin. Fields that only
@@ -35,6 +37,8 @@ type Input struct {
 	ToolInput      json.RawMessage `json:"tool_input,omitempty"`
 	ToolUseID      string          `json:"tool_use_id,omitempty"`
 	StopHookActive bool            `json:"stop_hook_active,omitempty"`
+	// Prompt is the user's message, for UserPromptSubmit.
+	Prompt string `json:"prompt,omitempty"`
 }
 
 // ReadInput decodes an event from r.

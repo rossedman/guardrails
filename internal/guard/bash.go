@@ -39,6 +39,19 @@ func CheckBash(cfg config.Config, command string, env Env) Decision {
 	return worst(ds...)
 }
 
+// Commands splits a shell command line into simple commands, each with
+// leading env assignments and wrappers such as sudo removed. Empty commands
+// are dropped.
+func Commands(command string) [][]string {
+	var out [][]string
+	for _, seg := range Segments(command) {
+		if args := stripPrefixes(seg); len(args) > 0 {
+			out = append(out, args)
+		}
+	}
+	return out
+}
+
 // Segments splits a shell command into simple commands on ;, &&, ||, |, &
 // and newlines, tokenizing each with basic quote handling. It is not a full
 // shell parser; it errs toward splitting more, which only makes guards see

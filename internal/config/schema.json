@@ -384,6 +384,85 @@
       },
       "description": "PreToolUse policy guards."
     },
+    "deps": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Dependency check: packages Claude installs or adds to a manifest are looked up on deps.dev and OSV before the change runs.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Run the dependency check (default true)."
+        },
+        "min_age_days": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ask before adding a package first published fewer days ago; 0 disables."
+        },
+        "min_version_age_days": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ask before adding a version published fewer days ago; 0 disables."
+        },
+        "vulnerabilities": {
+          "enum": [
+            "ask",
+            "deny",
+            "allow"
+          ],
+          "description": "What to do with a version that has known advisories."
+        },
+        "unreachable": {
+          "enum": [
+            "ask",
+            "allow"
+          ],
+          "description": "What to do when the registries can't be reached in time."
+        },
+        "licenses": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "SPDX license identifiers. An empty allow list allows any license not denied.",
+          "properties": {
+            "allow": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Licenses dependencies may have."
+            },
+            "deny": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Licenses that are denied."
+            }
+          }
+        },
+        "allow": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Packages that skip the check, as globs such as @acme/* or github.com/acme/*."
+        }
+      }
+    },
+    "lessons": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Capture your corrections of Claude as candidate rules for /guardrails:learn.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Capture corrections (default true)."
+        },
+        "nudge": {
+          "type": "boolean",
+          "description": "Tell Claude when a correction was recorded."
+        }
+      }
+    },
     "gate": {
       "type": "object",
       "additionalProperties": false,

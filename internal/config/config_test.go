@@ -107,6 +107,15 @@ func TestEnabled(t *testing.T) {
 	if !cfg.GoEnabled() {
 		t.Error("go should be enabled")
 	}
+	if !cfg.DepsEnabled() || !cfg.LessonsEnabled() {
+		t.Error("deps and lessons are on by default")
+	}
+	if err := Merge(&cfg, []byte("deps:\n  enabled: false\nlessons:\n  enabled: false\n")); err != nil {
+		t.Fatal(err)
+	}
+	if cfg.DepsEnabled() || cfg.LessonsEnabled() {
+		t.Error("deps and lessons should be disabled")
+	}
 }
 
 func TestValidate(t *testing.T) {
@@ -130,6 +139,10 @@ func TestValidate(t *testing.T) {
 		{"blocks", func(c *Config) { c.Gate.MaxConsecutiveBlocks = 0 }, "gate.max_consecutive_blocks"},
 		{"timeout", func(c *Config) { c.Gate.TimeoutSeconds = 0 }, "gate.timeout_seconds"},
 		{"tag", func(c *Config) { c.Guards.AllowSuppressionTag = "" }, "guards.allow_suppression_tag"},
+		{"deps vulns", func(c *Config) { c.Deps.Vulnerabilities = "panic" }, "deps.vulnerabilities"},
+		{"deps unreachable", func(c *Config) { c.Deps.Unreachable = "deny" }, "deps.unreachable"},
+		{"deps age", func(c *Config) { c.Deps.MinAgeDays = -1 }, "deps.min_age_days"},
+		{"deps version age", func(c *Config) { c.Deps.MinVersionAgeDays = -1 }, "deps.min_version_age_days"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
