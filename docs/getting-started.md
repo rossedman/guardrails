@@ -1,19 +1,14 @@
 # Getting started
 
-## 1. Install the tools
+## 1. Tools: nothing to install
 
-Guardrails orchestrates the tools you already trust. For Go:
+Guardrails runs a lot of tools — golangci-lint, ruff, mypy, shellcheck,
+yamllint, tflint, hadolint and more — but it provisions them itself: pinned
+versions, checksum-verified, downloaded on first use into the plugin's data
+directory. Tools you already have on `PATH` are used first.
 
-| Tool | Required | Install |
-|---|---|---|
-| Go | yes | <https://go.dev/doc/install> |
-| golangci-lint v2 | yes | <https://golangci-lint.run/welcome/install/> |
-| gofumpt | recommended | `go install mvdan.cc/gofumpt@latest` |
-| goimports | recommended | `go install golang.org/x/tools/cmd/goimports@latest` |
-| govulncheck | recommended | `go install golang.org/x/vuln/cmd/govulncheck@latest` |
-
-Missing recommended tools degrade gracefully (gofmt replaces gofumpt; the
-vulnerability check is skipped) and are reported to you, never to Claude.
+You only need the runtime for the language you write, such as Go or a
+Python project environment. See [Tool provisioning](tools.md) for details.
 
 ## 2. Install the plugin
 
@@ -43,27 +38,21 @@ developing Guardrails itself).
 ## 3. Check your setup
 
 ```bash
-guardrails doctor
+guardrails doctor        # config and runtimes
+guardrails tools list    # every tool and where it resolves from
 ```
 
-```text
-guardrails v0.1.0
-data dir: /home/you/.local/share/guardrails
-config:   ✓ /home/you/src/myrepo
+To download everything up front, for example before going offline:
 
-go module
-  ✓ go             /usr/local/go/bin/go go version go1.26.9 linux/amd64
-  ✓ golangci-lint  /home/you/go/bin/golangci-lint golangci-lint has version 2.15.0
-  ✓ gofumpt        /home/you/go/bin/gofumpt v0.9.1
-  ✓ goimports      /home/you/go/bin/goimports
-  ✓ govulncheck    /home/you/go/bin/govulncheck Go: go1.26.9
+```bash
+guardrails tools install
 ```
 
 ## 4. Configure the repository (optional)
 
-With no config, the defaults apply: 90% coverage on touched packages, an 80%
-per-package floor, a coverage ratchet, 90% patch coverage, race tests,
-golangci-lint and govulncheck. To tune them:
+With no config, the defaults apply to every language the repo uses: 90%
+coverage with a ratchet and 90% patch coverage, clean linters and type
+checkers, and the policy guards. To tune them:
 
 ```bash
 guardrails init
@@ -73,8 +62,8 @@ This writes:
 
 - `.guardrails.yaml` with every default spelled out (see
   [Configuration](configuration.md)).
-- `.claude/rules/go.md`, a path-scoped rule that teaches Claude the
-  standards up front, so it hits the gate less often.
+- `.claude/rules/*.md`, path-scoped rules for each language that teach
+  Claude the standards up front, so it hits the gate less often.
 
 It also prints a `permissions.deny` block for `.claude/settings.json`.
 Plugins cannot ship permission rules, and those denies hold even if a hook

@@ -137,11 +137,11 @@ func (m *Module) gateModule(ctx context.Context, env module.Env, root string, fi
 
 	// 5. govulncheck.
 	if cfg.Vuln {
-		if _, err := env.Runner.LookPath("govulncheck"); err != nil {
-			out.notes = append(out.notes, "govulncheck not installed; vulnerability check skipped (go install golang.org/x/vuln/cmd/govulncheck@latest)")
+		if _, err := env.Tool(ctx, "govulncheck"); err != nil {
+			out.notes = append(out.notes, module.Unavailable(m.tool("govulncheck"), err)+"; vulnerability check skipped")
 		} else {
 			out.ran = append(out.ran, "vuln")
-			vuln, err := env.Runner.Run(ctx, root, "govulncheck", "./...")
+			vuln, err := env.RunTool(ctx, root, "govulncheck", "./...")
 			switch {
 			case err != nil:
 				out.notes = append(out.notes, "govulncheck could not run: "+err.Error())

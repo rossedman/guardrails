@@ -4,14 +4,14 @@
   per-package, ratchet and patch coverage, config file with strict schema,
   feedback template, retry cap and hand-off, CLI (`gate`, `doctor`, `init`,
   `explain`, `statusline`).
-- [x] **v0.2 — Guards.** Anti-gaming and blast-radius PreToolUse guards,
+- [x] **v0.1.x — Guards.** Anti-gaming and blast-radius PreToolUse guards,
   plus a `permissions.deny` block from `guardrails init`. *(shipped early,
   alongside v0.1)*
-- [ ] **v0.3 — Python, Shell, YAML.** ruff, mypy/pyright, pytest-cov, uv;
-  shfmt and shellcheck; yamllint, actionlint, kubeconform.
-- [ ] **v0.4 — Terraform, Docker.** `terraform fmt`, tflint, `init
-  -backend=false` + `validate` with caching, trivy; hadolint, `docker build
-  --check`, digest pins, non-root `USER`.
+- [x] **v0.2 — Every language, no tool installs.** Python (ruff, mypy,
+  pytest-cov, uv), Shell (shfmt, shellcheck), YAML (yamllint, actionlint,
+  kubeconform), Terraform (fmt, tflint, validate, trivy, version
+  constraints) and Docker (hadolint, digest pins, non-root, `docker build
+  --check`), with pinned, checksum-verified [tool provisioning](tools.md).
 - [ ] **Test depth.** Mutation testing on changed functions (gremlins,
   mutmut), benchmarks with benchstat regression checks, fuzzing with crash
   capture, and a `go/analysis` pass to decide when each is warranted.

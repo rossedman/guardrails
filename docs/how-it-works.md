@@ -10,8 +10,9 @@ flowchart LR
     H --> C[(config<br/>defaults → global → repo)]
     H --> S[(session state<br/>touched files · retries · baseline)]
     H --> G{guards}
-    H --> M[language modules<br/>Fix · Check · Gate]
-    M --> T[go · gofumpt · golangci-lint<br/>govulncheck · git]
+    H --> M[language modules<br/>Go · Python · Shell · YAML · Terraform · Docker]
+    M --> P[tool manager<br/>PATH · managed · pinned + verified]
+    P --> T[ruff · mypy · shellcheck · tflint<br/>golangci-lint · hadolint · …]
     G --> D[decision JSON on stdout]
     M --> D
     D --> CC
@@ -83,11 +84,13 @@ type Module interface {
     Enabled(cfg config.Config) bool
     Match(path string) bool
     Tools() []Tool
+    Standards(cfg config.Config) string
     Fix(ctx context.Context, env Env, files []string) FixResult
     Check(ctx context.Context, env Env, files []string) []feedback.Check
     Gate(ctx context.Context, env Env, in GateInput) GateResult
 }
 ```
 
-v0.1 ships the [Go module](go.md). Python, Shell, YAML, Terraform and Docker
-follow the same interface; see the [roadmap](roadmap.md).
+Six modules ship today: [Go](go.md), [Python](python.md), [Shell](shell.md),
+[YAML](yaml.md), [Terraform](terraform.md) and [Docker](docker.md). The
+tools they run are [provisioned automatically](tools.md).

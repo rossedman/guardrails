@@ -59,16 +59,20 @@ only), `full`, or `off`.
 
 ## Toolchain
 
-| Tool | Required | Missing means |
+You need Go itself. Everything around it is
+[provisioned automatically](tools.md) at a pinned, checksum-verified version
+when it isn't already on your `PATH`.
+
+| Tool | Required | If unavailable |
 |---|---|---|
 | `go` | yes | The gate fails with a `tools` check |
-| `golangci-lint` (v2) | yes | The `lint` check fails, naming the install command |
+| `golangci-lint` (v2) | yes | The `lint` check fails, naming the fix |
 | `gofumpt` | no | Falls back to `gofmt` |
 | `goimports` | no | Imports aren't fixed on edit |
-| `govulncheck` | no | The vulnerability check is skipped |
+| `govulncheck` | no | The vulnerability check is skipped with a note |
 
-Missing tools are listed at SessionStart in `systemMessage` and by
-`guardrails doctor`.
+While a tool is still downloading in the background, per-edit checks that
+need it are skipped; the Stop gate waits for it.
 
 ## Coming next: test depth
 

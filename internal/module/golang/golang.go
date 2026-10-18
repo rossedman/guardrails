@@ -19,6 +19,7 @@ import (
 	"github.com/rossedman/guardrails/internal/config"
 	"github.com/rossedman/guardrails/internal/feedback"
 	"github.com/rossedman/guardrails/internal/module"
+	"github.com/rossedman/guardrails/internal/tools"
 )
 
 // BundledLintConfig is used when a repo has no golangci-lint config.
@@ -48,11 +49,42 @@ func (*Module) Match(path string) bool {
 func (*Module) Tools() []module.Tool {
 	return []module.Tool{
 		{Name: "go", Required: true, Install: "https://go.dev/doc/install", VersionArgs: []string{"version"}},
-		{Name: "golangci-lint", Required: true, Install: "https://golangci-lint.run/welcome/install/", VersionArgs: []string{"version"}},
-		{Name: "gofumpt", Install: "go install mvdan.cc/gofumpt@latest", VersionArgs: []string{"--version"}},
-		{Name: "goimports", Install: "go install golang.org/x/tools/cmd/goimports@latest"},
-		{Name: "govulncheck", Install: "go install golang.org/x/vuln/cmd/govulncheck@latest", VersionArgs: []string{"-version"}},
+		{Name: "golangci-lint", Required: true, Install: "managed, or https://golangci-lint.run/welcome/install/", VersionArgs: []string{"version"}},
+		{Name: "gofumpt", Install: "managed, or go install mvdan.cc/gofumpt@latest", VersionArgs: []string{"--version"}},
+		{Name: "goimports", Install: "managed, or go install golang.org/x/tools/cmd/goimports@latest"},
+		{Name: "govulncheck", Install: "managed, or go install golang.org/x/vuln/cmd/govulncheck@latest", VersionArgs: []string{"-version"}},
 	}
+}
+
+// Standards implements module.Module.
+func (*Module) Standards(cfg config.Config) string {
+	var b strings.Builder
+	g := cfg.Go
+	b.WriteString("Go standards: gofumpt/goimports formatting is applied automatically after each edit; go vet and golangci-lint run on the edited package. ")
+	fmt.Fprintf(&b, "Before a turn can end, touched packages must build, pass `go test -race`, reach %.0f%% total statement coverage (no package below %.0f%%", g.Coverage.Total, g.Coverage.PerPackageFloor)
+	if g.Coverage.Ratchet {
+		b.WriteString(", none below its starting coverage")
+	}
+	b.WriteString(")")
+	if g.PatchCoverage > 0 {
+		fmt.Fprintf(&b, ", cover %.0f%% of lines changed this session", g.PatchCoverage)
+	}
+	b.WriteString(", be golangci-lint clean and keep go.mod tidy")
+	if g.Vuln {
+		b.WriteString(", with no reachable govulncheck findings")
+	}
+	b.WriteString(".")
+	return b.String()
+}
+
+// tool returns the named entry of Tools.
+func (m *Module) tool(name string) module.Tool {
+	for _, t := range m.Tools() {
+		if t.Name == name {
+			return t
+		}
+	}
+	return module.Tool{Name: name}
 }
 
 // Fix implements module.Module. goimports runs first, then gofumpt (or
@@ -64,16 +96,12 @@ func (m *Module) Fix(ctx context.Context, env module.Env, files []string) module
 	if len(goFiles) == 0 {
 		return res
 	}
-	if _, err := env.Runner.LookPath("goimports"); err == nil {
-		_, _ = env.Runner.Run(ctx, env.Repo, "goimports", append([]string{"-w"}, goFiles...)...)
-	} else {
-		res.Notes = append(res.Notes, "goimports not installed; imports were not fixed (go install golang.org/x/tools/cmd/goimports@latest)")
+	if _, err := env.RunTool(ctx, env.Repo, "goimports", append([]string{"-w"}, goFiles...)...); module.IsUnavailable(err) {
+		res.Notes = append(res.Notes, module.Unavailable(m.tool("goimports"), err)+"; imports were not fixed")
 	}
-	if _, err := env.Runner.LookPath("gofumpt"); err == nil {
-		_, _ = env.Runner.Run(ctx, env.Repo, "gofumpt", append([]string{"-w"}, goFiles...)...)
-	} else {
+	if _, err := env.RunTool(ctx, env.Repo, "gofumpt", append([]string{"-w"}, goFiles...)...); module.IsUnavailable(err) {
 		_, _ = env.Runner.Run(ctx, env.Repo, "gofmt", append([]string{"-w"}, goFiles...)...)
-		res.Notes = append(res.Notes, "gofumpt not installed; fell back to gofmt (go install mvdan.cc/gofumpt@latest)")
+		res.Notes = append(res.Notes, module.Unavailable(m.tool("gofumpt"), err)+"; fell back to gofmt")
 	}
 	return res
 }
@@ -126,10 +154,13 @@ func (m *Module) Check(ctx context.Context, env module.Env, files []string) []fe
 // lint runs golangci-lint and returns a failing check when there are
 // issues in want (or in any file when want is nil).
 func (m *Module) lint(ctx context.Context, env module.Env, root string, args []string, want map[string]bool) (feedback.Check, bool) {
-	if _, err := env.Runner.LookPath("golangci-lint"); err != nil {
+	if _, err := env.Tool(ctx, "golangci-lint"); err != nil {
+		if errors.Is(err, tools.ErrInstalling) {
+			return feedback.Check{}, false
+		}
 		return feedback.Check{
-			Name: "lint", Failed: true, Summary: "golangci-lint is not installed",
-			Fix: "the human must install golangci-lint v2 (https://golangci-lint.run/welcome/install/)",
+			Name: "lint", Failed: true, Summary: module.Unavailable(m.tool("golangci-lint"), err),
+			Fix: "the human must install golangci-lint v2 or set tools.install: auto",
 		}, true
 	}
 	full := []string{args[0], "--output.json.path=stdout", "--output.text.path=stderr", "--show-stats=false"}
@@ -137,7 +168,7 @@ func (m *Module) lint(ctx context.Context, env module.Env, root string, args []s
 		full = append(full, "--config="+cfgPath)
 	}
 	full = append(full, args[1:]...)
-	res, err := env.Runner.Run(ctx, root, "golangci-lint", full...)
+	res, err := env.RunTool(ctx, root, "golangci-lint", full...)
 	if err != nil {
 		return toolError("lint", err), true
 	}

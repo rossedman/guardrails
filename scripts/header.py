@@ -106,7 +106,7 @@ def svg(width, height, social=False):
     pills, px = [], 96
     for i, lang in enumerate(langs):
         pw = len(lang) * 11 + 34
-        live = i == 0
+        live = True
         pills.append(
             f'<rect x="{px}" y="{392}" width="{pw}" height="34" rx="17" '
             f'fill="{AMBER if live else "none"}" fill-opacity="{0.14 if live else 0}" '

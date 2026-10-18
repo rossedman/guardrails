@@ -1,0 +1,120 @@
+# Tools Guardrails can provision itself. Edit versions here, then regenerate
+# the lock (URLs and SHA-256 per platform):
+#
+#   go run ./internal/tools/lockgen
+#
+# or run the "Tools lock" workflow, which also covers GitHub-hosted assets.
+#
+# Sources:
+#   archive  release asset per platform: url template, format, path inside
+#   pypi     a binary wheel from PyPI, matched per platform by wheel tag
+#   uv       a Python tool installed by uv into an isolated, hash-locked venv
+#   go       `go install module/cmd@version` (verified by the Go checksum DB)
+#
+# Template variables: {version}, {os}, {arch}, plus per-tool maps below.
+
+platforms: [linux/amd64, linux/arm64, darwin/amd64, darwin/arm64]
+
+tools:
+  uv:
+    version: 0.13.1
+    source: pypi
+    package: uv
+    path: "uv-{version}.data/scripts/uv"
+    wheels:
+      linux/amd64: "manylinux_2_17_x86_64"
+      linux/arm64: "manylinux_2_17_aarch64"
+      darwin/amd64: "macosx_10_12_x86_64"
+      darwin/arm64: "macosx_11_0_arm64"
+
+  # Python tools, run in isolated venvs created by uv.
+  ruff: {version: 0.17.1, source: uv, package: ruff}
+  mypy: {version: 2.4.0, source: uv, package: mypy}
+  yamllint: {version: 1.38.0, source: uv, package: yamllint}
+
+  shfmt:
+    version: 4.2.0 # shfmt-py, which ships the upstream shfmt binary
+    source: pypi
+    package: shfmt-py
+    path: "shfmt_py-{version}.data/scripts/shfmt"
+    wheels:
+      linux/amd64: "manylinux2014_x86_64"
+      linux/arm64: "manylinux2014_aarch64"
+      darwin/amd64: "macosx_10_9_x86_64"
+      darwin/arm64: "macosx_11_0_arm64"
+
+  hadolint:
+    version: 2.15.1
+    source: archive
+    url: "https://github.com/hadolint/hadolint/releases/download/v{version}/hadolint-{os}-{arch}"
+    format: raw
+    os: {linux: linux, darwin: macos}
+    arch: {amd64: x86_64, arm64: arm64}
+
+  shellcheck:
+    version: 0.11.0
+    source: archive
+    url: "https://github.com/koalaman/shellcheck/releases/download/v{version}/shellcheck-v{version}.{os}.{arch}.tar.xz"
+    format: tar.xz
+    path: "shellcheck-v{version}/shellcheck"
+    arch: {amd64: x86_64, arm64: aarch64}
+
+  actionlint:
+    version: 1.7.12
+    source: archive
+    url: "https://github.com/rhysd/actionlint/releases/download/v{version}/actionlint_{version}_{os}_{arch}.tar.gz"
+    format: tar.gz
+    path: actionlint
+
+  kubeconform:
+    version: 0.8.0
+    source: archive
+    url: "https://github.com/yannh/kubeconform/releases/download/v{version}/kubeconform-{os}-{arch}.tar.gz"
+    format: tar.gz
+    path: kubeconform
+
+  tflint:
+    version: 0.64.0
+    source: archive
+    url: "https://github.com/terraform-linters/tflint/releases/download/v{version}/tflint_{os}_{arch}.zip"
+    format: zip
+    path: tflint
+
+  trivy:
+    version: 0.76.0
+    source: archive
+    url: "https://github.com/aquasecurity/trivy/releases/download/v{version}/trivy_{version}_{os}-{arch}.tar.gz"
+    format: tar.gz
+    path: trivy
+    os: {linux: Linux, darwin: macOS}
+    arch: {amd64: 64bit, arm64: ARM64}
+
+  terraform:
+    version: 1.16.6
+    source: archive
+    url: "https://releases.hashicorp.com/terraform/{version}/terraform_{version}_{os}_{arch}.zip"
+    format: zip
+    path: terraform
+
+  tofu:
+    version: 1.13.1
+    source: archive
+    url: "https://github.com/opentofu/opentofu/releases/download/v{version}/tofu_{version}_{os}_{arch}.tar.gz"
+    format: tar.gz
+    path: tofu
+
+  golangci-lint:
+    version: 2.15.0
+    source: archive
+    url: "https://github.com/golangci/golangci-lint/releases/download/v{version}/golangci-lint-{version}-{os}-{arch}.tar.gz"
+    format: tar.gz
+    path: "golangci-lint-{version}-{os}-{arch}/golangci-lint"
+
+  gofumpt:
+    version: 0.12.0
+    source: archive
+    url: "https://github.com/mvdan/gofumpt/releases/download/v{version}/gofumpt_v{version}_{os}_{arch}"
+    format: raw
+
+  goimports: {version: 0.52.0, source: go, module: golang.org/x/tools/cmd/goimports}
+  govulncheck: {version: 1.9.0, source: go, module: golang.org/x/vuln/cmd/govulncheck}

@@ -86,9 +86,16 @@ nav:
       - How it works: how-it-works.md
       - Hook events: hooks.md
       - Feedback format: feedback.md
+  - Languages:
+      - Go: go.md
+      - Python: python.md
+      - Shell: shell.md
+      - YAML: yaml.md
+      - Terraform: terraform.md
+      - Docker: docker.md
   - Reference:
-      - Go module: go.md
       - Policy guards: guards.md
+      - Tool provisioning: tools.md
       - Configuration: configuration.md
       - CLI: cli.md
       - Companion tools: companion-tools.md

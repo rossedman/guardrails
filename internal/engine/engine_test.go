@@ -15,6 +15,7 @@ import (
 	"github.com/rossedman/guardrails/internal/feedback"
 	"github.com/rossedman/guardrails/internal/hook"
 	"github.com/rossedman/guardrails/internal/module"
+	"github.com/rossedman/guardrails/internal/module/golang"
 	"github.com/rossedman/guardrails/internal/runlog"
 	"github.com/rossedman/guardrails/internal/runner"
 	"github.com/rossedman/guardrails/internal/state"
@@ -43,6 +44,10 @@ func (s *stub) Name() string               { return "stub" }
 func (s *stub) Enabled(config.Config) bool { return s.enabled }
 func (s *stub) Match(path string) bool     { return strings.HasSuffix(path, ".stub") }
 func (s *stub) Tools() []module.Tool       { return s.tools }
+func (s *stub) Standards(config.Config) string {
+	return "Stub standards."
+}
+
 func (s *stub) Fix(context.Context, module.Env, []string) module.FixResult {
 	return module.FixResult{Notes: s.fixNotes}
 }
@@ -373,14 +378,14 @@ func TestSessionStart(t *testing.T) {
 		cfg := config.Default()
 		cfg.Mode = config.ModeWarn
 		rc := &state.RepoCache{Coverage: map[string]float64{"x": 70}, LastGate: &state.GateSummary{Passed: true}}
-		got := standardsSummary(cfg, []module.Module{goNamed{newStub()}}, rc)
+		got := standardsSummary(cfg, []module.Module{golang.New()}, rc)
 		for _, want := range []string{"warn mode", "Go standards", "90% total", "none below its starting", "lines changed", "govulncheck", "Last gate passed"} {
 			if !strings.Contains(got, want) {
 				t.Errorf("summary missing %q:\n%s", want, got)
 			}
 		}
 		cfg.Go.Coverage.Ratchet, cfg.Go.PatchCoverage, cfg.Go.Vuln = false, 0, false
-		got = standardsSummary(cfg, []module.Module{goNamed{newStub()}}, &state.RepoCache{})
+		got = standardsSummary(cfg, []module.Module{golang.New()}, &state.RepoCache{})
 		for _, absent := range []string{"starting coverage", "lines changed", "govulncheck", "Baseline"} {
 			if strings.Contains(got, absent) {
 				t.Errorf("summary should not mention %q:\n%s", absent, got)
@@ -388,11 +393,6 @@ func TestSessionStart(t *testing.T) {
 		}
 	})
 }
-
-// goNamed reports itself as the go module for summary rendering.
-type goNamed struct{ *stub }
-
-func (goNamed) Name() string { return "go" }
 
 func TestPreToolUse(t *testing.T) {
 	edit := func(h *harness, tool string, input map[string]any, extra map[string]any) hook.Output {

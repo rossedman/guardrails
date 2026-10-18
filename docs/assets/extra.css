@@ -548,3 +548,25 @@ body:has(.gr-home) .md-main {
     text-align: center;
   }
 }
+
+a.gr-lang {
+  text-decoration: none;
+}
+
+.gr-home a.gr-lang--live {
+  color: var(--gr-amber);
+}
+
+.gr-home a.gr-lang:hover {
+  background: rgba(245, 184, 61, 0.2);
+}
+
+.gr-home a.gr-lang--tools {
+  border-style: dashed;
+  border-color: var(--gr-blue);
+  color: var(--gr-blue);
+}
+
+.gr-home a.gr-lang--tools em {
+  color: var(--gr-blue);
+}

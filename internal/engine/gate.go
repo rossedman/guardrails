@@ -28,7 +28,7 @@ type GateOutcome struct {
 func (e *Engine) Gate(ctx context.Context, repo string, cfg config.Config, files []string, base string, baseline map[string]float64, all bool) GateOutcome {
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(cfg.Gate.TimeoutSeconds)*time.Second)
 	defer cancel()
-	env := e.env(repo, cfg)
+	env := e.env(repo, cfg, true)
 
 	out := GateOutcome{Coverage: map[string]float64{}, Total: -1}
 	for _, m := range e.Modules {

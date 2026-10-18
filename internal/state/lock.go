@@ -35,3 +35,9 @@ func lock(path string, timeout time.Duration) (func(), error) {
 		time.Sleep(10 * time.Millisecond)
 	}
 }
+
+// Lock acquires an exclusive lock file at path, waiting up to timeout. It
+// returns the function that releases it.
+func Lock(path string, timeout time.Duration) (func(), error) {
+	return lock(path, timeout)
+}

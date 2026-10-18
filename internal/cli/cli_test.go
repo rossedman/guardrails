@@ -29,6 +29,10 @@ func (*stub) Name() string               { return "stub" }
 func (*stub) Enabled(config.Config) bool { return true }
 func (*stub) Match(p string) bool        { return strings.HasSuffix(p, ".stub") }
 func (s *stub) Tools() []module.Tool     { return s.tools }
+func (s *stub) Standards(config.Config) string {
+	return "Stub standards."
+}
+
 func (*stub) Fix(context.Context, module.Env, []string) module.FixResult {
 	return module.FixResult{}
 }

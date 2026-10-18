@@ -27,7 +27,7 @@ version: 1
 mode: enforce            # enforce | warn (warn = never block, report only)
 
 go:
-  enabled: true          # default: on when Go files exist
+  enabled: true          # every module defaults to on when its files exist
   coverage:
     total: 90            # min statement coverage of touched packages
     per_package_floor: 80
@@ -39,10 +39,40 @@ go:
     on_edit: fast          # fast | full | off
   race: true
   vuln: true
-  # Accepted now, enforced in upcoming releases:
+  # Accepted now, enforced in an upcoming release:
   mutation: { tool: gremlins, min_score: 70, budget_seconds: 45 }
   bench: { require_on_hot_paths: true, regression_pct: 10, count: 6 }
   fuzz: { require_on_parsers: true, fuzztime: 10s }
+
+python:
+  coverage: { total: 90 }
+  patch_coverage: 90
+  typecheck: mypy        # mypy | pyright | off
+  strict: true           # mypy --strict
+
+shell:
+  severity: style        # minimum shellcheck severity: style | info | warning | error
+
+yaml:
+  actionlint: true       # GitHub Actions workflows
+  kubeconform:
+    enabled: true        # Kubernetes manifests (apiVersion + kind)
+    kubernetes_version: "1.31"
+
+terraform:
+  binary: terraform      # terraform | tofu
+  tflint: true
+  scan: trivy            # trivy | off
+  require_version_constraints: true
+
+docker:
+  require_digest_pins: true
+  require_non_root: true
+  build_check: true      # docker build --check, when a daemon is available
+
+tools:
+  install: auto          # auto | never
+  prefer: path           # path | managed
 
 guards:
   allow_suppression_tag: "guardrails:allow"
@@ -52,22 +82,6 @@ guards:
 gate:
   max_consecutive_blocks: 3   # then hand off to the human
   timeout_seconds: 90
-
-# Planned modules; settings are validated today.
-python:
-  coverage: { total: 90 }
-  patch_coverage: 90
-  typecheck: mypy        # mypy | pyright | off
-  strict: true
-  mutation: { tool: mutmut, min_score: 70 }
-terraform:
-  binary: terraform      # terraform | tofu
-  scan: trivy
-docker:
-  require_digest_pins: true
-  require_non_root: true
-yaml:
-  kubeconform: { kubernetes_version: "1.31" }
 ```
 
 ## Recipes
@@ -105,6 +119,17 @@ yaml:
       patch_coverage: 100
       lint:
         on_edit: full
+    ```
+
+=== "Match CI exactly"
+
+    Ignore whatever is on each machine's `PATH` and always use the pinned
+    tool versions:
+
+    ```yaml
+    version: 1
+    tools:
+      prefer: managed
     ```
 
 === "Personal defaults"

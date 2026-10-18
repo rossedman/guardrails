@@ -616,7 +616,7 @@ func TestGateVuln(t *testing.T) {
 
 	f = runner.NewFake("go", "golangci-lint").OnFunc("go test", profileWriter(aProfileFull))
 	res = New().Gate(context.Background(), newEnv(t, repo, f), module.GateInput{Files: []string{file}})
-	if len(res.Notes) != 1 || !strings.Contains(res.Notes[0], "govulncheck not installed") {
+	if len(res.Notes) != 1 || !strings.Contains(res.Notes[0], "govulncheck is not installed") {
 		t.Errorf("notes = %v", res.Notes)
 	}
 

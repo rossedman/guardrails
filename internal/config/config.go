@@ -44,6 +44,8 @@ type Config struct {
 	Terraform Terraform `yaml:"terraform" json:"terraform"`
 	Docker    Docker    `yaml:"docker" json:"docker"`
 	YAML      YAMLLint  `yaml:"yaml" json:"yaml"`
+	Shell     Shell     `yaml:"shell" json:"shell"`
+	Tools     Tools     `yaml:"tools" json:"tools"`
 	Guards    Guards    `yaml:"guards" json:"guards"`
 	Gate      Gate      `yaml:"gate" json:"gate"`
 }
@@ -95,7 +97,7 @@ type Fuzz struct {
 	Fuzztime         string `yaml:"fuzztime" json:"fuzztime"`
 }
 
-// Python configures the Python module (planned).
+// Python configures the Python module.
 type Python struct {
 	Enabled       *bool          `yaml:"enabled" json:"enabled,omitempty"`
 	Coverage      PythonCoverage `yaml:"coverage" json:"coverage"`
@@ -110,29 +112,65 @@ type PythonCoverage struct {
 	Total float64 `yaml:"total" json:"total"`
 }
 
-// Terraform configures the Terraform module (planned).
+// Terraform configures the Terraform module.
 type Terraform struct {
 	Enabled *bool  `yaml:"enabled" json:"enabled,omitempty"`
 	Binary  string `yaml:"binary" json:"binary"`
-	Scan    string `yaml:"scan" json:"scan"`
+	// Scan is the config scanner: trivy or off.
+	Scan string `yaml:"scan" json:"scan"`
+	// Tflint runs tflint on edit and at the gate.
+	Tflint bool `yaml:"tflint" json:"tflint"`
+	// RequireVersionConstraints fails providers without a version.
+	RequireVersionConstraints bool `yaml:"require_version_constraints" json:"require_version_constraints"`
 }
 
-// Docker configures the Docker module (planned).
+// Docker configures the Docker module.
 type Docker struct {
 	Enabled           *bool `yaml:"enabled" json:"enabled,omitempty"`
 	RequireDigestPins bool  `yaml:"require_digest_pins" json:"require_digest_pins"`
 	RequireNonRoot    bool  `yaml:"require_non_root" json:"require_non_root"`
+	// BuildCheck runs `docker build --check` when a Docker daemon is
+	// available.
+	BuildCheck bool `yaml:"build_check" json:"build_check"`
 }
 
-// YAMLLint configures the YAML module (planned).
+// YAMLLint configures the YAML module.
 type YAMLLint struct {
-	Enabled     *bool       `yaml:"enabled" json:"enabled,omitempty"`
+	Enabled *bool `yaml:"enabled" json:"enabled,omitempty"`
+	// Actionlint checks GitHub Actions workflows.
+	Actionlint  bool        `yaml:"actionlint" json:"actionlint"`
 	Kubeconform Kubeconform `yaml:"kubeconform" json:"kubeconform"`
 }
 
 // Kubeconform configures manifest validation.
 type Kubeconform struct {
+	Enabled           bool   `yaml:"enabled" json:"enabled"`
 	KubernetesVersion string `yaml:"kubernetes_version" json:"kubernetes_version"`
+}
+
+// Shell configures the shell module.
+type Shell struct {
+	Enabled *bool `yaml:"enabled" json:"enabled,omitempty"`
+	// Severity is the minimum shellcheck severity reported.
+	Severity string `yaml:"severity" json:"severity"`
+}
+
+// Tool provisioning values.
+const (
+	InstallAuto   = "auto"
+	InstallNever  = "never"
+	PreferPath    = "path"
+	PreferManaged = "managed"
+)
+
+// Tools configures how Guardrails finds and installs external tools.
+type Tools struct {
+	// Install is auto (download pinned, checksum-verified tools on demand)
+	// or never (use only what is installed).
+	Install string `yaml:"install" json:"install"`
+	// Prefer is path (use installed tools first) or managed (always use
+	// the pinned versions).
+	Prefer string `yaml:"prefer" json:"prefer"`
 }
 
 // Guards configures the PreToolUse policy guards.
@@ -175,9 +213,11 @@ func Default() Config {
 			Strict:        true,
 			Mutation:      Mutation{Tool: "mutmut", MinScore: 70},
 		},
-		Terraform: Terraform{Binary: "terraform", Scan: "trivy"},
-		Docker:    Docker{RequireDigestPins: true, RequireNonRoot: true},
-		YAML:      YAMLLint{Kubeconform: Kubeconform{KubernetesVersion: "1.31"}},
+		Terraform: Terraform{Binary: "terraform", Scan: "trivy", Tflint: true, RequireVersionConstraints: true},
+		Docker:    Docker{RequireDigestPins: true, RequireNonRoot: true, BuildCheck: true},
+		YAML:      YAMLLint{Actionlint: true, Kubeconform: Kubeconform{Enabled: true, KubernetesVersion: "1.31"}},
+		Shell:     Shell{Severity: "style"},
+		Tools:     Tools{Install: InstallAuto, Prefer: PreferPath},
 		Guards: Guards{
 			AllowSuppressionTag: "guardrails:allow",
 			KubectlSafeContexts: []string{"kind-*", "*-dev"},
@@ -191,7 +231,24 @@ func Default() Config {
 func (c Config) Enforcing() bool { return c.Mode != ModeWarn }
 
 // GoEnabled reports whether the Go module is on. A nil Enabled means on.
-func (c Config) GoEnabled() bool { return c.Go.Enabled == nil || *c.Go.Enabled }
+func (c Config) GoEnabled() bool { return on(c.Go.Enabled) }
+
+// PythonEnabled reports whether the Python module is on.
+func (c Config) PythonEnabled() bool { return on(c.Python.Enabled) }
+
+// ShellEnabled reports whether the shell module is on.
+func (c Config) ShellEnabled() bool { return on(c.Shell.Enabled) }
+
+// YAMLEnabled reports whether the YAML module is on.
+func (c Config) YAMLEnabled() bool { return on(c.YAML.Enabled) }
+
+// TerraformEnabled reports whether the Terraform module is on.
+func (c Config) TerraformEnabled() bool { return on(c.Terraform.Enabled) }
+
+// DockerEnabled reports whether the Docker module is on.
+func (c Config) DockerEnabled() bool { return on(c.Docker.Enabled) }
+
+func on(b *bool) bool { return b == nil || *b }
 
 // Hash returns a stable digest of the effective config, used to key caches.
 func (c Config) Hash() string {
@@ -291,6 +348,10 @@ func (c Config) Validate() error {
 	oneOf("go.lint.on_edit", c.Go.Lint.OnEdit, "fast", "full", "off")
 	oneOf("python.typecheck", c.Python.Typecheck, "mypy", "pyright", "off")
 	oneOf("terraform.binary", c.Terraform.Binary, "terraform", "tofu")
+	oneOf("terraform.scan", c.Terraform.Scan, "trivy", "off")
+	oneOf("shell.severity", c.Shell.Severity, "style", "info", "warning", "error")
+	oneOf("tools.install", c.Tools.Install, InstallAuto, InstallNever)
+	oneOf("tools.prefer", c.Tools.Prefer, PreferPath, PreferManaged)
 	if c.Gate.MaxConsecutiveBlocks < 1 {
 		add("gate.max_consecutive_blocks: must be at least 1")
 	}

@@ -1,0 +1,35 @@
+name: Tools lock
+
+# Regenerates internal/tools/tools.lock.json (URLs and SHA-256 for every
+# pinned tool on every platform). Run it after editing tools.yaml, or let the
+# weekly schedule open a pull request when upstream artifacts change.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: astral-sh/setup-uv@v7
+      - name: Regenerate lock
+        run: go run ./internal/tools/lockgen
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: chore/tools-lock
+          commit-message: "chore(tools): regenerate tools lock"
+          title: "chore(tools): regenerate tools lock"
+          body: |
+            Regenerated `internal/tools/tools.lock.json` from `internal/tools/tools.yaml`.
+            Every artifact was downloaded, hashed and checked for its executable.
