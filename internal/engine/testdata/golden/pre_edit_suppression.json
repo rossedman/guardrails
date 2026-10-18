@@ -1,0 +1,1 @@
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"guardrails [suppression]: new //nolint in calc.go: \"g() //nolint:errcheck\". Fix the issue instead of suppressing it."}}

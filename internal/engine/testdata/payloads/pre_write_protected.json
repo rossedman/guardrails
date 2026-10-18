@@ -1,0 +1,1 @@
+{"session_id":"s1","cwd":"$REPO","hook_event_name":"PreToolUse","tool_name":"Write","tool_use_id":"toolu_2","tool_input":{"file_path":"$REPO/.guardrails.yaml","content":"version: 1\nmode: warn\n"}}

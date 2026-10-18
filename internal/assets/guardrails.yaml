@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/rossedman/guardrails/main/internal/config/schema.json
+#
+# Guardrails configuration. Keys override ~/.config/guardrails/config.yaml,
+# which overrides the built-in defaults. Unknown keys are an error.
+# Docs: https://rossedman.github.io/guardrails/configuration/
+version: 1
+mode: enforce            # enforce | warn (warn = never block, report only)
+
+go:
+  coverage:
+    total: 90
+    per_package_floor: 80
+    ratchet: true          # never below the SessionStart baseline
+    exclude: ["**/mocks/**", "**/*_mock.go", "**/*.pb.go", "cmd/**/main.go"]
+  patch_coverage: 90       # lines changed this session
+  lint:
+    config: .golangci.yml  # falls back to the bundled config
+    on_edit: fast          # fast | full | off
+  race: true
+  vuln: true
+
+guards:
+  allow_suppression_tag: "guardrails:allow"
+  kubectl_safe_contexts: ["kind-*", "*-dev"]
+  protected_branches: ["main", "master"]
+
+gate:
+  max_consecutive_blocks: 3
+  timeout_seconds: 90

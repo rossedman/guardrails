@@ -1,0 +1,1 @@
+{"decision":"block","reason":"guardrails: stub gate failed (1 of 3 checks)\n\n[coverage] 50.0% < 90.0%\n  main.stub:1  F  0/2 stmts\n  fix: add tests\n\nattempt 1 of 3 — run `guardrails gate --explain` for full output\n"}

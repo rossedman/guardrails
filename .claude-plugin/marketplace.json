@@ -1,0 +1,14 @@
+{
+  "name": "guardrails",
+  "owner": {
+    "name": "Ross Edman",
+    "url": "https://github.com/rossedman"
+  },
+  "plugins": [
+    {
+      "name": "guardrails",
+      "source": ".",
+      "description": "Quality gates for Claude Code: format and lint on edit, a test and coverage gate at Stop, and anti-gaming policy guards."
+    }
+  ]
+}

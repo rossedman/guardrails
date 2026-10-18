@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.15.0
+      - name: actionlint
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Test
+        run: go test -race -count=1 -coverprofile=coverage.out ./...
+      - name: Coverage summary
+        if: runner.os == 'Linux'
+        run: go tool cover -func=coverage.out | tail -n 1
+
+  gate:
+    # Dogfood: the binary holds itself to its own gate (build, race tests,
+    # 90% coverage, golangci-lint, go mod tidy, govulncheck).
+    name: Guardrails gate (dogfood)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Install tools
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          go install mvdan.cc/gofumpt@latest
+          curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v2.15.0
+      - name: Build
+        run: go build -o guardrails ./cmd/guardrails
+      - name: Doctor
+        run: ./guardrails doctor
+      - name: Gate
+        run: ./guardrails gate --all --explain
+
+  plugin:
+    name: Plugin package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate JSON manifests
+        run: |
+          for f in .claude-plugin/plugin.json .claude-plugin/marketplace.json hooks/hooks.json internal/config/schema.json; do
+            jq empty "$f" && echo "ok  $f"
+          done
+      - name: Hooks use the launcher in exec form
+        run: |
+          jq -e '[.hooks[][].hooks[] | select(.command != "${CLAUDE_PLUGIN_ROOT}/bin/guardrails" or (.args | length) != 2)] | length == 0' hooks/hooks.json
+      - name: ShellCheck launcher
+        run: shellcheck bin/guardrails
+      - name: Skills and agents have frontmatter
+        run: |
+          for f in skills/*/SKILL.md agents/*.md; do
+            head -n 1 "$f" | grep -qx -- '---' || { echo "missing frontmatter: $f"; exit 1; }
+          done
+
+  release-check:
+    name: GoReleaser snapshot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: anchore/sbom-action/download-syft@v0
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: release --snapshot --clean

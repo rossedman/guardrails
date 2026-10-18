@@ -1,0 +1,1 @@
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"guardrails [protected-config]: .guardrails.yaml holds standards owned by the human. Propose the change in chat instead of editing it."}}
