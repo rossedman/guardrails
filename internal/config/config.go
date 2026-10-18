@@ -77,24 +77,32 @@ type GoLint struct {
 	OnEdit string `yaml:"on_edit" json:"on_edit"`
 }
 
-// Mutation configures mutation testing (planned).
+// Mutation configures mutation testing, run on demand by
+// `guardrails harden`.
 type Mutation struct {
+	// Tool is builtin for Go; mutmut for Python is planned.
 	Tool          string  `yaml:"tool" json:"tool"`
 	MinScore      float64 `yaml:"min_score" json:"min_score"`
 	BudgetSeconds int     `yaml:"budget_seconds" json:"budget_seconds"`
 }
 
-// Bench configures benchmark requirements (planned).
+// Bench configures benchmark guidance.
 type Bench struct {
 	RequireOnHotPaths bool    `yaml:"require_on_hot_paths" json:"require_on_hot_paths"`
 	RegressionPct     float64 `yaml:"regression_pct" json:"regression_pct"`
 	Count             int     `yaml:"count" json:"count"`
+	// Packages are performance-critical: `guardrails harden` suggests a
+	// benchmark for every changed function in them. Module-relative
+	// patterns, e.g. "internal/codec/...".
+	Packages []string `yaml:"packages" json:"packages"`
 }
 
-// Fuzz configures fuzzing requirements (planned).
+// Fuzz configures fuzzing, run on demand by `guardrails harden`.
 type Fuzz struct {
 	RequireOnParsers bool   `yaml:"require_on_parsers" json:"require_on_parsers"`
 	Fuzztime         string `yaml:"fuzztime" json:"fuzztime"`
+	// BudgetSeconds caps the total time spent fuzzing.
+	BudgetSeconds int `yaml:"budget_seconds" json:"budget_seconds"`
 }
 
 // Python configures the Python module.
@@ -204,9 +212,9 @@ func Default() Config {
 			Lint:          GoLint{Config: ".golangci.yml", OnEdit: "fast"},
 			Race:          true,
 			Vuln:          true,
-			Mutation:      Mutation{Tool: "gremlins", MinScore: 70, BudgetSeconds: 45},
+			Mutation:      Mutation{Tool: "builtin", MinScore: 70, BudgetSeconds: 120},
 			Bench:         Bench{RequireOnHotPaths: true, RegressionPct: 10, Count: 6},
-			Fuzz:          Fuzz{RequireOnParsers: true, Fuzztime: "10s"},
+			Fuzz:          Fuzz{RequireOnParsers: true, Fuzztime: "10s", BudgetSeconds: 60},
 		},
 		Python: Python{
 			Coverage:      PythonCoverage{Total: 90, Ratchet: true},

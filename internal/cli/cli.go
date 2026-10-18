@@ -74,6 +74,7 @@ Usage:
 Commands:
   hook <event>   Handle a Claude Code hook event (reads JSON on stdin)
   gate           Run the full quality gate on changed files (or --all)
+  harden         Mutation-test and fuzz the Go code you changed (on demand)
   explain        Print the full report from the last gate in this repo
   doctor         Check that required tools are installed
   init           Write .guardrails.yaml and Claude rules into this repo
@@ -112,6 +113,8 @@ func (a *App) Run(ctx context.Context, args []string) int {
 		_, err = a.Stdout.Write(config.Schema)
 	case "tools":
 		return a.tools(ctx, rest)
+	case "harden":
+		return a.harden(ctx, rest)
 	case "statusline":
 		a.statusline(ctx)
 	case "version", "--version", "-v":

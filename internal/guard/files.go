@@ -234,6 +234,11 @@ func suppressions(g config.Guards, fc FileChange) Decision {
 		if strings.Contains(l, tag) {
 			return deny("suppression", fmt.Sprintf("the %q tag is reserved for the human. Fix the underlying issue instead.", tag))
 		}
+		for _, optOut := range []string{"guardrails:nobench", "guardrails:nofuzz"} {
+			if strings.Contains(l, optOut) {
+				return deny("suppression", fmt.Sprintf("the %q opt-out is reserved for the human. Add the benchmark or fuzz target, or explain in chat why it isn't needed.", optOut))
+			}
+		}
 	}
 	for _, l := range added {
 		for _, p := range suppressionPatterns {

@@ -18,6 +18,17 @@ guardrails gate --json          # machine-readable
 Exits 0 when the gate passes and 1 when it fails. Patch coverage is
 measured against `--base`. The result updates the status line cache.
 
+## `guardrails harden`
+
+Mutation-test the Go functions changed against a ref and briefly fuzz their
+fuzz targets; list functions that could use a benchmark or fuzz target.
+Exits 1 on surviving mutants below the minimum score or a fuzz crash. See
+[Hardening tests](harden.md).
+
+```bash
+guardrails harden [--base main] [--budget 3m] [--min-score 80] [--fuzztime 30s] [--no-fuzz] [--json]
+```
+
 ## `guardrails explain`
 
 Print the full report from the most recent gate in this repository, whether

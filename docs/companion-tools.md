@@ -9,6 +9,7 @@ less often. They ship in the same plugin.
 |---|---|
 | `/guardrails:check` | Runs the full gate on demand and explains the results, with the smallest set of changes that would make it pass. Useful before you commit. |
 | `/guardrails:cover` | Reads the coverage report, lists the biggest gaps, and writes behavior-asserting, table-driven tests until the threshold is met. |
+| `/guardrails:harden` | Mutation-tests and fuzzes the code you changed with [`guardrails harden`](harden.md), adds the test cases that kill surviving mutants, and reports back. |
 | `/guardrails:baseline` | Read-only. Reports existing debt (lint counts, coverage by package) and proposes a ratchet plan as a `.guardrails.yaml` diff for you to apply. |
 
 ## Subagents
@@ -22,8 +23,8 @@ less often. They ship in the same plugin.
 
 `guardrails init` installs `.claude/rules/go.md`, a path-scoped rule that
 loads only when Claude works on Go files: error wrapping, context first,
-no global state, table-driven tests, when to add benchmarks and fuzz
-targets. Plugins can't ship rules directly, which is why `init` writes them
+no global state, table-driven tests that would catch a mutant, and when to
+add benchmarks and fuzz targets. Plugins can't ship rules directly, which is why `init` writes them
 into the repo, where you can edit them.
 
 ## Status line

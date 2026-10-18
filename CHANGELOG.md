@@ -4,7 +4,18 @@ Release notes for each version are published on
 [GitHub Releases](https://github.com/rossedman/guardrails/releases),
 generated from Conventional Commit messages.
 
-## Unreleased
+## 0.3.0
+
+### Added
+
+- `guardrails harden` and the `/guardrails:harden` skill: built-in mutation
+  testing of changed Go functions (via `go test -overlay`, skipping
+  equivalent boundary mutants), short fuzz runs, and benchmark / fuzz-target
+  suggestions.
+- Stronger Go rules: test like a mutation tester; when to add benchmarks
+  and fuzz targets.
+
+## 0.2.0
 
 ### Added
 

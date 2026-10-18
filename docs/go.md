@@ -74,17 +74,8 @@ when it isn't already on your `PATH`.
 While a tool is still downloading in the background, per-edit checks that
 need it are skipped; the Stop gate waits for it.
 
-## Coming next: test depth
+## Hardening
 
-Coverage proves code ran, not that it was tested. The config schema already
-accepts these settings; the checks land in upcoming releases (see the
-[roadmap](roadmap.md)):
-
-- **Mutation testing** with gremlins on changed functions only, a 70%
-  minimum score, sampling when the 45-second budget would be exceeded.
-- **Benchmarks** required for hot paths (`perf: true` packages,
-  `// guardrails:hot`, parsers, encoders, hashing, sorting), compared with
-  benchstat against the session's base commit; a >10% regression blocks.
-- **Fuzzing** required for functions taking untrusted input; each touched
-  fuzz target runs for 10 seconds at Stop and crashes are saved to
-  `testdata/fuzz/`.
+The gate checks coverage; `guardrails harden` checks that the tests behind
+your changes actually assert something — mutation testing of changed
+functions and short fuzz runs, on demand. See [Hardening tests](harden.md).

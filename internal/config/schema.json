@@ -94,7 +94,7 @@
           "properties": {
             "tool": {
               "type": "string",
-              "description": "Mutation testing tool."
+              "description": "builtin (Go)."
             },
             "min_score": {
               "type": "number",
@@ -108,7 +108,7 @@
               "description": "Time slice for the mutation run."
             }
           },
-          "description": "Mutation testing (planned)."
+          "description": "Mutation testing of changed functions, run by `guardrails harden`."
         },
         "bench": {
           "type": "object",
@@ -125,9 +125,16 @@
             "count": {
               "type": "integer",
               "minimum": 1
+            },
+            "packages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Performance-critical packages (module-relative, ... allowed)."
             }
           },
-          "description": "Benchmark requirements (planned)."
+          "description": "Benchmark guidance."
         },
         "fuzz": {
           "type": "object",
@@ -140,9 +147,14 @@
             "fuzztime": {
               "type": "string",
               "description": "Fuzz duration per target, e.g. 10s."
+            },
+            "budget_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Total time budget for fuzzing."
             }
           },
-          "description": "Fuzzing requirements (planned)."
+          "description": "Fuzzing, run by `guardrails harden`."
         }
       },
       "description": "Go module."
