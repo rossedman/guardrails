@@ -1,0 +1,52 @@
+# golangci-lint v2 configuration. This file is also embedded in the binary
+# (internal/module/golang/golangci.yml) as the default for repos without one.
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - bodyclose
+    - copyloopvar
+    - errorlint
+    - gocritic
+    - gosec
+    - misspell
+    - nilerr
+    - nolintlint
+    - revive
+    - unconvert
+    - unparam
+    - usestdlibvars
+  settings:
+    gosec:
+      excludes:
+        - G204 # subprocess launched with variable: running tools is the job
+        - G304 # file inclusion via variable: reading the files Claude edits is the job
+        - G306 # WriteFile permissions are chosen deliberately
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
+        - name: var-naming
+        - name: indent-error-flow
+        - name: errorf
+        - name: error-return
+        - name: error-strings
+        - name: receiver-naming
+  exclusions:
+    presets:
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters: [gosec, unparam]
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports

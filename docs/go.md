@@ -1,0 +1,86 @@
+# Go module
+
+The Go module owns `*.go` files and `go.mod`.
+
+| Stage | What runs |
+|---|---|
+| **On edit: auto-fix** | `goimports -w`, then `gofumpt -w` (gofmt if gofumpt is missing). Generated files are skipped. |
+| **On edit: check** | `go vet` and `golangci-lint run --fast-only` on the edited file's package, reporting issues in that file. Type errors anywhere in the package are always reported, because the edit may have broken another file. |
+| **At Stop: gate** | `go build ./...`, `go test -race -count=1 -covermode=atomic -coverprofile` on touched packages, coverage checks, full golangci-lint, `go mod tidy -diff`, `govulncheck ./...` |
+
+Packages are grouped by their nearest `go.mod`, so multi-module repositories
+are gated module by module.
+
+## Coverage rules
+
+Coverage is the bar that matters most, so it has four parts. All must hold.
+
+**Total.** Statement coverage across touched packages must be at least
+`go.coverage.total` (default 90%).
+
+**Per-package floor.** No touched package may fall below
+`go.coverage.per_package_floor` (default 80%), so one well-tested package
+can't hide an untested one.
+
+**Ratchet.** With `go.coverage.ratchet: true`, no package may end below its
+coverage at SessionStart, even in repositories still under 90%. Each passing
+gate raises the baseline; it never moves down.
+
+**Patch coverage.** Lines added or changed this session — `git diff` against
+the commit at SessionStart, plus untracked files — must be at least
+`go.patch_coverage` covered (default 90%). Lines without statements
+(comments, declarations) don't count. Failures list the uncovered changed
+lines grouped by function:
+
+```text
+[patch-coverage] 66.7% of changed lines covered < 90.0% (8/12)
+  internal/api/handler.go:94-97  decodeRequest
+  fix: test the changed lines above; they are code you wrote this session
+```
+
+**Exclusions.** By default `**/mocks/**`, `**/*_mock.go`, `**/*.pb.go`,
+`cmd/**/main.go`, and any file with a `// Code generated ... DO NOT EDIT.`
+header are excluded. Patterns support `**` and are relative to the module
+root.
+
+On failure, the report lists the five functions with the most uncovered
+statements, with `file:line`, so Claude knows exactly where to write tests.
+
+## Lint config
+
+If the repository has a golangci-lint config (`.golangci.yml`, `.yaml`,
+`.toml` or `.json`) it is used. Otherwise Guardrails uses its bundled
+config: the `standard` linters plus bodyclose, errorlint, gocritic, gosec,
+misspell, nolintlint, revive, unparam and friends, with gofumpt and
+goimports as formatters. `go.lint.config` points at a config elsewhere.
+
+`go.lint.on_edit` controls the per-edit pass: `fast` (default, fast linters
+only), `full`, or `off`.
+
+## Toolchain
+
+| Tool | Required | Missing means |
+|---|---|---|
+| `go` | yes | The gate fails with a `tools` check |
+| `golangci-lint` (v2) | yes | The `lint` check fails, naming the install command |
+| `gofumpt` | no | Falls back to `gofmt` |
+| `goimports` | no | Imports aren't fixed on edit |
+| `govulncheck` | no | The vulnerability check is skipped |
+
+Missing tools are listed at SessionStart in `systemMessage` and by
+`guardrails doctor`.
+
+## Coming next: test depth
+
+Coverage proves code ran, not that it was tested. The config schema already
+accepts these settings; the checks land in upcoming releases (see the
+[roadmap](roadmap.md)):
+
+- **Mutation testing** with gremlins on changed functions only, a 70%
+  minimum score, sampling when the 45-second budget would be exceeded.
+- **Benchmarks** required for hot paths (`perf: true` packages,
+  `// guardrails:hot`, parsers, encoders, hashing, sorting), compared with
+  benchstat against the session's base commit; a >10% regression blocks.
+- **Fuzzing** required for functions taking untrusted input; each touched
+  fuzz target runs for 10 seconds at Stop and crashes are saved to
+  `testdata/fuzz/`.

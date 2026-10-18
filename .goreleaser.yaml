@@ -1,0 +1,83 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+project_name: guardrails
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: guardrails
+    main: ./cmd/guardrails
+    binary: guardrails
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/rossedman/guardrails/internal/cli.Version={{ .Version }}
+      - -X github.com/rossedman/guardrails/internal/cli.Commit={{ .ShortCommit }}
+      - -X github.com/rossedman/guardrails/internal/cli.Date={{ .CommitDate }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: default
+    formats: [tar.gz]
+    # The plugin launcher (bin/guardrails) downloads this exact name.
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+sboms:
+  - artifacts: archive
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: Bug fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Documentation
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Other
+      order: 999
+  filters:
+    exclude:
+      - "^test:"
+      - "^chore\\(deps\\):"
+      - "Merge pull request"
+
+release:
+  github:
+    owner: rossedman
+    name: guardrails
+  header: |
+    Install the Claude Code plugin:
+
+    ```
+    /plugin marketplace add rossedman/guardrails
+    /plugin install guardrails@guardrails
+    ```
+
+    Or install the CLI: `go install github.com/rossedman/guardrails/cmd/guardrails@{{ .Tag }}`

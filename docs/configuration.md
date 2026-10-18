@@ -1,0 +1,118 @@
+# Configuration
+
+Configuration is layered. Each layer overrides the previous one key by key:
+
+1. Built-in defaults.
+2. The global file, `~/.config/guardrails/config.yaml` (or
+   `$XDG_CONFIG_HOME/guardrails/config.yaml`).
+3. The repository's `.guardrails.yaml`.
+
+With no files at all, the defaults apply and every module whose files exist
+is on. Lists replace rather than merge.
+
+**Unknown keys are an error.** The loader is strict, so a typo can never
+silently disable a check. Point your editor at the
+[JSON Schema](https://raw.githubusercontent.com/rossedman/guardrails/main/internal/config/schema.json)
+for completion and validation (the template from `guardrails init` already
+does), or print it with `guardrails schema`. `guardrails config` prints the
+effective, merged configuration.
+
+`.guardrails.yaml` is protected: Claude cannot edit it. It proposes changes
+in chat and you apply them.
+
+## Reference
+
+```yaml
+version: 1
+mode: enforce            # enforce | warn (warn = never block, report only)
+
+go:
+  enabled: true          # default: on when Go files exist
+  coverage:
+    total: 90            # min statement coverage of touched packages
+    per_package_floor: 80
+    ratchet: true        # never below the SessionStart baseline
+    exclude: ["**/mocks/**", "**/*_mock.go", "**/*.pb.go", "cmd/**/main.go"]
+  patch_coverage: 90     # min coverage of lines changed this session; 0 disables
+  lint:
+    config: .golangci.yml  # falls back to the bundled config
+    on_edit: fast          # fast | full | off
+  race: true
+  vuln: true
+  # Accepted now, enforced in upcoming releases:
+  mutation: { tool: gremlins, min_score: 70, budget_seconds: 45 }
+  bench: { require_on_hot_paths: true, regression_pct: 10, count: 6 }
+  fuzz: { require_on_parsers: true, fuzztime: 10s }
+
+guards:
+  allow_suppression_tag: "guardrails:allow"
+  kubectl_safe_contexts: ["kind-*", "*-dev"]
+  protected_branches: ["main", "master"]
+
+gate:
+  max_consecutive_blocks: 3   # then hand off to the human
+  timeout_seconds: 90
+
+# Planned modules; settings are validated today.
+python:
+  coverage: { total: 90 }
+  patch_coverage: 90
+  typecheck: mypy        # mypy | pyright | off
+  strict: true
+  mutation: { tool: mutmut, min_score: 70 }
+terraform:
+  binary: terraform      # terraform | tofu
+  scan: trivy
+docker:
+  require_digest_pins: true
+  require_non_root: true
+yaml:
+  kubeconform: { kubernetes_version: "1.31" }
+```
+
+## Recipes
+
+=== "Legacy repo"
+
+    Keep the ratchet, start with a lower bar, and raise it as debt is paid
+    down:
+
+    ```yaml
+    version: 1
+    go:
+      coverage:
+        total: 60
+        per_package_floor: 40
+    ```
+
+=== "Trial run"
+
+    See what Guardrails would block without blocking anything:
+
+    ```yaml
+    version: 1
+    mode: warn
+    ```
+
+=== "Strict library"
+
+    ```yaml
+    version: 1
+    go:
+      coverage:
+        total: 95
+        per_package_floor: 90
+      patch_coverage: 100
+      lint:
+        on_edit: full
+    ```
+
+=== "Personal defaults"
+
+    `~/.config/guardrails/config.yaml` applies to every repo:
+
+    ```yaml
+    version: 1
+    guards:
+      kubectl_safe_contexts: ["kind-*", "*-dev", "minikube", "docker-desktop"]
+    ```

@@ -1,0 +1,20 @@
+name: Feature request
+description: A new check, guard, language, or improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: What did Claude do (or fail to do) that a guardrail should catch?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Which hook event, what it checks, and what Claude should see.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://rossedman.github.io/guardrails/
+    about: Configuration, guards, and how the gate works.
+  - name: Security vulnerability
+    url: https://github.com/rossedman/guardrails/security/advisories/new
+    about: Report guard bypasses and other security issues privately.

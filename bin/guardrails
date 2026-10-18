@@ -1,0 +1,94 @@
+#!/bin/sh
+# Launcher for the guardrails binary inside the Claude Code plugin.
+#
+# Resolution order:
+#   1. $GUARDRAILS_BIN, if set (local development).
+#   2. A cached release binary matching the plugin version.
+#   3. Download that release from GitHub, verify its checksum, and cache it.
+#   4. A guardrails binary already on PATH (e.g. installed with go install).
+#
+# Any failure exits 2 so blocking hooks fail closed.
+set -eu
+
+repo="rossedman/guardrails"
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+self="$root/bin/guardrails"
+
+die() {
+	echo "guardrails: $*" >&2
+	exit 2
+}
+
+if [ -n "${GUARDRAILS_BIN:-}" ]; then
+	exec "$GUARDRAILS_BIN" "$@"
+fi
+
+version=$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' "$root/.claude-plugin/plugin.json" | head -n 1)
+[ -n "$version" ] || die "cannot read version from $root/.claude-plugin/plugin.json"
+
+data="${CLAUDE_PLUGIN_DATA:-${XDG_DATA_HOME:-$HOME/.local/share}/guardrails}"
+cached="$data/bin/guardrails-$version"
+if [ -x "$cached" ]; then
+	exec "$cached" "$@"
+fi
+
+download() {
+	os=$(uname -s | tr '[:upper:]' '[:lower:]')
+	case "$os" in
+	linux | darwin) ;;
+	*) return 1 ;;
+	esac
+	arch=$(uname -m)
+	case "$arch" in
+	x86_64 | amd64) arch=amd64 ;;
+	arm64 | aarch64) arch=arm64 ;;
+	*) return 1 ;;
+	esac
+	command -v curl >/dev/null 2>&1 || return 1
+
+	archive="guardrails_${version}_${os}_${arch}.tar.gz"
+	base="https://github.com/$repo/releases/download/v$version"
+	tmp=$(mktemp -d)
+	if ! curl -fsSL --retry 2 -o "$tmp/$archive" "$base/$archive" ||
+		! curl -fsSL --retry 2 -o "$tmp/checksums.txt" "$base/checksums.txt"; then
+		rm -rf "$tmp"
+		return 1
+	fi
+
+	want=$(grep " $archive\$" "$tmp/checksums.txt" | cut -d ' ' -f 1)
+	if command -v sha256sum >/dev/null 2>&1; then
+		got=$(sha256sum "$tmp/$archive" | cut -d ' ' -f 1)
+	else
+		got=$(shasum -a 256 "$tmp/$archive" | cut -d ' ' -f 1)
+	fi
+	if [ -z "$want" ] || [ "$want" != "$got" ]; then
+		rm -rf "$tmp"
+		die "checksum mismatch for $archive"
+	fi
+
+	tar -xzf "$tmp/$archive" -C "$tmp" guardrails
+	mkdir -p "$data/bin"
+	mv "$tmp/guardrails" "$cached.tmp"
+	chmod 0755 "$cached.tmp"
+	mv "$cached.tmp" "$cached"
+	rm -rf "$tmp"
+}
+
+if download; then
+	exec "$cached" "$@"
+fi
+
+# Fall back to a binary on PATH, skipping this launcher (the plugin's bin/
+# directory is itself on PATH inside Claude Code).
+old_ifs=$IFS
+IFS=:
+for dir in $PATH; do
+	candidate="$dir/guardrails"
+	if [ -x "$candidate" ] && [ "$(CDPATH='' cd -- "$dir" && pwd)/guardrails" != "$self" ]; then
+		IFS=$old_ifs
+		exec "$candidate" "$@"
+	fi
+done
+IFS=$old_ifs
+
+die "no binary for v$version: download failed and none on PATH. Install with: go install github.com/$repo/cmd/guardrails@v$version"

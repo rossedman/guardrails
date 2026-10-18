@@ -1,0 +1,1 @@
+{"session_id":"s1","cwd":"$REPO","hook_event_name":"PreToolUse","tool_name":"Bash","tool_use_id":"toolu_3","tool_input":{"command":"cd infra && terraform apply -auto-approve","description":"apply"}}

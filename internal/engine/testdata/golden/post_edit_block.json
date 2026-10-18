@@ -1,0 +1,1 @@
+{"decision":"block","reason":"guardrails: stub check failed for main.stub\n\n[lint] 1 issue\n  main.stub:3:1  rule  bad thing\n  fix: fix it\n"}

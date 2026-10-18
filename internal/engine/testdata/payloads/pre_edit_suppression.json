@@ -1,0 +1,1 @@
+{"session_id":"s1","cwd":"$REPO","hook_event_name":"PreToolUse","permission_mode":"default","tool_name":"Edit","tool_use_id":"toolu_1","tool_input":{"file_path":"$REPO/calc.go","old_string":"\tg()","new_string":"\tg() //nolint:errcheck"}}

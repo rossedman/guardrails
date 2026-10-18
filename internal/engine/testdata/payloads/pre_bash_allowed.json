@@ -1,0 +1,1 @@
+{"session_id":"s1","cwd":"$REPO","hook_event_name":"PreToolUse","tool_name":"Bash","tool_use_id":"toolu_4","tool_input":{"command":"go test ./... && terraform plan"}}

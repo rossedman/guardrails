@@ -1,0 +1,321 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/rossedman/guardrails/main/internal/config/schema.json",
+  "title": "Guardrails configuration",
+  "description": "Configuration for .guardrails.yaml and ~/.config/guardrails/config.yaml.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1,
+      "description": "Config schema version."
+    },
+    "mode": {
+      "type": "string",
+      "description": "enforce blocks on failure; warn reports only.",
+      "enum": [
+        "enforce",
+        "warn"
+      ]
+    },
+    "go": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the Go module. Defaults to true when the module's files exist."
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "total": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Minimum total statement coverage of touched packages."
+            },
+            "per_package_floor": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Minimum coverage for any single touched package."
+            },
+            "ratchet": {
+              "type": "boolean",
+              "description": "Never allow a package to drop below its SessionStart baseline."
+            },
+            "exclude": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Glob patterns excluded from coverage."
+            }
+          }
+        },
+        "patch_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Minimum coverage of lines changed this session."
+        },
+        "lint": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "config": {
+              "type": "string",
+              "description": "golangci-lint config path; falls back to the bundled config."
+            },
+            "on_edit": {
+              "type": "string",
+              "description": "Lint depth on each edit.",
+              "enum": [
+                "fast",
+                "full",
+                "off"
+              ]
+            }
+          }
+        },
+        "race": {
+          "type": "boolean",
+          "description": "Run tests with -race."
+        },
+        "vuln": {
+          "type": "boolean",
+          "description": "Run govulncheck at Stop."
+        },
+        "mutation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tool": {
+              "type": "string",
+              "description": "Mutation testing tool."
+            },
+            "min_score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Minimum mutation score on changed code."
+            },
+            "budget_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Time slice for the mutation run."
+            }
+          },
+          "description": "Mutation testing (planned)."
+        },
+        "bench": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "require_on_hot_paths": {
+              "type": "boolean",
+              "description": "Ask for benchmarks on hot-path code."
+            },
+            "regression_pct": {
+              "type": "number",
+              "minimum": 0
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "description": "Benchmark requirements (planned)."
+        },
+        "fuzz": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "require_on_parsers": {
+              "type": "boolean",
+              "description": "Ask for fuzz targets on parsers."
+            },
+            "fuzztime": {
+              "type": "string",
+              "description": "Fuzz duration per target, e.g. 10s."
+            }
+          },
+          "description": "Fuzzing requirements (planned)."
+        }
+      },
+      "description": "Go module."
+    },
+    "python": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the Python module. Defaults to true when the module's files exist."
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "total": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Minimum total coverage."
+            }
+          }
+        },
+        "patch_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Minimum coverage of changed lines."
+        },
+        "typecheck": {
+          "type": "string",
+          "description": "Type checker.",
+          "enum": [
+            "mypy",
+            "pyright",
+            "off"
+          ]
+        },
+        "strict": {
+          "type": "boolean",
+          "description": "Strict type checking."
+        },
+        "mutation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tool": {
+              "type": "string",
+              "description": "Mutation testing tool."
+            },
+            "min_score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Minimum mutation score on changed code."
+            },
+            "budget_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Time slice for the mutation run."
+            }
+          },
+          "description": "Mutation testing (planned)."
+        }
+      },
+      "description": "Python module (planned)."
+    },
+    "terraform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the Terraform module. Defaults to true when the module's files exist."
+        },
+        "binary": {
+          "type": "string",
+          "description": "Terraform binary.",
+          "enum": [
+            "terraform",
+            "tofu"
+          ]
+        },
+        "scan": {
+          "type": "string",
+          "description": "Config scanner."
+        }
+      },
+      "description": "Terraform module (planned)."
+    },
+    "docker": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the Docker module. Defaults to true when the module's files exist."
+        },
+        "require_digest_pins": {
+          "type": "boolean",
+          "description": "Base images must be pinned by digest."
+        },
+        "require_non_root": {
+          "type": "boolean",
+          "description": "Final stage must set a non-root USER."
+        }
+      },
+      "description": "Docker module (planned)."
+    },
+    "yaml": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the YAML module. Defaults to true when the module's files exist."
+        },
+        "kubeconform": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kubernetes_version": {
+              "type": "string",
+              "description": "Kubernetes version for schema validation."
+            }
+          }
+        }
+      },
+      "description": "YAML module (planned)."
+    },
+    "guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allow_suppression_tag": {
+          "type": "string",
+          "description": "Tag a human writes to allow a suppression comment.",
+          "minLength": 1
+        },
+        "kubectl_safe_contexts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "kubectl contexts where writes are allowed without asking."
+        },
+        "protected_branches": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Branches Claude may not push to."
+        }
+      },
+      "description": "PreToolUse policy guards."
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_consecutive_blocks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Stop blocks before handing off to the human."
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Stop gate time budget."
+        }
+      },
+      "description": "Stop gate."
+    }
+  }
+}
