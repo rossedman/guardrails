@@ -19,6 +19,34 @@ go:
   race: true
   vuln: true
 
+python:
+  coverage: { total: 90, ratchet: true }
+  patch_coverage: 90
+  typecheck: mypy        # mypy | pyright | off
+  strict: true
+
+shell:
+  severity: style        # style | info | warning | error
+
+yaml:
+  actionlint: true
+  kubeconform: { enabled: true, kubernetes_version: "1.31" }
+
+terraform:
+  binary: terraform      # terraform | tofu
+  tflint: true
+  scan: trivy            # trivy | off
+  require_version_constraints: true
+
+docker:
+  require_digest_pins: true
+  require_non_root: true
+  build_check: true      # docker build --check when a daemon is available
+
+tools:
+  install: auto          # auto: download pinned, verified tools | never
+  prefer: path           # path: use installed tools first | managed
+
 guards:
   allow_suppression_tag: "guardrails:allow"
   kubectl_safe_contexts: ["kind-*", "*-dev"]

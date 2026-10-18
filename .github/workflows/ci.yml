@@ -26,7 +26,7 @@ jobs:
         with:
           version: v2.15.0
       - name: actionlint
-        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
 
   test:
     name: Test (${{ matrix.os }})
@@ -56,17 +56,40 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - name: Install tools
-        run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          go install mvdan.cc/gofumpt@latest
-          curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v2.15.0
       - name: Build
         run: go build -o guardrails ./cmd/guardrails
+      - name: Provision tools
+        # Pinned, checksum-verified downloads into the data dir; no host
+        # installs needed.
+        run: ./guardrails tools install golangci-lint gofumpt goimports govulncheck
       - name: Doctor
         run: ./guardrails doctor
       - name: Gate
         run: ./guardrails gate --all --explain
+
+  tools:
+    # Install every pinned tool on each supported platform, so a broken or
+    # replaced upstream artifact fails here instead of on a user's machine.
+    name: Tools (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Lock matches tools.yaml
+        run: go run ./internal/tools/lockgen -check
+      - name: Install every tool
+        env:
+          CLAUDE_PLUGIN_DATA: ${{ runner.temp }}/guardrails
+        run: |
+          go build -o guardrails ./cmd/guardrails
+          ./guardrails tools install
+          ./guardrails tools list
 
   plugin:
     name: Plugin package

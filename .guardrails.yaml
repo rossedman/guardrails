@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/rossedman/guardrails/main/internal/config/schema.json
+#
+# Guardrails gates its own repository. Defaults apply except where noted.
+version: 1
+
+python:
+  # The only Python here is scripts/header.py, a dev-only image generator.
+  enabled: false

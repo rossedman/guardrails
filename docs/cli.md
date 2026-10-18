@@ -30,13 +30,23 @@ config is invalid or a required tool is missing.
 
 ## `guardrails init`
 
-Write `.guardrails.yaml` and `.claude/rules/go.md` into the repository, and
+Write `.guardrails.yaml` and `.claude/rules/*.md` into the repository, and
 print a `permissions.deny` block for `.claude/settings.json`.
 
 | Flag | Default | Meaning |
 |---|---|---|
 | `--force` | `false` | Overwrite existing files |
 | `--rules` | `true` | Install path-scoped rules into `.claude/rules/` |
+
+## `guardrails tools`
+
+Manage the external tools Guardrails runs. See [Tool provisioning](tools.md).
+
+```bash
+guardrails tools list              # pinned version and where each tool resolves
+guardrails tools install [names]   # install pinned tools (all when none named)
+guardrails tools path <name>       # the command Guardrails runs for a tool
+```
 
 ## `guardrails config`
 

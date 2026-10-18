@@ -17,6 +17,7 @@ import (
 	"github.com/rossedman/guardrails/internal/module"
 	"github.com/rossedman/guardrails/internal/runner"
 	"github.com/rossedman/guardrails/internal/state"
+	"github.com/rossedman/guardrails/internal/tools"
 )
 
 // Build metadata, set by goreleaser via -ldflags.
@@ -38,6 +39,9 @@ type App struct {
 	Getwd func() (string, error)
 	// Now is the clock.
 	Now func() time.Time
+	// NewTools builds the tool manager rooted at a directory. Nil disables
+	// tool provisioning, so tools resolve from PATH only.
+	NewTools func(root string) *tools.Manager
 	// Modules overrides the engine's language modules when non-nil.
 	Modules []module.Module
 }
@@ -52,6 +56,13 @@ func New() *App {
 		Getenv: os.Getenv,
 		Getwd:  os.Getwd,
 		Now:    time.Now,
+		NewTools: func(root string) *tools.Manager {
+			lock, err := tools.DefaultLock()
+			if err != nil {
+				return nil
+			}
+			return tools.NewManager(lock, root)
+		},
 	}
 }
 
@@ -68,6 +79,7 @@ Commands:
   init           Write .guardrails.yaml and Claude rules into this repo
   config         Print the effective configuration
   schema         Print the config JSON Schema
+  tools          List, install or locate the external tools Guardrails runs
   statusline     Print a one-line status for Claude Code's status line
   version        Print version information
 
@@ -98,6 +110,8 @@ func (a *App) Run(ctx context.Context, args []string) int {
 		err = a.config(ctx)
 	case "schema":
 		_, err = a.Stdout.Write(config.Schema)
+	case "tools":
+		return a.tools(ctx, rest)
 	case "statusline":
 		a.statusline(ctx)
 	case "version", "--version", "-v":
@@ -146,7 +160,17 @@ func (a *App) engine() *engine.Engine {
 	if a.Modules != nil {
 		e.Modules = a.Modules
 	}
+	e.Tools = a.toolManager()
 	return e
+}
+
+// toolManager returns the tool manager rooted in the data dir, or nil when
+// tool provisioning is disabled (tests construct App without NewTools).
+func (a *App) toolManager() *tools.Manager {
+	if a.NewTools == nil {
+		return nil
+	}
+	return a.NewTools(filepath.Join(a.DataDir(), "tools"))
 }
 
 func (a *App) repo(ctx context.Context) (string, error) {

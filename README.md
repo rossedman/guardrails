@@ -22,15 +22,18 @@
 **Guardrails makes Claude meet your standards before it can call work done.**
 It's one Go binary, shipped as a [Claude Code](https://claude.com/claude-code)
 plugin, with a fast inner loop on every edit and a hard gate at the end of
-every turn.
+every turn — for **Go, Python, Shell, YAML, Terraform and Docker**.
 
 - **Fix, don't nag.** Every file Claude edits is formatted in place
-  (gofumpt, goimports), then its package is linted (go vet, golangci-lint),
-  in about two seconds.
-- **Gate every turn.** Before Claude can stop, touched packages must build,
-  pass `go test -race`, reach **90% coverage** with a per-package floor and
-  a ratchet, cover **90% of the lines changed this session**, lint clean,
-  keep `go.mod` tidy and pass govulncheck.
+  (gofumpt, ruff, shfmt, terraform fmt), then linted and type-checked, in
+  about two seconds.
+- **Gate every turn.** Before Claude can stop, touched code must build and
+  pass its tests, reach **90% coverage** with a ratchet, cover **90% of the
+  lines changed this session**, and pass every linter and scanner for its
+  language.
+- **Nothing to install.** ruff, mypy, shellcheck, yamllint, tflint, trivy,
+  golangci-lint and the rest are provisioned automatically:
+  pinned versions, checksum-verified, downloaded on first use.
 - **Claude can't move the goalposts.** New `//nolint`, `# noqa`, `t.Skip`,
   lowered thresholds and edits to the guardrail config are denied before
   they happen.
@@ -60,22 +63,22 @@ attempt 1 of 3 — run `guardrails gate --explain` for full output
 
 ## Quick start
 
-Install the toolchain Guardrails orchestrates (Go and
-[golangci-lint v2](https://golangci-lint.run/welcome/install/) are required;
-gofumpt, goimports and govulncheck are recommended), then in Claude Code:
+In Claude Code:
 
 ```text
 /plugin marketplace add rossedman/guardrails
 /plugin install guardrails@guardrails
 ```
 
-The plugin downloads the matching release binary on first use and verifies
-its checksum. Optionally, tune it for a repository:
+That's it. The plugin downloads its own binary and the
+[tools it runs](https://rossedman.github.io/guardrails/tools/) on first use,
+each pinned and checksum-verified; tools already on your `PATH` are used
+first. Optionally, use the CLI too:
 
 ```bash
 go install github.com/rossedman/guardrails/cmd/guardrails@latest
-guardrails doctor   # check tools and config
-guardrails init     # write .guardrails.yaml and .claude/rules/go.md
+guardrails doctor   # check config and runtimes
+guardrails init     # write .guardrails.yaml and .claude/rules/*.md
 guardrails gate     # run the same gate Claude faces, on your changes
 ```
 
@@ -83,12 +86,21 @@ guardrails gate     # run the same gate Claude faces, on your changes
 
 | Event | What runs | On failure |
 |---|---|---|
-| **SessionStart** | Detect toolchains, inject the repo's standards and coverage baseline | Context for Claude; missing tools reported to you |
+| **SessionStart** | Detect languages, prefetch their tools, inject the standards and coverage baseline | Context for Claude |
 | **PreToolUse** | [Policy guards](https://rossedman.github.io/guardrails/guards/) on edits and shell commands | `deny` or `ask`, with a reason |
-| **PostToolUse** | Auto-format, then fast lint on the edited package | Block with a `file:line` report |
-| **Stop** | Build, race tests, coverage, patch coverage, full lint, tidy, govulncheck | Block; after 3 attempts, hand off to you |
+| **PostToolUse** | Auto-format, then fast lint and type checks on the edited file | Block with a `file:line` report |
+| **Stop** | Build, tests, coverage, patch coverage, full lint, scanners, per language | Block; after 3 attempts, hand off to you |
 | **SubagentStop** | The same gate, scoped to the subagent's files | Same as Stop |
 | **SessionEnd** | Append a run record to `runs.jsonl` | — |
+
+| Language | On edit | At Stop |
+|---|---|---|
+| [Go](https://rossedman.github.io/guardrails/go/) | gofumpt, goimports, go vet, golangci-lint | build, `go test -race`, coverage, golangci-lint, `go mod tidy`, govulncheck |
+| [Python](https://rossedman.github.io/guardrails/python/) | ruff format + fix, ruff, mypy | pytest + coverage, mypy, ruff, `uv lock --check` |
+| [Shell](https://rossedman.github.io/guardrails/shell/) | shfmt, shellcheck | shellcheck, shfmt diff |
+| [YAML](https://rossedman.github.io/guardrails/yaml/) | yamllint, actionlint, kubeconform | the same, over every touched file |
+| [Terraform](https://rossedman.github.io/guardrails/terraform/) | terraform fmt, tflint | init + validate, tflint, trivy, provider version constraints |
+| [Docker](https://rossedman.github.io/guardrails/docker/) | built-in Dockerfile checks | built-in checks, digest-pinned bases, non-root `USER`, `docker build --check` |
 
 Read more in [How it works](https://rossedman.github.io/guardrails/how-it-works/).
 
@@ -116,9 +128,9 @@ See the [configuration reference](https://rossedman.github.io/guardrails/configu
 
 ## Status
 
-Guardrails is **early (v0.1)**. The Go module and all policy guards are
-implemented; Python, Shell, YAML, Terraform and Docker modules, mutation
-testing, benchmarks and fuzzing are on the
+Guardrails is **early (v0.2)**. All six language modules, tool
+provisioning and the policy guards are implemented; mutation testing,
+benchmarks and fuzzing are next on the
 [roadmap](https://rossedman.github.io/guardrails/roadmap/). Guardrails
 holds itself to its own gate in CI.
 

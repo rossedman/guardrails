@@ -17,10 +17,16 @@ import (
 	"github.com/rossedman/guardrails/internal/feedback"
 	"github.com/rossedman/guardrails/internal/hook"
 	"github.com/rossedman/guardrails/internal/module"
+	"github.com/rossedman/guardrails/internal/module/docker"
 	"github.com/rossedman/guardrails/internal/module/golang"
+	"github.com/rossedman/guardrails/internal/module/python"
+	"github.com/rossedman/guardrails/internal/module/shell"
+	"github.com/rossedman/guardrails/internal/module/terraform"
+	"github.com/rossedman/guardrails/internal/module/yamlmod"
 	"github.com/rossedman/guardrails/internal/runlog"
 	"github.com/rossedman/guardrails/internal/runner"
 	"github.com/rossedman/guardrails/internal/state"
+	"github.com/rossedman/guardrails/internal/tools"
 )
 
 // PostToolUseBudget bounds the per-edit work; the hook timeout is 5s.
@@ -35,6 +41,8 @@ type Engine struct {
 	GlobalConfig string
 	// Now is the clock, replaceable in tests.
 	Now func() time.Time
+	// Tools provisions external tools. Nil resolves tools from PATH only.
+	Tools *tools.Manager
 }
 
 // New returns an Engine with the default modules.
@@ -42,7 +50,7 @@ func New(store *state.Store, r runner.Runner, globalConfig string) *Engine {
 	return &Engine{
 		Store:        store,
 		Runner:       r,
-		Modules:      []module.Module{golang.New()},
+		Modules:      []module.Module{golang.New(), python.New(), shell.New(), terraform.New(), yamlmod.New(), docker.New()},
 		GlobalConfig: globalConfig,
 		Now:          time.Now,
 	}
@@ -111,8 +119,26 @@ func (e *Engine) loadConfig(repo string) (config.Config, error) {
 	return config.Load(e.GlobalConfig, repo)
 }
 
-func (e *Engine) env(repo string, cfg config.Config) module.Env {
-	return module.Env{Runner: e.Runner, Config: cfg, Repo: repo, DataDir: e.Store.Root}
+func (e *Engine) env(repo string, cfg config.Config, blocking bool) module.Env {
+	env := module.Env{Runner: e.Runner, Config: cfg, Repo: repo, DataDir: e.Store.Root}
+	if m := e.manager(cfg, blocking); m != nil {
+		env.Tools = m
+	}
+	return env
+}
+
+// manager returns the tool manager configured for cfg, or nil when the
+// engine has none. Blocking managers install missing tools synchronously
+// (the Stop gate and the CLI); non-blocking ones start a background install
+// and skip the check (per-edit hooks, which have a 5s budget).
+func (e *Engine) manager(cfg config.Config, blocking bool) *tools.Manager {
+	if e.Tools == nil {
+		return nil
+	}
+	m := e.Tools.WithBlocking(blocking)
+	m.Prefer = cfg.Tools.Prefer
+	m.AutoInstall = cfg.Tools.Install != config.InstallNever
+	return m
 }
 
 // moduleFor returns the enabled module owning path, if any.

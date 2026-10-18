@@ -6,12 +6,15 @@ package module
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 
 	"github.com/rossedman/guardrails/internal/config"
 	"github.com/rossedman/guardrails/internal/feedback"
 	"github.com/rossedman/guardrails/internal/runner"
+	"github.com/rossedman/guardrails/internal/tools"
 )
 
 // Env is what a module needs to do its work.
@@ -24,6 +27,53 @@ type Env struct {
 	// DataDir is the plugin data directory, for bundled configs and
 	// scratch files.
 	DataDir string
+	// Tools resolves external tools, installing pinned versions when
+	// allowed. Nil resolves from PATH through Runner.
+	Tools tools.Resolver
+}
+
+// Tool resolves an external tool. Without a configured resolver the bare
+// name is returned when Runner finds it on PATH.
+func (e Env) Tool(ctx context.Context, name string) (tools.Command, error) {
+	if e.Tools != nil {
+		return e.Tools.Resolve(ctx, name)
+	}
+	if _, err := e.Runner.LookPath(name); err != nil {
+		return tools.Command{}, fmt.Errorf("%s: %w", name, tools.ErrMissing)
+	}
+	return tools.Command{Path: name}, nil
+}
+
+// RunTool resolves name and runs it with args in dir.
+func (e Env) RunTool(ctx context.Context, dir, name string, args ...string) (runner.Result, error) {
+	cmd, err := e.Tool(ctx, name)
+	if err != nil {
+		return runner.Result{}, err
+	}
+	return e.Runner.Run(ctx, dir, cmd.Path, append(append([]string(nil), cmd.Args...), args...)...)
+}
+
+// Unavailable explains a tool that could not be resolved, for a note to
+// the human or a failing check's summary.
+func Unavailable(t Tool, err error) string {
+	switch {
+	case errors.Is(err, tools.ErrInstalling):
+		return t.Name + " is being installed in the background; its checks are skipped until it is ready"
+	case errors.Is(err, tools.ErrMissing):
+		msg := t.Name + " is not installed"
+		if t.Install != "" {
+			msg += " (" + t.Install + ")"
+		}
+		return msg
+	default:
+		return t.Name + ": " + err.Error()
+	}
+}
+
+// IsUnavailable reports whether err means a tool could not be resolved,
+// as opposed to the tool running and failing.
+func IsUnavailable(err error) bool {
+	return errors.Is(err, tools.ErrInstalling) || errors.Is(err, tools.ErrMissing)
 }
 
 // Tool describes an external tool a module depends on.
@@ -83,6 +133,9 @@ type Module interface {
 	Match(path string) bool
 	// Tools lists external dependencies.
 	Tools() []Tool
+	// Standards is one paragraph telling Claude, at SessionStart, what the
+	// module enforces under cfg.
+	Standards(cfg config.Config) string
 	// Fix auto-fixes files in place.
 	Fix(ctx context.Context, env Env, files []string) FixResult
 	// Check runs fast checks (<2s) on files and returns failing checks.

@@ -29,6 +29,10 @@ func (*stub) Name() string               { return "stub" }
 func (*stub) Enabled(config.Config) bool { return true }
 func (*stub) Match(p string) bool        { return strings.HasSuffix(p, ".stub") }
 func (s *stub) Tools() []module.Tool     { return s.tools }
+func (s *stub) Standards(config.Config) string {
+	return "Stub standards."
+}
+
 func (*stub) Fix(context.Context, module.Env, []string) module.FixResult {
 	return module.FixResult{}
 }
@@ -316,8 +320,8 @@ func TestDoctor(t *testing.T) {
 		{Name: "quiet", VersionArgs: []string{"version"}},
 	}
 	f.fake.Install("req", "quiet")
-	f.fake.On("req --version", runner.Result{Stdout: "req 1.2.3\nextra\n"})
-	f.fake.OnError("quiet version", errors.New("boom"))
+	f.fake.On("/usr/bin/req --version", runner.Result{Stdout: "req 1.2.3\nextra\n"})
+	f.fake.OnError("/usr/bin/quiet version", errors.New("boom"))
 	code := f.run("", "doctor")
 	out := f.stdout.String()
 	if code != 0 || !strings.Contains(out, "req 1.2.3") || !strings.Contains(out, "✗ opt") || !strings.Contains(out, "config:   ✓") {

@@ -36,13 +36,13 @@
         <li>
           <span class="gr-step__icon">{% include ".icons/material/auto-fix.svg" %}</span>
           <span class="gr-step__name">Fix</span>
-          <span class="gr-step__desc">gofumpt · goimports</span>
+          <span class="gr-step__desc">gofumpt · ruff · shfmt · fmt</span>
           <span class="gr-badge">in place</span>
         </li>
         <li>
           <span class="gr-step__icon">{% include ".icons/material/magnify-scan.svg" %}</span>
           <span class="gr-step__name">Check</span>
-          <span class="gr-step__desc">vet · golangci-lint</span>
+          <span class="gr-step__desc">linters · type checkers</span>
           <span class="gr-badge">&lt; 2s</span>
         </li>
         <li class="gr-step--gate">
@@ -91,10 +91,10 @@
           <h3>Written for a model</h3>
           <p><code>file:line</code> first, one fix per group, capped and deduped.</p>
         </a>
-        <a class="gr-tile" href="{{ 'configuration/' | url }}">
-          <span class="gr-tile__icon">{% include ".icons/material/tune-variant.svg" %}</span>
-          <h3>Zero config</h3>
-          <p>Sane defaults. One strict, schema-checked file when you want it.</p>
+        <a class="gr-tile" href="{{ 'tools/' | url }}">
+          <span class="gr-tile__icon">{% include ".icons/material/package-variant-closed-check.svg" %}</span>
+          <h3>Zero setup</h3>
+          <p>Pinned, checksum-verified tools download themselves. Defaults just work.</p>
         </a>
         <a class="gr-tile" href="{{ 'cli/' | url }}">
           <span class="gr-tile__icon">{% include ".icons/material/console.svg" %}</span>
@@ -139,12 +139,13 @@
   <!-- Languages -->
   <section class="gr-band">
     <div class="gr-wrap gr-langs">
-      <span class="gr-lang gr-lang--live">Go <em>v0.1</em></span>
-      <span class="gr-lang">Python <em>soon</em></span>
-      <span class="gr-lang">Shell <em>soon</em></span>
-      <span class="gr-lang">YAML <em>soon</em></span>
-      <span class="gr-lang">Terraform <em>soon</em></span>
-      <span class="gr-lang">Docker <em>soon</em></span>
+      <a class="gr-lang gr-lang--live" href="{{ 'go/' | url }}">Go</a>
+      <a class="gr-lang gr-lang--live" href="{{ 'python/' | url }}">Python</a>
+      <a class="gr-lang gr-lang--live" href="{{ 'shell/' | url }}">Shell</a>
+      <a class="gr-lang gr-lang--live" href="{{ 'yaml/' | url }}">YAML</a>
+      <a class="gr-lang gr-lang--live" href="{{ 'terraform/' | url }}">Terraform</a>
+      <a class="gr-lang gr-lang--live" href="{{ 'docker/' | url }}">Docker</a>
+      <a class="gr-lang gr-lang--tools" href="{{ 'tools/' | url }}">0 tools to install <em>→</em></a>
     </div>
   </section>
 

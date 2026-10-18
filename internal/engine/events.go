@@ -54,29 +54,53 @@ func (e *Engine) sessionStart(ctx context.Context, in hook.Input) (hook.Output, 
 		return out, nil
 	}
 
-	var active []module.Module
-	var missing []string
+	var (
+		active     []module.Module
+		missing    []string
+		installing []string
+	)
+	mgr := e.manager(cfg, false)
 	for _, m := range e.Modules {
 		if !m.Enabled(cfg) || !present(repo, m) {
 			continue
 		}
 		active = append(active, m)
 		for _, t := range m.Tools() {
-			if _, err := e.Runner.LookPath(t.Name); err != nil {
-				kind := "optional"
-				if t.Required {
-					kind = "required"
-				}
-				missing = append(missing, fmt.Sprintf("%s (%s, %s: %s)", t.Name, m.Name(), kind, t.Install))
+			if _, err := e.Runner.LookPath(t.Name); err == nil {
+				continue
 			}
+			if mgr != nil && mgr.Installed(t.Name) {
+				continue
+			}
+			if mgr != nil && mgr.AutoInstall && mgr.Supported(t.Name) {
+				installing = append(installing, t.Name)
+				continue
+			}
+			kind := "optional"
+			if t.Required {
+				kind = "required"
+			}
+			missing = append(missing, fmt.Sprintf("%s (%s, %s: %s)", t.Name, m.Name(), kind, t.Install))
 		}
 	}
 	if len(active) == 0 {
 		return hook.Output{}, nil
 	}
 	out := hook.Context(hook.SessionStart, standardsSummary(cfg, active, rc))
+	var msgs []string
+	if len(installing) > 0 {
+		// Download pinned tools now so the first edit doesn't wait.
+		if err := mgr.Prefetch(installing...); err != nil {
+			msgs = append(msgs, "could not start tool install: "+err.Error())
+		} else {
+			msgs = append(msgs, "installing pinned tools in the background: "+strings.Join(installing, ", "))
+		}
+	}
 	if len(missing) > 0 {
-		out.SystemMessage = "guardrails: missing tools: " + strings.Join(missing, "; ")
+		msgs = append(msgs, "missing tools: "+strings.Join(missing, "; "))
+	}
+	if len(msgs) > 0 {
+		out.SystemMessage = "guardrails: " + strings.Join(msgs, "; ")
 	}
 	return out, nil
 }
@@ -103,22 +127,8 @@ func standardsSummary(cfg config.Config, active []module.Module, rc *state.RepoC
 	}
 	fmt.Fprintf(&b, "Guardrails is active in this repo (%s).\n", mode)
 	for _, m := range active {
-		if m.Name() == "go" {
-			g := cfg.Go
-			fmt.Fprintf(&b, "Go standards: gofumpt/goimports formatting is applied automatically after each edit; go vet and golangci-lint run on the edited package. ")
-			fmt.Fprintf(&b, "Before a turn can end, touched packages must build, pass `go test -race`, reach %.0f%% total statement coverage (no package below %.0f%%", g.Coverage.Total, g.Coverage.PerPackageFloor)
-			if g.Coverage.Ratchet {
-				b.WriteString(", none below its starting coverage")
-			}
-			b.WriteString(")")
-			if g.PatchCoverage > 0 {
-				fmt.Fprintf(&b, ", cover %.0f%% of lines changed this session", g.PatchCoverage)
-			}
-			b.WriteString(", be golangci-lint clean and keep go.mod tidy")
-			if g.Vuln {
-				b.WriteString(", with no reachable govulncheck findings")
-			}
-			b.WriteString(".\n")
+		if line := m.Standards(cfg); line != "" {
+			b.WriteString(line + "\n")
 		}
 	}
 	b.WriteString("Suppression comments (//nolint, # noqa, ...), skipped tests, lowered thresholds and edits to guardrail config are denied; the human owns those. Write tests alongside code rather than after the gate asks.\n")
@@ -233,7 +243,7 @@ func (e *Engine) postToolUse(ctx context.Context, in hook.Input) (hook.Output, e
 
 	ctx, cancel := context.WithTimeout(ctx, PostToolUseBudget)
 	defer cancel()
-	env := e.env(repo, cfg)
+	env := e.env(repo, cfg, false)
 	fix := m.Fix(ctx, env, []string{path})
 
 	var checks []feedback.Check

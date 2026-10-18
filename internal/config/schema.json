@@ -164,6 +164,10 @@
               "minimum": 0,
               "maximum": 100,
               "description": "Minimum total coverage."
+            },
+            "ratchet": {
+              "type": "boolean",
+              "description": "Never allow a package to drop below its SessionStart baseline."
             }
           }
         },
@@ -209,7 +213,57 @@
           "description": "Mutation testing (planned)."
         }
       },
-      "description": "Python module (planned)."
+      "description": "Python module."
+    },
+    "shell": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Shell module.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the shell module. Defaults to true when shell scripts exist."
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "style",
+            "info",
+            "warning",
+            "error"
+          ],
+          "description": "Minimum shellcheck severity reported."
+        }
+      }
+    },
+    "yaml": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the YAML module. Defaults to true when the module's files exist."
+        },
+        "kubeconform": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kubernetes_version": {
+              "type": "string",
+              "description": "Kubernetes version for schema validation."
+            },
+            "enabled": {
+              "type": "boolean",
+              "description": "Validate Kubernetes manifests with kubeconform."
+            }
+          }
+        },
+        "actionlint": {
+          "type": "boolean",
+          "description": "Check GitHub Actions workflows with actionlint."
+        }
+      },
+      "description": "YAML module."
     },
     "terraform": {
       "type": "object",
@@ -229,10 +283,22 @@
         },
         "scan": {
           "type": "string",
+          "enum": [
+            "trivy",
+            "off"
+          ],
           "description": "Config scanner."
+        },
+        "tflint": {
+          "type": "boolean",
+          "description": "Run tflint on edit and at the gate."
+        },
+        "require_version_constraints": {
+          "type": "boolean",
+          "description": "Every provider must have a version constraint."
         }
       },
-      "description": "Terraform module (planned)."
+      "description": "Terraform module."
     },
     "docker": {
       "type": "object",
@@ -249,30 +315,36 @@
         "require_non_root": {
           "type": "boolean",
           "description": "Final stage must set a non-root USER."
+        },
+        "build_check": {
+          "type": "boolean",
+          "description": "Run `docker build --check` when a Docker daemon is available."
         }
       },
-      "description": "Docker module (planned)."
+      "description": "Docker module."
     },
-    "yaml": {
+    "tools": {
       "type": "object",
       "additionalProperties": false,
+      "description": "How external tools are found and installed.",
       "properties": {
-        "enabled": {
-          "type": "boolean",
-          "description": "Enable the YAML module. Defaults to true when the module's files exist."
+        "install": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "never"
+          ],
+          "description": "auto downloads pinned, checksum-verified tools on demand; never uses only what is installed."
         },
-        "kubeconform": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "kubernetes_version": {
-              "type": "string",
-              "description": "Kubernetes version for schema validation."
-            }
-          }
+        "prefer": {
+          "type": "string",
+          "enum": [
+            "path",
+            "managed"
+          ],
+          "description": "path uses installed tools first; managed always uses the pinned versions."
         }
-      },
-      "description": "YAML module (planned)."
+      }
     },
     "guards": {
       "type": "object",
