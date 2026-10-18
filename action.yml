@@ -1,0 +1,151 @@
+name: Guardrails
+description: Run the Guardrails quality gate in CI — the same binary, config and checks Claude Code faces.
+author: Ross Edman
+branding:
+  icon: shield
+  color: yellow
+
+inputs:
+  version:
+    description: Guardrails version to run, e.g. 0.3.0. "latest" resolves the newest release.
+    default: latest
+  args:
+    description: >-
+      Arguments for guardrails. Empty runs `gate --base origin/<base> --explain` on
+      pull requests (checkout with fetch-depth 0) and `gate --all --explain` otherwise.
+    default: ""
+  working-directory:
+    description: Directory to run in.
+    default: "."
+  binary:
+    description: Path to a prebuilt guardrails binary; skips the download.
+    default: ""
+  token:
+    description: Token used to resolve "latest" through the GitHub API.
+    default: ${{ github.token }}
+
+outputs:
+  passed:
+    description: '"true" when guardrails exited 0.'
+    value: ${{ steps.run.outputs.passed }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve version and platform
+      id: resolve
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_BINARY: ${{ inputs.binary }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        set -euo pipefail
+        case "$RUNNER_OS" in
+          Linux) os=linux ;;
+          macOS) os=darwin ;;
+          *) echo "::error::guardrails supports Linux and macOS runners, not $RUNNER_OS"; exit 1 ;;
+        esac
+        case "$RUNNER_ARCH" in
+          X64) arch=amd64 ;;
+          ARM64) arch=arm64 ;;
+          *) echo "::error::unsupported runner architecture $RUNNER_ARCH"; exit 1 ;;
+        esac
+        version="${INPUT_VERSION#v}"
+        if [ -n "$INPUT_BINARY" ]; then
+          version=local
+        elif [ "$version" = latest ]; then
+          version=$(curl -fsSL --retry 3 -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/rossedman/guardrails/releases/latest |
+            sed -n 's/.*"tag_name": *"v\{0,1\}\([^"]*\)".*/\1/p' | head -n 1)
+          if [ -z "$version" ]; then
+            echo "::error::could not resolve the latest guardrails release"
+            exit 1
+          fi
+        fi
+        {
+          echo "version=$version"
+          echo "os=$os"
+          echo "arch=$arch"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Cache tools
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/guardrails-data/tools
+        key: guardrails-tools-${{ steps.resolve.outputs.version }}-${{ hashFiles('internal/tools/tools.lock.json') }}-${{ steps.resolve.outputs.os }}-${{ steps.resolve.outputs.arch }}
+
+    - name: Install guardrails
+      id: install
+      shell: bash
+      env:
+        INPUT_BINARY: ${{ inputs.binary }}
+        VERSION: ${{ steps.resolve.outputs.version }}
+        OS: ${{ steps.resolve.outputs.os }}
+        ARCH: ${{ steps.resolve.outputs.arch }}
+      run: |
+        set -euo pipefail
+        if [ -n "$INPUT_BINARY" ]; then
+          path=$(cd "$(dirname "$INPUT_BINARY")" && pwd)/$(basename "$INPUT_BINARY")
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        archive="guardrails_${VERSION}_${OS}_${ARCH}.tar.gz"
+        base="https://github.com/rossedman/guardrails/releases/download/v${VERSION}"
+        dir="$RUNNER_TEMP/guardrails-bin"
+        mkdir -p "$dir"
+        curl -fsSL --retry 3 -o "$dir/$archive" "$base/$archive"
+        curl -fsSL --retry 3 -o "$dir/checksums.txt" "$base/checksums.txt"
+        want=$(grep " ${archive}\$" "$dir/checksums.txt" | cut -d ' ' -f 1)
+        if command -v sha256sum >/dev/null 2>&1; then
+          got=$(sha256sum "$dir/$archive" | cut -d ' ' -f 1)
+        else
+          got=$(shasum -a 256 "$dir/$archive" | cut -d ' ' -f 1)
+        fi
+        if [ -z "$want" ] || [ "$want" != "$got" ]; then
+          echo "::error::checksum mismatch for $archive"
+          exit 1
+        fi
+        tar -xzf "$dir/$archive" -C "$dir" guardrails
+        echo "path=$dir/guardrails" >> "$GITHUB_OUTPUT"
+
+    - name: Run guardrails
+      id: run
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GUARDRAILS: ${{ steps.install.outputs.path }}
+        CLAUDE_PLUGIN_DATA: ${{ runner.temp }}/guardrails-data
+        INPUT_ARGS: ${{ inputs.args }}
+        EVENT: ${{ github.event_name }}
+        BASE_REF: ${{ github.base_ref }}
+      run: |
+        set -uo pipefail
+        args="$INPUT_ARGS"
+        if [ -z "$args" ]; then
+          if [ -n "$BASE_REF" ] && { [ "$EVENT" = pull_request ] || [ "$EVENT" = pull_request_target ]; }; then
+            if ! git rev-parse --verify --quiet "origin/$BASE_REF" >/dev/null; then
+              git fetch --no-tags --quiet origin "$BASE_REF:refs/remotes/origin/$BASE_REF" || true
+            fi
+            args="gate --base origin/$BASE_REF --explain"
+          else
+            args="gate --all --explain"
+          fi
+        fi
+        read -r -a argv <<< "$args"
+        report="$RUNNER_TEMP/guardrails-report.txt"
+        "$GUARDRAILS" "${argv[@]}" > "$report" 2>&1
+        code=$?
+        cat "$report"
+        {
+          echo "### Guardrails"
+          echo
+          echo "\`guardrails ${args}\` exited ${code}"
+          echo
+          echo '```text'
+          cat "$report"
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+        if [ "$code" -eq 0 ]; then passed=true; else passed=false; fi
+        echo "passed=$passed" >> "$GITHUB_OUTPUT"
+        exit "$code"

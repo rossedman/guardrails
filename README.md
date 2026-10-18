@@ -109,6 +109,27 @@ guardrails insights # what Claude trips on most, and rules to prevent it
 
 Read more in [How it works](https://rossedman.github.io/guardrails/how-it-works/).
 
+## Same gate in CI and pre-commit
+
+```yaml
+# .github/workflows/guardrails.yml
+- uses: actions/checkout@v5
+  with: { fetch-depth: 0 }
+- uses: rossedman/guardrails@v0.4.0
+```
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/rossedman/guardrails
+    rev: v0.4.0
+    hooks:
+      - id: guardrails
+```
+
+Same binary, same config, same result as Claude's hooks. See
+[CI and pre-commit](https://rossedman.github.io/guardrails/ci/).
+
 ## Configuration
 
 Zero config works. To tune, add `.guardrails.yaml` (Claude can't edit it):
@@ -133,7 +154,7 @@ See the [configuration reference](https://rossedman.github.io/guardrails/configu
 
 ## Status
 
-Guardrails is **early (v0.3)**. All six language modules, tool
+Guardrails is **early (v0.4)**. All six language modules, tool
 provisioning, the policy guards and on-demand hardening (mutation testing
 and fuzzing) are implemented; Python mutation testing and benchmark
 regression checks are next on the

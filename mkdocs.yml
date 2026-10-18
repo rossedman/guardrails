@@ -100,6 +100,7 @@ nav:
       - Tool provisioning: tools.md
       - Configuration: configuration.md
       - CLI: cli.md
+      - CI and pre-commit: ci.md
       - Companion tools: companion-tools.md
   - Project:
       - Roadmap: roadmap.md
