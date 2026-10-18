@@ -18,6 +18,7 @@ import (
 	"github.com/rossedman/guardrails/internal/feedback"
 	"github.com/rossedman/guardrails/internal/hook"
 	"github.com/rossedman/guardrails/internal/state"
+	"github.com/rossedman/guardrails/internal/tools"
 )
 
 // hook handles `guardrails hook <event>`. Internal errors on events that
@@ -165,44 +166,78 @@ func (a *App) doctor(ctx context.Context) int {
 	missingRequired := false
 	fmt.Fprintf(a.Stdout, "guardrails %s\n", Version)
 	fmt.Fprintf(a.Stdout, "data dir: %s\n", a.DataDir())
+	cfg := config.Default()
 	if repo, err := a.repo(ctx); err == nil {
-		if _, err := config.Load(a.globalConfig(), repo); err != nil {
+		if loaded, err := config.Load(a.globalConfig(), repo); err != nil {
 			fmt.Fprintf(a.Stdout, "config:   ✗ %v\n", err)
 			missingRequired = true
 		} else {
+			cfg = loaded
 			fmt.Fprintf(a.Stdout, "config:   ✓ %s\n", repo)
 		}
+	}
+	mgr := a.toolManager()
+	if mgr != nil {
+		mgr.Prefer = cfg.Tools.Prefer
+		mgr.AutoInstall = cfg.Tools.Install != config.InstallNever
 	}
 	for _, m := range e.Modules {
 		fmt.Fprintf(a.Stdout, "\n%s module\n", m.Name())
 		for _, t := range m.Tools() {
-			path, err := a.Runner.LookPath(t.Name)
 			kind := "optional"
 			if t.Required {
 				kind = "required"
 			}
-			if err != nil {
+			path, where := a.locateTool(mgr, t.Name)
+			switch {
+			case path != "":
+				version := ""
+				if len(t.VersionArgs) > 0 {
+					if res, err := a.Runner.Run(ctx, "", path, t.VersionArgs...); err == nil {
+						if ls := trimLines(res.Combined()); len(ls) > 0 {
+							version = ls[0]
+						}
+					}
+				}
+				fmt.Fprintf(a.Stdout, "  ✓ %-14s %s (%s) %s\n", t.Name, path, where, version)
+			case mgr != nil && mgr.AutoInstall && mgr.Supported(t.Name):
+				fmt.Fprintf(a.Stdout, "  ○ %-14s %s, installs v%s on first use (guardrails tools install)\n", t.Name, kind, mgr.Lock.Tools[t.Name].Version)
+			default:
 				if t.Required {
 					missingRequired = true
 				}
 				fmt.Fprintf(a.Stdout, "  ✗ %-14s %s, not found — %s\n", t.Name, kind, t.Install)
-				continue
 			}
-			version := ""
-			if len(t.VersionArgs) > 0 {
-				if res, err := a.Runner.Run(ctx, "", t.Name, t.VersionArgs...); err == nil {
-					if ls := trimLines(res.Combined()); len(ls) > 0 {
-						version = ls[0]
-					}
-				}
-			}
-			fmt.Fprintf(a.Stdout, "  ✓ %-14s %s %s\n", t.Name, path, version)
 		}
 	}
 	if missingRequired {
 		return 1
 	}
 	return 0
+}
+
+// locateTool finds a tool the way hooks resolve it, without installing:
+// PATH first (unless the managed copy is preferred), then the managed copy.
+func (a *App) locateTool(mgr *tools.Manager, name string) (path, where string) {
+	onPath := func() string {
+		p, err := a.Runner.LookPath(name)
+		if err != nil {
+			return ""
+		}
+		return p
+	}
+	if mgr == nil || mgr.Prefer != tools.PreferManaged {
+		if p := onPath(); p != "" {
+			return p, "PATH"
+		}
+	}
+	if mgr != nil && mgr.Installed(name) {
+		return mgr.ManagedPath(name), "managed"
+	}
+	if p := onPath(); p != "" {
+		return p, "PATH"
+	}
+	return "", ""
 }
 
 // init handles `guardrails init`.

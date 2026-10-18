@@ -320,8 +320,8 @@ func TestDoctor(t *testing.T) {
 		{Name: "quiet", VersionArgs: []string{"version"}},
 	}
 	f.fake.Install("req", "quiet")
-	f.fake.On("req --version", runner.Result{Stdout: "req 1.2.3\nextra\n"})
-	f.fake.OnError("quiet version", errors.New("boom"))
+	f.fake.On("/usr/bin/req --version", runner.Result{Stdout: "req 1.2.3\nextra\n"})
+	f.fake.OnError("/usr/bin/quiet version", errors.New("boom"))
 	code := f.run("", "doctor")
 	out := f.stdout.String()
 	if code != 0 || !strings.Contains(out, "req 1.2.3") || !strings.Contains(out, "✗ opt") || !strings.Contains(out, "config:   ✓") {

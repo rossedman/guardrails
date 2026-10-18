@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/rossedman/guardrails/internal/module"
 	"github.com/rossedman/guardrails/internal/tools"
 )
 
@@ -141,5 +142,73 @@ func TestNewToolsBuildsManager(t *testing.T) {
 	m := a.NewTools(t.TempDir())
 	if m == nil || len(m.Lock.Tools) == 0 {
 		t.Fatalf("NewTools() = %+v", m)
+	}
+}
+
+func TestDoctorResolvesManagedTools(t *testing.T) {
+	f := newFixture(t)
+	withToolManager(t, f)
+	f.mod.tools = []module.Tool{
+		{Name: "good", Required: true},
+		{Name: "elsewhere"},
+	}
+
+	// Fresh data dir: a supported tool installs on first use, which is not a
+	// failure; an unsupported optional tool is reported but doesn't fail.
+	if code := f.run("", "doctor"); code != 0 {
+		t.Fatalf("doctor = %d\n%s", code, f.stdout.String())
+	}
+	out := f.stdout.String()
+	if !strings.Contains(out, "○ good") || !strings.Contains(out, "installs v1.0 on first use") {
+		t.Errorf("want installable good:\n%s", out)
+	}
+	if !strings.Contains(out, "✗ elsewhere") {
+		t.Errorf("want unsupported elsewhere:\n%s", out)
+	}
+
+	// After installing, the managed copy is found.
+	if code := f.run("", "tools", "install", "--quiet", "good"); code != 0 {
+		t.Fatalf("install = %d: %s", code, f.stderr.String())
+	}
+	f.stdout.Reset()
+	if code := f.run("", "doctor"); code != 0 {
+		t.Fatalf("doctor = %d", code)
+	}
+	if out := f.stdout.String(); !strings.Contains(out, "✓ good") || !strings.Contains(out, "(managed)") {
+		t.Errorf("want managed good:\n%s", out)
+	}
+
+	// With managed preferred, the managed copy wins over PATH.
+	f.fake.Install("good")
+	f.write(".guardrails.yaml", "version: 1\ntools:\n  prefer: managed\n")
+	f.stdout.Reset()
+	f.run("", "doctor")
+	if out := f.stdout.String(); !strings.Contains(out, "(managed)") {
+		t.Errorf("managed preference should use the managed copy:\n%s", out)
+	}
+}
+
+func TestDoctorFailsWhenRequiredToolCannotInstall(t *testing.T) {
+	f := newFixture(t)
+	withToolManager(t, f)
+	f.mod.tools = []module.Tool{{Name: "good", Required: true}}
+	f.write(".guardrails.yaml", "version: 1\ntools:\n  install: never\n")
+	if code := f.run("", "doctor"); code != 1 {
+		t.Fatalf("doctor = %d, want 1\n%s", code, f.stdout.String())
+	}
+	if out := f.stdout.String(); !strings.Contains(out, "✗ good") {
+		t.Errorf("want missing good:\n%s", out)
+	}
+
+	// Found on PATH with a managed preference but nothing managed installed:
+	// PATH is the fallback.
+	f.fake.Install("good")
+	f.write(".guardrails.yaml", "version: 1\ntools:\n  install: never\n  prefer: managed\n")
+	f.stdout.Reset()
+	if code := f.run("", "doctor"); code != 0 {
+		t.Fatalf("doctor = %d\n%s", code, f.stdout.String())
+	}
+	if out := f.stdout.String(); !strings.Contains(out, "(PATH)") {
+		t.Errorf("want PATH fallback:\n%s", out)
 	}
 }

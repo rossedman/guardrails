@@ -114,6 +114,10 @@ func (m *Manager) managedPath(name string) string {
 	}
 }
 
+// ManagedPath is the executable of the managed copy of name, whether or
+// not it is installed yet.
+func (m *Manager) ManagedPath(name string) string { return m.managedPath(name) }
+
 // Installed reports whether the managed copy of name is complete.
 func (m *Manager) Installed(name string) bool {
 	if _, ok := m.Lock.Tools[name]; !ok {
