@@ -89,14 +89,9 @@ func IsProtected(rel string) bool {
 	if protectedNames[base] {
 		return true
 	}
-	dir := filepath.ToSlash(filepath.Dir(rel))
 	if strings.HasPrefix(base, "settings") && strings.HasSuffix(base, ".json") {
+		dir := filepath.ToSlash(filepath.Dir(rel))
 		return dir == ".claude" || strings.HasSuffix(dir, "/.claude")
-	}
-	// Rules teach Claude the standards; changes go through the human, e.g.
-	// as diffs drafted by /guardrails:insights.
-	if strings.HasSuffix(base, ".md") {
-		return dir == ".claude/rules" || strings.HasSuffix(dir, "/.claude/rules")
 	}
 	return false
 }

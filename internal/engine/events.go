@@ -385,7 +385,7 @@ func (e *Engine) stop(ctx context.Context, in hook.Input, agent string) (hook.Ou
 		Type: "gate", At: e.Now(), Session: in.SessionID, Repo: repo,
 		Event: in.HookEventName, AgentType: in.AgentType, Passed: passed,
 		Attempt: attempt, HandedOff: handedOff, Failures: failures(checks),
-		Coverage: total, Modules: names, Millis: e.Now().Sub(started).Milliseconds(),
+		Coverage: total, Millis: e.Now().Sub(started).Milliseconds(),
 	})
 	return out, nil
 }

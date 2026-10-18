@@ -26,10 +26,7 @@ type Record struct {
 	HandedOff bool      `json:"handed_off,omitempty"`
 	Failures  []Failure `json:"failures,omitempty"`
 	Coverage  float64   `json:"coverage,omitempty"`
-	// Modules names the language modules that ran in a gate, so failures
-	// without a file can still be attributed to a language.
-	Modules []string `json:"modules,omitempty"`
-	Millis  int64    `json:"ms,omitempty"`
+	Millis    int64     `json:"ms,omitempty"`
 	// Session records.
 	Reason  string `json:"reason,omitempty"`
 	Gates   int    `json:"gates,omitempty"`
