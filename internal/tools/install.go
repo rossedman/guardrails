@@ -57,7 +57,7 @@ func (in *Installer) Install(ctx context.Context, name string) error {
 		return nil
 	}
 	parent := filepath.Dir(m.Dir(name))
-	if err := os.MkdirAll(parent, 0o755); err != nil {
+	if err := os.MkdirAll(parent, 0o750); err != nil {
 		return err
 	}
 	unlock, err := state.Lock(m.Dir(name)+".lock", in.LockTimeout)
@@ -76,7 +76,7 @@ func (in *Installer) Install(ctx context.Context, name string) error {
 	stage := m.Dir(name)
 	if t.Source == SourceUV {
 		_ = os.RemoveAll(stage)
-		if err := os.MkdirAll(stage, 0o755); err != nil {
+		if err := os.MkdirAll(stage, 0o750); err != nil {
 			return err
 		}
 	} else {

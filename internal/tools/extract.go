@@ -93,8 +93,13 @@ func extractZip(src, member, dst string) error {
 }
 
 func writeExecutable(dst string, r io.Reader) error {
-	f, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
+	f, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {
+		return err
+	}
+	// Owner-only and executable: the data dir belongs to the user.
+	if err := f.Chmod(0o700); err != nil {
+		_ = f.Close()
 		return err
 	}
 	n, err := io.Copy(f, io.LimitReader(r, maxBinary+1))
