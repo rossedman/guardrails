@@ -94,7 +94,11 @@
           "properties": {
             "tool": {
               "type": "string",
-              "description": "Mutation testing tool."
+              "enum": [
+                "builtin",
+                "off"
+              ],
+              "description": "builtin mutates changed Go functions with go test -overlay; off disables."
             },
             "min_score": {
               "type": "number",
@@ -108,7 +112,7 @@
               "description": "Time slice for the mutation run."
             }
           },
-          "description": "Mutation testing (planned)."
+          "description": "Mutation testing of functions changed this session."
         },
         "bench": {
           "type": "object",
@@ -124,10 +128,27 @@
             },
             "count": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 2,
+              "description": "Runs per side for the significance test."
+            },
+            "benchtime": {
+              "type": "string",
+              "description": "-benchtime per run, e.g. 100ms or 1000x."
+            },
+            "packages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Performance-critical packages (module-relative, ... allowed); every changed function in them needs a benchmark."
+            },
+            "budget_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Time budget for benchmark runs at Stop."
             }
           },
-          "description": "Benchmark requirements (planned)."
+          "description": "Benchmark requirements for hot paths and regression checks against the session's base commit."
         },
         "fuzz": {
           "type": "object",
@@ -140,9 +161,14 @@
             "fuzztime": {
               "type": "string",
               "description": "Fuzz duration per target, e.g. 10s."
+            },
+            "budget_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Total time budget for fuzzing at Stop."
             }
           },
-          "description": "Fuzzing requirements (planned)."
+          "description": "Fuzz target requirements for parsers and short fuzz runs at Stop."
         }
       },
       "description": "Go module."
@@ -196,7 +222,11 @@
           "properties": {
             "tool": {
               "type": "string",
-              "description": "Mutation testing tool."
+              "enum": [
+                "mutmut",
+                "off"
+              ],
+              "description": "Python mutation tool (planned)."
             },
             "min_score": {
               "type": "number",
@@ -210,7 +240,7 @@
               "description": "Time slice for the mutation run."
             }
           },
-          "description": "Mutation testing (planned)."
+          "description": "Mutation testing (planned for Python)."
         }
       },
       "description": "Python module."

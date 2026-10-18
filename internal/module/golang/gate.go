@@ -2,6 +2,7 @@ package golang
 
 import (
 	"context"
+	"time"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,11 +10,13 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/rossedman/guardrails/internal/config"
 	"github.com/rossedman/guardrails/internal/coverage"
 	"github.com/rossedman/guardrails/internal/diff"
 	"github.com/rossedman/guardrails/internal/feedback"
 	"github.com/rossedman/guardrails/internal/glob"
 	"github.com/rossedman/guardrails/internal/module"
+	"github.com/rossedman/guardrails/internal/testdepth"
 )
 
 // ratchetTolerance absorbs float noise when comparing to the baseline.
@@ -46,6 +49,7 @@ func (m *Module) Gate(ctx context.Context, env module.Env, in module.GateInput) 
 		res.Checks = append(res.Checks, r.checks...)
 		res.Notes = append(res.Notes, r.notes...)
 		res.Ran = appendUnique(res.Ran, r.ran...)
+		res.Asked = append(res.Asked, r.asked...)
 		for pkg, pct := range r.coverage {
 			res.Coverage[pkg] = pct
 		}
@@ -62,6 +66,7 @@ func (m *Module) Gate(ctx context.Context, env module.Env, in module.GateInput) 
 }
 
 type moduleResult struct {
+	asked    []string
 	ran      []string
 	checks   []feedback.Check
 	notes    []string
@@ -156,7 +161,39 @@ func (m *Module) gateModule(ctx context.Context, env module.Env, root string, fi
 			}
 		}
 	}
+	// 6. Test depth: mutation testing, benchmarks and fuzzing of the
+	// functions changed this session. Only worth running on code that
+	// already builds, passes and is covered.
+	if len(out.checks) == 0 && !in.All && in.BaseCommit != "" {
+		m.testDepth(ctx, env, root, modPath, files, in, &out)
+	}
 	return out
+}
+
+func (m *Module) testDepth(ctx context.Context, env module.Env, root, modPath string, files []string, in module.GateInput, out *moduleResult) {
+	cfg := env.Config.Go
+	changed := m.changedLines(ctx, env, in.BaseCommit, files)
+	funcs, err := testdepth.ChangedFuncs(changed)
+	if err != nil {
+		out.notes = append(out.notes, "test depth skipped: "+err.Error())
+		return
+	}
+	de := testdepth.Env{
+		Env: env, Root: root, ModPath: modPath, Base: in.BaseCommit,
+		Changed: changed, Asked: in.Asked, Now: time.Now,
+	}
+	var res testdepth.Result
+	if cfg.Mutation.Tool != config.MutationOff && len(funcs) > 0 {
+		res.Merge(testdepth.Mutation(ctx, de, funcs))
+	}
+	if len(funcs) > 0 {
+		res.Merge(testdepth.Benchmarks(ctx, de, funcs))
+	}
+	res.Merge(testdepth.Fuzz(ctx, de, funcs, files))
+	out.checks = append(out.checks, res.Checks...)
+	out.notes = append(out.notes, res.Notes...)
+	out.ran = append(out.ran, res.Ran...)
+	out.asked = append(out.asked, res.Asked...)
 }
 
 func (m *Module) testAndCover(ctx context.Context, env module.Env, root, modPath string, pkgs, files []string, in module.GateInput, out *moduleResult) {

@@ -106,6 +106,9 @@ type GateInput struct {
 	Baseline map[string]float64
 	// All runs over every package instead of only touched ones.
 	All bool
+	// Asked holds keys of borderline test-depth requirements already
+	// raised this session.
+	Asked map[string]bool
 }
 
 // GateResult is the outcome of a gate run.
@@ -121,6 +124,9 @@ type GateResult struct {
 	Notes []string
 	// Ran names every check that executed, passing or not.
 	Ran []string
+	// Asked are keys of borderline requirements raised by this run, to
+	// remember so each is raised only once per session.
+	Asked []string
 }
 
 // Module is one language.

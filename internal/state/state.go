@@ -36,6 +36,9 @@ type Session struct {
 	Baseline map[string]float64 `json:"baseline,omitempty"`
 	// Reported holds fingerprints of issues already shown to Claude.
 	Reported map[string]bool `json:"reported,omitempty"`
+	// Asked holds borderline test-depth requirements already raised; each
+	// is raised once per session.
+	Asked map[string]bool `json:"asked,omitempty"`
 	// Gates counts Stop gate runs; Blocked counts the ones that blocked.
 	Gates   int `json:"gates"`
 	Blocked int `json:"blocked"`

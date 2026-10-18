@@ -317,7 +317,7 @@ func (e *Engine) stop(ctx context.Context, in hook.Input, agent string) (hook.Ou
 		return configError(cfgErr), nil
 	}
 
-	g := e.Gate(ctx, repo, cfg, files, sess.BaseCommit, sess.Baseline, false)
+	g := e.Gate(ctx, repo, cfg, files, sess.BaseCommit, sess.Baseline, false, sess.Asked)
 	if len(g.Modules) == 0 {
 		return hook.Output{}, nil
 	}
@@ -333,6 +333,12 @@ func (e *Engine) stop(ctx context.Context, in hook.Input, agent string) (hook.Ou
 	handedOff := false
 	_, err = e.Store.Update(in.SessionID, func(s *state.Session) error {
 		s.Gates++
+		for _, k := range g.Asked {
+			if s.Asked == nil {
+				s.Asked = map[string]bool{}
+			}
+			s.Asked[k] = true
+		}
 		if passed {
 			s.SetBlocks(agent, 0)
 			// The ratchet only moves up.

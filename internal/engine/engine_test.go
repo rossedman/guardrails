@@ -695,7 +695,7 @@ func TestStop(t *testing.T) {
 		h := newHarness(t)
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		g := h.eng.Gate(ctx, h.repo, config.Default(), []string{filepath.Join(h.repo, "main.stub")}, "", nil, false)
+		g := h.eng.Gate(ctx, h.repo, config.Default(), []string{filepath.Join(h.repo, "main.stub")}, "", nil, false, nil)
 		if len(g.Checks) != 1 || g.Checks[0].Name != "timeout" {
 			t.Errorf("checks = %+v", g.Checks)
 		}
@@ -703,12 +703,12 @@ func TestStop(t *testing.T) {
 	t.Run("gate all includes modules without files", func(t *testing.T) {
 		h := newHarness(t)
 		h.mod.gate = module.GateResult{Total: -1}
-		g := h.eng.Gate(context.Background(), h.repo, config.Default(), nil, "", nil, true)
+		g := h.eng.Gate(context.Background(), h.repo, config.Default(), nil, "", nil, true, nil)
 		if len(g.Modules) != 1 || !h.mod.gateIn[0].All || g.Total != -1 {
 			t.Errorf("outcome = %+v", g)
 		}
 		h.mod.enabled = false
-		if g := h.eng.Gate(context.Background(), h.repo, config.Default(), nil, "", nil, true); len(g.Modules) != 0 {
+		if g := h.eng.Gate(context.Background(), h.repo, config.Default(), nil, "", nil, true, nil); len(g.Modules) != 0 {
 			t.Errorf("disabled module ran: %+v", g)
 		}
 	})

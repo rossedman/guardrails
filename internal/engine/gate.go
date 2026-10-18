@@ -21,11 +21,14 @@ type GateOutcome struct {
 	Modules []string
 	// Ran counts the checks that executed.
 	Ran int
+	// Asked are borderline requirements raised by this run.
+	Asked []string
 }
 
 // Gate runs every enabled module's gate over the files it owns. all runs
-// over every package instead of only the files' packages.
-func (e *Engine) Gate(ctx context.Context, repo string, cfg config.Config, files []string, base string, baseline map[string]float64, all bool) GateOutcome {
+// over every package instead of only the files' packages. asked holds
+// borderline requirements already raised this session.
+func (e *Engine) Gate(ctx context.Context, repo string, cfg config.Config, files []string, base string, baseline map[string]float64, all bool, asked map[string]bool) GateOutcome {
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(cfg.Gate.TimeoutSeconds)*time.Second)
 	defer cancel()
 	env := e.env(repo, cfg, true)
@@ -45,10 +48,11 @@ func (e *Engine) Gate(ctx context.Context, repo string, cfg config.Config, files
 			continue
 		}
 		out.Modules = append(out.Modules, m.Name())
-		res := m.Gate(ctx, env, module.GateInput{Files: mine, BaseCommit: base, Baseline: baseline, All: all})
+		res := m.Gate(ctx, env, module.GateInput{Files: mine, BaseCommit: base, Baseline: baseline, All: all, Asked: asked})
 		out.Checks = append(out.Checks, res.Checks...)
 		out.Notes = append(out.Notes, res.Notes...)
 		out.Ran += len(res.Ran)
+		out.Asked = append(out.Asked, res.Asked...)
 		for k, v := range res.Coverage {
 			out.Coverage[k] = v
 		}

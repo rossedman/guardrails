@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -77,24 +78,40 @@ type GoLint struct {
 	OnEdit string `yaml:"on_edit" json:"on_edit"`
 }
 
-// Mutation configures mutation testing (planned).
+// Mutation tools.
+const (
+	MutationBuiltin = "builtin"
+	MutationMutmut  = "mutmut"
+	MutationOff     = "off"
+)
+
+// Mutation configures mutation testing of changed functions.
 type Mutation struct {
+	// Tool is builtin (Go) or mutmut (Python, planned), or off.
 	Tool          string  `yaml:"tool" json:"tool"`
 	MinScore      float64 `yaml:"min_score" json:"min_score"`
 	BudgetSeconds int     `yaml:"budget_seconds" json:"budget_seconds"`
 }
 
-// Bench configures benchmark requirements (planned).
+// Bench configures benchmark requirements and regression checks.
 type Bench struct {
 	RequireOnHotPaths bool    `yaml:"require_on_hot_paths" json:"require_on_hot_paths"`
 	RegressionPct     float64 `yaml:"regression_pct" json:"regression_pct"`
 	Count             int     `yaml:"count" json:"count"`
+	// Benchtime is passed to -benchtime for each run.
+	Benchtime string `yaml:"benchtime" json:"benchtime"`
+	// Packages are performance-critical: every changed function in them
+	// is a hot path. Patterns are module-relative, e.g. "internal/codec/...".
+	Packages      []string `yaml:"packages" json:"packages"`
+	BudgetSeconds int      `yaml:"budget_seconds" json:"budget_seconds"`
 }
 
-// Fuzz configures fuzzing requirements (planned).
+// Fuzz configures fuzzing requirements and short fuzz runs.
 type Fuzz struct {
 	RequireOnParsers bool   `yaml:"require_on_parsers" json:"require_on_parsers"`
 	Fuzztime         string `yaml:"fuzztime" json:"fuzztime"`
+	// BudgetSeconds caps the total time spent fuzzing at Stop.
+	BudgetSeconds int `yaml:"budget_seconds" json:"budget_seconds"`
 }
 
 // Python configures the Python module.
@@ -204,16 +221,16 @@ func Default() Config {
 			Lint:          GoLint{Config: ".golangci.yml", OnEdit: "fast"},
 			Race:          true,
 			Vuln:          true,
-			Mutation:      Mutation{Tool: "gremlins", MinScore: 70, BudgetSeconds: 45},
-			Bench:         Bench{RequireOnHotPaths: true, RegressionPct: 10, Count: 6},
-			Fuzz:          Fuzz{RequireOnParsers: true, Fuzztime: "10s"},
+			Mutation:      Mutation{Tool: MutationBuiltin, MinScore: 70, BudgetSeconds: 45},
+			Bench:         Bench{RequireOnHotPaths: true, RegressionPct: 10, Count: 6, Benchtime: "100ms", BudgetSeconds: 40},
+			Fuzz:          Fuzz{RequireOnParsers: true, Fuzztime: "10s", BudgetSeconds: 30},
 		},
 		Python: Python{
 			Coverage:      PythonCoverage{Total: 90, Ratchet: true},
 			PatchCoverage: 90,
 			Typecheck:     "mypy",
 			Strict:        true,
-			Mutation:      Mutation{Tool: "mutmut", MinScore: 70},
+			Mutation:      Mutation{Tool: MutationOff, MinScore: 70, BudgetSeconds: 45},
 		},
 		Terraform: Terraform{Binary: "terraform", Scan: "trivy", Tflint: true, RequireVersionConstraints: true},
 		Docker:    Docker{RequireDigestPins: true, RequireNonRoot: true, BuildCheck: true},
@@ -225,7 +242,7 @@ func Default() Config {
 			KubectlSafeContexts: []string{"kind-*", "*-dev"},
 			ProtectedBranches:   []string{"main", "master"},
 		},
-		Gate: Gate{MaxConsecutiveBlocks: 3, TimeoutSeconds: 90},
+		Gate: Gate{MaxConsecutiveBlocks: 3, TimeoutSeconds: 170},
 	}
 }
 
@@ -349,6 +366,17 @@ func (c Config) Validate() error {
 	}
 	oneOf("go.lint.on_edit", c.Go.Lint.OnEdit, "fast", "full", "off")
 	oneOf("python.typecheck", c.Python.Typecheck, "mypy", "pyright", "off")
+	oneOf("go.mutation.tool", c.Go.Mutation.Tool, MutationBuiltin, MutationOff)
+	oneOf("python.mutation.tool", c.Python.Mutation.Tool, MutationMutmut, MutationOff)
+	if _, err := time.ParseDuration(c.Go.Fuzz.Fuzztime); err != nil {
+		add("go.fuzz.fuzztime: %q is not a duration", c.Go.Fuzz.Fuzztime)
+	}
+	if _, err := time.ParseDuration(c.Go.Bench.Benchtime); err != nil && !strings.HasSuffix(c.Go.Bench.Benchtime, "x") {
+		add("go.bench.benchtime: %q is not a duration or count like 100x", c.Go.Bench.Benchtime)
+	}
+	if c.Go.Bench.Count < 2 {
+		add("go.bench.count: must be at least 2 for a significance test")
+	}
 	oneOf("terraform.binary", c.Terraform.Binary, "terraform", "tofu")
 	oneOf("terraform.scan", c.Terraform.Scan, "trivy", "off")
 	oneOf("shell.severity", c.Shell.Severity, "style", "info", "warning", "error")

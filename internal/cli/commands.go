@@ -94,7 +94,7 @@ func (a *App) gate(ctx context.Context, args []string) int {
 	if !*all {
 		patchBase = *base
 	}
-	g := e.Gate(ctx, repo, cfg, files, patchBase, baseline, *all)
+	g := e.Gate(ctx, repo, cfg, files, patchBase, baseline, *all, nil)
 	report := feedback.Report{Checks: g.Checks}
 	failed := report.Failed()
 	passed := len(failed) == 0
