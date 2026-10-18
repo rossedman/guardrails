@@ -20,7 +20,7 @@ SANS = "Inter, 'Inter Display', sans-serif"
 MONO = "'DejaVu Sans Mono', monospace"
 
 
-def shield(x, y, s):
+def shield(x: float, y: float, s: float) -> str:
     """A shield with a check mark, top-left at (x, y), size s."""
     w, h = s, s * 1.18
     path = (
@@ -43,7 +43,7 @@ def shield(x, y, s):
     )
 
 
-def guardrail(y, width, offset=0):
+def guardrail(y: int, width: int, offset: int = 0) -> str:
     """A W-beam highway guardrail with posts along the bottom edge."""
     parts = []
     for px in range(offset, width + 80, 80):
@@ -62,7 +62,7 @@ def guardrail(y, width, offset=0):
     return "".join(parts)
 
 
-def terminal(x, y, w):
+def terminal(x: float, y: float, w: float) -> str:
     rows = [
         ("PostToolUse", [("gofumpt", GREEN, "✓"), ("golangci-lint", GREEN, "✓")], "0.8s"),
         ("PreToolUse", [("//nolint", RED, "denied")], "4ms"),
@@ -98,7 +98,7 @@ def terminal(x, y, w):
     return "".join(out)
 
 
-def svg(width, height, social=False):
+def svg(width: int, height: int, social: bool = False) -> str:
     scale = height / 600
     term_w = 690
     term_x = width - term_w - 70
@@ -166,7 +166,7 @@ def svg(width, height, social=False):
 """
 
 
-def main():
+def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     header = svg(1600, 600)
     (OUT / "header.svg").write_text(header)

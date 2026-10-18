@@ -66,7 +66,7 @@
 }
 
 /* Keep identifiers in the first table column on one line. */
-.md-typeset table:not([class]) td:first-child code {
+.md-typeset table:not([class]) td:nth-child(-n + 2) code {
   white-space: nowrap;
 }
 

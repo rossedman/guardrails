@@ -11,6 +11,7 @@ import (
 	"github.com/rossedman/guardrails/internal/diff"
 	"github.com/rossedman/guardrails/internal/feedback"
 	"github.com/rossedman/guardrails/internal/module"
+	"github.com/rossedman/guardrails/internal/runner"
 	"github.com/rossedman/guardrails/internal/tools"
 )
 
@@ -189,6 +190,15 @@ func (m *Module) testAndCover(ctx context.Context, env module.Env, proj string, 
 		return
 	}
 	raw, err := os.ReadFile(report)
+	if err != nil && noTests(res) {
+		out.checks = append(out.checks, feedback.Check{
+			Name: "coverage", Failed: true,
+			Summary: fmt.Sprintf("no tests ran, so touched code has 0%% coverage (< %.0f%%)", env.Config.Python.Coverage.Total),
+			Lines:   relPaths(env.Repo, files),
+			Fix:     "add pytest tests (test_*.py) that exercise the files above",
+		})
+		return
+	}
 	if err != nil {
 		out.checks = append(out.checks, feedback.Check{
 			Name: "coverage", Failed: true, Summary: "pytest-cov wrote no report",
@@ -471,4 +481,21 @@ func appendUnique(dst []string, items ...string) []string {
 		}
 	}
 	return dst
+}
+
+// noTests reports whether pytest collected nothing (exit code 5).
+func noTests(res runner.Result) bool {
+	return res.ExitCode == 5 || strings.Contains(res.Combined(), "no tests ran")
+}
+
+// relPaths renders files relative to the repo.
+func relPaths(repo string, files []string) []string {
+	out := make([]string, 0, len(files))
+	for _, f := range files {
+		if rel, err := filepath.Rel(repo, f); err == nil {
+			f = filepath.ToSlash(rel)
+		}
+		out = append(out, f)
+	}
+	return out
 }

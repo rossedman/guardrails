@@ -492,6 +492,16 @@ func TestGateFailures(t *testing.T) {
 			t.Fatalf("%+v", res.Checks)
 		}
 	})
+	t.Run("no tests collected", func(t *testing.T) {
+		t.Parallel()
+		g := newGate(t, nil)
+		g.f.On("env", runner.Result{ExitCode: 5, Stdout: "no tests ran in 0.01s"})
+		res := New().Gate(ctx, g.e, module.GateInput{Files: []string{g.a}})
+		c, ok := find(res.Checks, "coverage")
+		if !ok || !strings.Contains(c.Summary, "no tests ran") || len(c.Lines) != 1 || filepath.IsAbs(c.Lines[0]) {
+			t.Fatalf("%+v", res.Checks)
+		}
+	})
 	t.Run("corrupt report", func(t *testing.T) {
 		t.Parallel()
 		g := newGate(t, nil)
