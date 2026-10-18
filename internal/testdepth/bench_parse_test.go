@@ -1,7 +1,9 @@
 package testdepth
 
 import (
+	"math"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -81,4 +83,30 @@ func TestBenchFormat(t *testing.T) {
 	if got := benchRegex([]string{"BenchmarkA", "BenchmarkB.x"}); got != `^(BenchmarkA|BenchmarkB\.x)$` {
 		t.Errorf("regex = %q", got)
 	}
+}
+
+func FuzzBenchParse(f *testing.F) {
+	f.Add("BenchmarkDecode-8   \t 1000000\t      1203 ns/op\t      64 B/op\t       2 allocs/op\n")
+	f.Add("goos: linux\nBenchmarkX/sub-16 5 100.5 ns/op 3.2 MB/s\nPASS\nok pkg 1.2s\n")
+	f.Add("BenchmarkBad 12 x ns/op\n")
+	f.Add("BenchmarkOdd 3 NaN ns/op 1 B/op\nBenchmarkOdd 3 +Inf ns/op 1 B/op\n")
+	f.Fuzz(func(t *testing.T, out string) {
+		for name, units := range benchParse(out) {
+			// Sub-benchmark names may contain -N segments (BenchmarkX/size-1024);
+			// only the final -GOMAXPROCS suffix is stripped.
+			if !strings.HasPrefix(name, "Benchmark") {
+				t.Fatalf("bad name %q", name)
+			}
+			for unit, vals := range units {
+				if len(vals) == 0 {
+					t.Fatalf("%s %s: no values", name, unit)
+				}
+				for _, v := range vals {
+					if math.IsNaN(v) || math.IsInf(v, 0) {
+						t.Fatalf("%s %s: non-finite value %v would break the significance test", name, unit, v)
+					}
+				}
+			}
+		}
+	})
 }

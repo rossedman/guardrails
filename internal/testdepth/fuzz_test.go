@@ -84,9 +84,9 @@ func ParseConfig(b []byte) (int, error) {
 	return len(b), nil
 }
 
-func Load(s string) int { return len(s) }
+func DecodeHint(s string) int { return len(s) }
 
-func Covered(s string) (int, error) { return len(s), nil }
+func ParseCovered(s string) (int, error) { return len(s), nil }
 
 // guardrails:nofuzz only fed by trusted config
 func ParseSkip(b []byte) (int, error) { return len(b), nil }
@@ -100,7 +100,7 @@ import "testing"
 
 func FuzzCovered(f *testing.F) {
 	f.Add("a")
-	f.Fuzz(func(t *testing.T, s string) { _, _ = Covered(s) })
+	f.Fuzz(func(t *testing.T, s string) { _, _ = ParseCovered(s) })
 }
 `
 
@@ -127,13 +127,13 @@ func TestFuzzRequirements(t *testing.T) {
 	if strings.Contains(c.Lines[0], "why not") {
 		t.Errorf("strong requirement should not offer an explanation: %q", c.Lines[0])
 	}
-	if !strings.Contains(c.Lines[1], "Load") || !strings.HasSuffix(c.Lines[1], " — or say in one line why not") {
+	if !strings.Contains(c.Lines[1], "DecodeHint") || !strings.HasSuffix(c.Lines[1], " — or say in one line why not") {
 		t.Errorf("weak line = %q", c.Lines[1])
 	}
 	if !strings.Contains(c.Fix, "guardrails:nofuzz") {
 		t.Errorf("fix = %q", c.Fix)
 	}
-	wantKey := "fuzz:internal/codec.Load"
+	wantKey := "fuzz:internal/codec.DecodeHint"
 	if len(res.Asked) != 1 || res.Asked[0] != wantKey {
 		t.Errorf("asked = %v", res.Asked)
 	}
@@ -149,7 +149,7 @@ func TestFuzzRequirements(t *testing.T) {
 	// one still blocks.
 	res = Fuzz(context.Background(), f.env(map[string]bool{wantKey: true}), funcs, nil)
 	c = findFuzzCheck(res, "fuzz-targets")
-	if c == nil || len(c.Lines) != 1 || c.Summary != "1 function that parse untrusted input have no fuzz target" {
+	if c == nil || len(c.Lines) != 1 || c.Summary != "1 function that parses untrusted input has no fuzz target" {
 		t.Fatalf("second run: %+v", c)
 	}
 	if len(res.Asked) != 0 {
@@ -159,8 +159,8 @@ func TestFuzzRequirements(t *testing.T) {
 
 func TestFuzzRequirementsOnlyBorderlineAlreadyAsked(t *testing.T) {
 	f := newFuzzFixture(t)
-	src := f.write("load.go", "package codec\n\nfunc Load(s string) int { return len(s) }\n")
-	res := Fuzz(context.Background(), f.env(map[string]bool{"fuzz:internal/codec.Load": true}), f.funcs(src), nil)
+	src := f.write("load.go", "package codec\n\nfunc DecodeHint(s string) int { return len(s) }\n")
+	res := Fuzz(context.Background(), f.env(map[string]bool{"fuzz:internal/codec.DecodeHint": true}), f.funcs(src), nil)
 	if len(res.Checks) != 0 || len(res.Asked) != 0 {
 		t.Fatalf("res = %+v", res)
 	}
@@ -365,9 +365,9 @@ func TestFuzzBudgetSkipsRemainingTargets(t *testing.T) {
 	f.cfg.Go.Fuzz.Fuzztime = "not-a-duration"
 	src := f.write("codec.go", fuzzSource)
 	f.write("codec_test.go", fuzzTests+`
-func FuzzA(f *testing.F) { f.Fuzz(func(t *testing.T, s string) { _, _ = Covered(s) }) }
+func FuzzA(f *testing.F) { f.Fuzz(func(t *testing.T, s string) { _, _ = ParseCovered(s) }) }
 
-func FuzzB(f *testing.F) { f.Fuzz(func(t *testing.T, s string) { _, _ = Covered(s) }) }
+func FuzzB(f *testing.F) { f.Fuzz(func(t *testing.T, s string) { _, _ = ParseCovered(s) }) }
 `)
 	f.fake.OnFunc("go test", func(runner.Call) (runner.Result, error) {
 		time.Sleep(1100 * time.Millisecond)

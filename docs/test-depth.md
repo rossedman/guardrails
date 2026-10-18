@@ -39,6 +39,9 @@ increments (`++` ↔ `--`, `+=` ↔ `-=`), logic (`&&` ↔ `||`), boolean
 literals, and removed negation (`-x` → `x`, `!x` → `x`). Only changed lines
 are mutated.
 
+**Fast tests only.** Mutants run with `go test -short`, so integration
+tests that skip under `testing.Short()` don't eat the budget.
+
 **Budget.** Mutants run in parallel within 45 seconds
 (`go.mutation.budget_seconds`). When there are more than fit, a
 deterministic sample runs and the gate says so — it never skips silently.
@@ -55,9 +58,14 @@ path. Signals come from a static pass over the function:
 |---|---|
 | A `// guardrails:hot` comment on the function | strong |
 | Its package is listed in `go.bench.packages` | strong |
-| Its name says it encodes, decodes, parses, hashes, compresses or sorts | borderline |
-| It uses `encoding/*`, `compress/*`, `hash`, `crypto/*`, `sort`, `slices`, `bufio` or `strconv` | borderline |
-| It loops over caller-sized input (a slice, map or string parameter) | borderline |
+| A verb in its name says it encodes, decodes, parses, hashes, compresses, sorts, scans or tokenizes | borderline |
+
+Verbs are matched as whole words anywhere in the name — `ParseConfig`,
+`decodeRequest` and `benchParse` match; the nouns `Parser`, `Scanner` and
+`Sorter` don't. Using `encoding/*`, `sort` or `strconv`, or looping over
+caller-sized input, is reported as supporting evidence but never flags a
+function on its own: on real code that flagged far too much ordinary
+orchestration.
 
 **Strong** signals block until a benchmark exists. **Borderline** ones are
 *asked*, once per session: Claude adds a benchmark or explains in one line
@@ -85,14 +93,17 @@ p < 0.05, so noise doesn't block.
 
 ### When a fuzz target is required
 
-A changed function needs a `Fuzz*` target that calls it when it takes
-loosely structured input — `[]byte`, `string`, `io.Reader`,
-`*bufio.Reader`, `*http.Request`, a file — and turns it into something:
+A changed function needs a `Fuzz*` target that calls it when its name says
+it parses and it takes loosely structured input — `[]byte`, `io.Reader`,
+`*bufio.Reader`, `*http.Request`, a file, or a `string`:
 
 | Signal | Strength |
 |---|---|
-| Parser-like name (`Parse`, `Decode`, `Unmarshal`, `Read`, `Load`, `Scan`…) **and** it can return an error | strong |
-| Parser-like name, or takes such input and can fail | borderline |
+| A parse verb (`Parse`, `Decode`, `Unmarshal`, `Scan`, `Lex`, `Tokenize`…) with such input, and it can return an error | strong |
+| The same without an error return | borderline |
+
+`Read`, `Load` and `From` count only with byte or reader input: with a
+`string` they almost always take a file path, not content.
 
 ### Short fuzz runs
 

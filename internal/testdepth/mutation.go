@@ -78,7 +78,7 @@ func Mutation(ctx context.Context, e Env, funcs []Func) Result {
 	for _, d := range dirs {
 		p := byDir[d]
 		start := now()
-		r, err := e.Runner.Run(sctx, e.Root, "go", "test", "-count=1", "-failfast", p.rel)
+		r, err := e.Runner.Run(sctx, e.Root, "go", "test", "-short", "-count=1", "-failfast", p.rel)
 		p.baseline = now().Sub(start)
 		if err != nil || r.ExitCode != 0 {
 			res.Notes = append(res.Notes, fmt.Sprintf("mutation: skipped %s; its tests do not pass unmutated", p.rel))
@@ -216,7 +216,7 @@ func mutRun(ctx context.Context, e Env, tmp string, i int, s mutSite, src []byte
 	}
 	mctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	r, err := e.Runner.Run(mctx, e.Root, "go", "test", "-overlay="+overlay, "-count=1", "-failfast", rel)
+	r, err := e.Runner.Run(mctx, e.Root, "go", "test", "-short", "-overlay="+overlay, "-count=1", "-failfast", rel)
 	switch {
 	case ctx.Err() != nil:
 		return mutNotRun

@@ -117,7 +117,7 @@ func TestBenchRequirements(t *testing.T) {
 	joined := strings.Join(c.Lines, "\n")
 	for _, want := range []string{
 		"mod/codec/codec.go:6  Hot  needs a Benchmark (marked // guardrails:hot",
-		"mod/codec/codec.go:8  DecodeLen  needs a Benchmark (DecodeLen does serialization",
+		"mod/codec/codec.go:8  DecodeLen  needs a Benchmark (DecodeLen decodes",
 		"uses encoding/binary) — or say in one line why not",
 	} {
 		if !strings.Contains(joined, want) {

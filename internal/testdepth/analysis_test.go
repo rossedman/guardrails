@@ -302,6 +302,14 @@ func Ptr(p *[]int) {
 	for range *p {
 	}
 }
+
+func HashAll(xs []string) int {
+	n := 0
+	for range xs {
+		n++
+	}
+	return n
+}
 `)
 
 	tests := []struct {
@@ -317,12 +325,12 @@ func Ptr(p *[]int) {
 		{"perf glob", got["Unused"], []string{"internal/*"}, true, []string{"package is listed in go.bench.packages"}},
 		{"perf recursive", got["Unused"], []string{"internal/..."}, true, []string{"package is listed in go.bench.packages"}},
 		{"perf no match", got["Unused"], []string{"cmd/...", "internal/codecs"}, false, nil},
-		{"name pattern", got["ParseConfig"], nil, false, []string{"ParseConfig does serialization, parsing, hashing or sorting work", "uses encoding/json"}},
-		{"name and import", got["SortNames"], nil, false, []string{"SortNames does serialization, parsing, hashing or sorting work", "uses sort"}},
-		{"renamed import", got["Atoi"], nil, false, []string{"uses strconv"}},
-		{"loop over slice", got["Sum"], nil, false, []string{"loops over caller-sized input"}},
-		{"loop over map and variadic", plain["Map"], nil, false, []string{"loops over caller-sized input"}},
-		{"loop over string", plain["Str"], nil, false, []string{"loops over caller-sized input"}},
+		{"name pattern", got["ParseConfig"], nil, false, []string{"ParseConfig parses", "uses encoding/json"}},
+		{"name and import", got["SortNames"], nil, false, []string{"SortNames sorts", "uses sort"}},
+		{"name and loop", plain["HashAll"], nil, false, []string{"HashAll hashes", "loops over caller-sized input"}},
+		{"import alone is not a signal", got["Atoi"], nil, false, nil},
+		{"loop alone is not a signal", got["Sum"], nil, false, nil},
+		{"loop over map and variadic alone", plain["Map"], nil, false, nil},
 		{"counted loop", plain["Plain"], nil, false, nil},
 		{"field loop and non-hot import", plain["Nested"], nil, false, nil},
 		{"pointer param", plain["Ptr"], nil, false, nil},
@@ -339,6 +347,13 @@ func Ptr(p *[]int) {
 				t.Errorf("Any = %v", s.Any())
 			}
 		})
+	}
+
+	// Loops count only over slice, map, variadic and string parameters.
+	for name, want := range map[string]bool{"Map": true, "Str": true, "HashAll": true, "Plain": false, "Nested": false, "Ptr": false} {
+		if got := loopsOverInput(plain[name].decl); got != want {
+			t.Errorf("loopsOverInput(%s) = %v, want %v", name, got, want)
+		}
 	}
 
 	// A root the package is not under never matches perf packages.
@@ -398,12 +413,12 @@ func Wrap(x int) (y int, err error) { return }
 	}{
 		{"ParseConfig", true, []string{"ParseConfig parses []byte input and can fail", "uses encoding/json"}},
 		{"DecodeLines", false, []string{"DecodeLines parses *bufio.Reader input"}},
-		{"Handle", false, []string{"Handle takes *http.Request input and can fail"}},
-		{"Open", false, []string{"Open takes *os.File input and can fail", "uses encoding/json"}},
+		{"Handle", false, nil},
+		{"Open", false, nil},
 		{"Format", false, nil},
 		{"NoParams", false, nil},
 		{"LoadAll", false, nil},
-		{"FromString", false, []string{"FromString parses string input", "uses encoding/json"}},
+		{"FromString", false, nil},
 		{"Wrap", false, nil},
 	}
 	for _, tc := range tests {
@@ -556,5 +571,29 @@ func TestSignalsEdgeDecls(t *testing.T) {
 	}
 	if loopsOverInput(bare.decl) {
 		t.Error("loopsOverInput(bare) = true")
+	}
+}
+
+func TestNameWords(t *testing.T) {
+	t.Parallel()
+	for in, want := range map[string]string{
+		"ParseConfig":       "parse config",
+		"decodeHTTPRequest": "decode http request",
+		"benchParse":        "bench parse",
+		"Parser":            "parser",
+		"read_all2Lines":    "read all lines",
+		"URLParse":          "url parse",
+	} {
+		if got := strings.Join(nameWords(in), " "); got != want {
+			t.Errorf("nameWords(%q) = %q, want %q", in, got, want)
+		}
+	}
+	if verb("Parser", hotVerbs) != "" || verb("benchParse", hotVerbs) != "parse" {
+		t.Error("verbs must match whole words only")
+	}
+	for v, want := range map[string]string{"sort": "sorts", "hash": "hashes", "compress": "compresses", "lex": "lexes"} {
+		if got := thirdPerson(v); got != want {
+			t.Errorf("thirdPerson(%q) = %q", v, got)
+		}
 	}
 }

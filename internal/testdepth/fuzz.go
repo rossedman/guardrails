@@ -83,14 +83,14 @@ func fuzzRequirements(e Env, funcs []Func, idx fuzzIndex) (feedback.Check, []str
 	if len(lines) == 0 {
 		return feedback.Check{}, asked, false
 	}
-	noun := "functions"
+	summary := fmt.Sprintf("%d functions that parse untrusted input have no fuzz target", len(lines))
 	if len(lines) == 1 {
-		noun = "function"
+		summary = "1 function that parses untrusted input has no fuzz target"
 	}
 	return feedback.Check{
 		Name:    "fuzz-targets",
 		Failed:  true,
-		Summary: fmt.Sprintf("%d %s that parse untrusted input have no fuzz target", len(lines), noun),
+		Summary: summary,
 		Lines:   lines,
 		Fix:     "add Fuzz functions with a seed corpus (f.Add) that call these and assert invariants such as round-trips; the human can opt out with // guardrails:nofuzz <reason>",
 	}, asked, true

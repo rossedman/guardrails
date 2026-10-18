@@ -35,6 +35,11 @@ func benchParse(out string) benchSamples {
 			if err != nil {
 				break
 			}
+			// ParseFloat accepts NaN and Inf, which would poison the
+			// significance test; no real benchmark reports them.
+			if math.IsNaN(v) || math.IsInf(v, 0) {
+				continue
+			}
 			if s[name] == nil {
 				s[name] = map[string][]float64{}
 			}

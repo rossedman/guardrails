@@ -154,11 +154,81 @@ func (s *Signals) add(strong bool, reason string) {
 }
 
 var (
-	hotNames    = regexp.MustCompile(`^(?i)(encode|decode|marshal|unmarshal|parse|hash|compress|decompress|sort|serialize|deserialize|scan|tokeni[sz]e|lex)`)
-	parserNames = regexp.MustCompile(`^(?i)(parse|decode|unmarshal|deserialize|read|load|scan|lex|tokeni[sz]e|from)`)
+	// Verbs are matched as whole camelCase words anywhere in the name:
+	// decodeRequest, benchParse and ParseConfig match; Parser, Scanner and
+	// Sorter (nouns) don't.
+	hotVerbs = wordSet("encode", "decode", "marshal", "unmarshal", "parse", "hash",
+		"compress", "decompress", "sort", "serialize", "deserialize", "scan", "tokenize", "tokenise", "lex")
+	// parseVerbs turn text or bytes into structure; a string parameter
+	// counts as input only for these.
+	parseVerbs = wordSet("parse", "decode", "unmarshal", "deserialize", "scan", "lex", "tokenize", "tokenise")
+	// readVerbs read structured input, but typically take a path when the
+	// parameter is a string, so they need byte or reader input.
+	readVerbs   = wordSet("read", "load", "from")
 	hotImports  = []string{"encoding/", "compress/", "hash", "crypto/", "sort", "slices", "bufio", "strconv"}
 	inputImport = []string{"encoding/", "bufio", "net/http", "net/url", "mime", "archive/", "text/template", "html/template"}
 )
+
+func wordSet(words ...string) map[string]bool {
+	m := make(map[string]bool, len(words))
+	for _, w := range words {
+		m[w] = true
+	}
+	return m
+}
+
+// nameWords splits a Go identifier into lower-case camelCase words, e.g.
+// "decodeHTTPRequest" → decode, http, request.
+func nameWords(name string) []string {
+	var (
+		words []string
+		cur   []rune
+	)
+	rs := []rune(name)
+	flush := func() {
+		if len(cur) > 0 {
+			words = append(words, strings.ToLower(string(cur)))
+			cur = nil
+		}
+	}
+	for i, r := range rs {
+		switch {
+		case r == '_' || (r >= '0' && r <= '9'):
+			flush()
+			continue
+		case i > 0 && r >= 'A' && r <= 'Z':
+			prevLower := rs[i-1] >= 'a' && rs[i-1] <= 'z'
+			nextLower := i+1 < len(rs) && rs[i+1] >= 'a' && rs[i+1] <= 'z'
+			prevUpper := rs[i-1] >= 'A' && rs[i-1] <= 'Z'
+			if prevLower || (prevUpper && nextLower) {
+				flush()
+			}
+		}
+		cur = append(cur, r)
+	}
+	flush()
+	return words
+}
+
+// thirdPerson conjugates a verb: sort → sorts, hash → hashes.
+func thirdPerson(v string) string {
+	for _, suf := range []string{"sh", "ss", "x"} {
+		if strings.HasSuffix(v, suf) {
+			return v + "es"
+		}
+	}
+	return v + "s"
+}
+
+// verb returns the first word of name in set, or "".
+func verb(name string, set map[string]bool) string {
+	for _, w := range nameWords(name) {
+		if set[w] {
+			return w
+		}
+	}
+	return ""
+}
 
 // HotPath reports benchmark signals for f. perfPackages are module-relative
 // patterns from go.bench.packages.
@@ -177,8 +247,13 @@ func HotPath(f Func, root string, perfPackages []string) Signals {
 			}
 		}
 	}
-	if hotNames.MatchString(f.Ident) {
-		s.add(false, fmt.Sprintf("%s does serialization, parsing, hashing or sorting work", f.Ident))
+	// Imports and loops only support a signal; on their own they flag far
+	// too much ordinary code.
+	if v := verb(f.Ident, hotVerbs); v != "" {
+		s.add(false, fmt.Sprintf("%s %s", f.Ident, thirdPerson(v)))
+	}
+	if !s.Any() {
+		return s
 	}
 	if imp := usedImports(f, hotImports); len(imp) > 0 {
 		s.add(false, "uses "+strings.Join(imp, ", "))
@@ -189,27 +264,44 @@ func HotPath(f Func, root string, perfPackages []string) Signals {
 	return s
 }
 
-// Parser reports fuzzing signals for f: it takes bytes, strings or a reader
-// and turns them into something structured.
+// Parser reports fuzzing signals for f: its name says it parses or reads,
+// and it takes bytes, a reader, or (for parse verbs) a string.
 func Parser(f Func) Signals {
 	var s Signals
 	in := inputParams(f.decl)
 	if len(in) == 0 {
 		return s
 	}
-	returnsErr := returnsError(f.decl)
 	switch {
-	case parserNames.MatchString(f.Ident) && returnsErr:
+	case verb(f.Ident, parseVerbs) != "":
+	case verb(f.Ident, readVerbs) != "":
+		// Read/Load with a string usually means a path, not content.
+		in = withoutString(in)
+	default:
+		return s
+	}
+	if len(in) == 0 {
+		return s
+	}
+	if returnsError(f.decl) {
 		s.add(true, fmt.Sprintf("%s parses %s input and can fail", f.Ident, strings.Join(in, ", ")))
-	case parserNames.MatchString(f.Ident):
+	} else {
 		s.add(false, fmt.Sprintf("%s parses %s input", f.Ident, strings.Join(in, ", ")))
-	case returnsErr:
-		s.add(false, fmt.Sprintf("%s takes %s input and can fail", f.Ident, strings.Join(in, ", ")))
 	}
 	if imp := usedImports(f, inputImport); len(imp) > 0 && s.Any() {
 		s.add(false, "uses "+strings.Join(imp, ", "))
 	}
 	return s
+}
+
+func withoutString(in []string) []string {
+	var out []string
+	for _, t := range in {
+		if t != "string" {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
 // inputParams lists parameter types that carry loosely structured input.
