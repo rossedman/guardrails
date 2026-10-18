@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/rossedman/guardrails/internal/config"
+	"github.com/rossedman/guardrails/internal/deps"
 	"github.com/rossedman/guardrails/internal/feedback"
 	"github.com/rossedman/guardrails/internal/hook"
 	"github.com/rossedman/guardrails/internal/module"
@@ -43,6 +44,9 @@ type Engine struct {
 	Now func() time.Time
 	// Tools provisions external tools. Nil resolves tools from PATH only.
 	Tools *tools.Manager
+	// Deps checks packages before they're added. Nil uses a checker that
+	// caches in the data dir.
+	Deps *deps.Checker
 }
 
 // New returns an Engine with the default modules.
@@ -74,6 +78,8 @@ func (e *Engine) Handle(ctx context.Context, event string, in hook.Input) (hook.
 		return e.stop(ctx, in, agentKey(in))
 	case hook.SessionEnd:
 		return e.sessionEnd(in)
+	case hook.UserPromptSubmit:
+		return e.userPromptSubmit(ctx, in)
 	default:
 		return hook.Output{}, fmt.Errorf("unknown hook event %q", event)
 	}
@@ -83,7 +89,7 @@ func (e *Engine) Handle(ctx context.Context, event string, in hook.Input) (hook.
 // canonical event name.
 func NormalizeEvent(s string) (string, bool) {
 	key := strings.ToLower(strings.NewReplacer("-", "", "_", "").Replace(s))
-	for _, ev := range []string{hook.SessionStart, hook.PreToolUse, hook.PostToolUse, hook.Stop, hook.SubagentStop, hook.SessionEnd} {
+	for _, ev := range []string{hook.SessionStart, hook.PreToolUse, hook.PostToolUse, hook.Stop, hook.SubagentStop, hook.SessionEnd, hook.UserPromptSubmit} {
 		if strings.ToLower(ev) == key {
 			return ev, true
 		}

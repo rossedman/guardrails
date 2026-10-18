@@ -9,7 +9,7 @@ import (
 	"github.com/rossedman/guardrails/internal/hook"
 )
 
-var hookEvents = []string{"SessionStart", "PreToolUse", "PostToolUse", "Stop", "SubagentStop", "SessionEnd"}
+var hookEvents = []string{"SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop", "SubagentStop", "SessionEnd"}
 
 func newHookCmd(a *App) *cobra.Command {
 	return &cobra.Command{
@@ -19,8 +19,8 @@ func newHookCmd(a *App) *cobra.Command {
 for every event; you rarely run it yourself.
 
 The event's JSON arrives on stdin and the hook's JSON answer goes to stdout.
-Events are SessionStart, PreToolUse, PostToolUse, Stop, SubagentStop and
-SessionEnd, in any case or kebab-case.
+Events are SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop,
+SubagentStop and SessionEnd, in any case or kebab-case.
 
 If guardrails itself fails on an event that can block (PreToolUse, Stop,
 SubagentStop), it exits 2 so the action fails closed. On other events it
