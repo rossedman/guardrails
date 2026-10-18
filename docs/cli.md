@@ -7,7 +7,7 @@ examples, and `guardrails help` lists them in groups:
 | Group | Commands |
 |---|---|
 | Claude Code | `hook`, `statusline` |
-| Gates | `gate`, `harden`, `explain`, `insights` |
+| Gates | `gate`, `harden`, `explain`, `insights`, `lessons` |
 | Setup | `init`, `doctor`, `tools`, `config`, `schema` |
 | More | `version`, `completion`, `help` |
 
@@ -68,6 +68,17 @@ the rules that trip most, with rule candidates worth teaching Claude. See
 
 ```bash
 guardrails insights [--days 30] [--all-repos] [--min-sessions 5] [--json]
+```
+
+## `guardrails lessons`
+
+List the corrections you've given Claude in this repository, recorded as
+candidate rules. `/guardrails:learn` drafts them into `.claude/rules/`. See
+[Lessons](lessons.md).
+
+```bash
+guardrails lessons [--all-repos] [--json]
+guardrails lessons --clear [--id ID ...]   # remove handled lessons
 ```
 
 ## `guardrails explain`

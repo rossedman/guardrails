@@ -2,7 +2,9 @@
 
 PreToolUse guards come in two kinds: **anti-gaming** guards stop Claude
 from weakening the standards, and **blast-radius** guards keep irreversible
-operations with you. Guards always apply, including in `mode: warn`.
+operations with you. Guards always apply, including in `mode: warn`. The
+[dependency check](dependencies.md) runs alongside them on install commands
+and manifest edits.
 
 ## Anti-gaming
 

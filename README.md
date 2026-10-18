@@ -43,6 +43,13 @@ every turn — for **Go, Python, Shell, YAML, Terraform and Docker**.
 - **Dangerous commands need you.** `terraform apply`, force pushes, pushes
   to `main` and `--no-verify` are denied; registry pushes and non-dev
   cluster writes ask first.
+- **No phantom packages.** Before Claude installs or adds a dependency
+  (npm, PyPI, Go, Cargo), it's looked up: names that don't exist,
+  typosquats and malicious packages are denied; brand-new packages, known
+  vulnerabilities and disallowed licenses ask first.
+- **It learns from you.** When you correct Claude ("no, we don't mock the
+  database"), the correction is recorded; `/guardrails:learn` turns your
+  corrections into rules so the next session already knows.
 - **Hands off, not stuck.** After three consecutive blocks the gate stops,
   summarizes what's left, and hands the turn back to you.
 
@@ -85,6 +92,7 @@ guardrails init     # write .guardrails.yaml and .claude/rules/*.md
 guardrails gate     # run the same gate Claude faces, on your changes
 guardrails harden   # mutation-test and fuzz what you changed
 guardrails insights # what Claude trips on most, and rules to prevent it
+guardrails lessons  # corrections you've given Claude, waiting to be rules
 ```
 
 ## How it works
