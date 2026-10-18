@@ -28,6 +28,10 @@ fmt: ## Format with gofumpt and goimports
 gate: build ## Run Guardrails' own gate on itself
 	$(BIN) gate --all --explain
 
+.PHONY: harden
+harden: build ## Mutation-test and fuzz the Go changed on this branch
+	$(BIN) harden --base origin/main
+
 .PHONY: docs
 docs: ## Serve the docs locally
 	pip install -q -r docs/requirements.txt

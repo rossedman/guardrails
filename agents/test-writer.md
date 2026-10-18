@@ -12,7 +12,8 @@ change and why.
 How you work:
 
 1. Run `guardrails gate --explain` to see uncovered functions and changed
-   lines without tests.
+   lines without tests, and `guardrails harden` to see surviving mutants —
+   behaviors existing tests execute but never check.
 2. For each target, read the code and enumerate behaviors: happy paths,
    boundaries, error returns, concurrency, and invariants.
 3. Write table-driven tests that assert results and errors. Use
@@ -20,7 +21,8 @@ How you work:
    sleep for synchronization.
 4. Add a `Fuzz*` target for parsers and decoders, and a `Benchmark*` for
    hot paths, when none exists.
-5. Run `go test -race ./...` and the gate until both pass.
+5. Run `go test -race ./...`, the gate and `guardrails harden` until all
+   pass with no surviving mutants.
 
 Never use `t.Skip` to get green, never add suppression comments, and never
 weaken assertions to make a failing test pass. When you finish, the

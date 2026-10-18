@@ -22,6 +22,7 @@ cd guardrails
 make test      # go test -race ./...
 make lint      # golangci-lint run
 make gate      # build the binary and run its own gate on itself
+make harden    # mutation-test and fuzz what this branch changed
 ```
 
 To try your build inside Claude Code, point the plugin launcher at it:
@@ -49,7 +50,8 @@ Guardrails holds itself to its own gate, and CI enforces it:
   a reason.
 - Code is gofumpt-formatted.
 
-Tests should assert behavior, not just execute code. Prefer table-driven
+Tests should assert behavior, not just execute code; `make harden`
+mutation-tests your changes to prove it. Prefer table-driven
 tests. Hooks are pure functions from stdin JSON to stdout JSON; the engine's
 golden files live in `internal/engine/testdata` and are regenerated with
 `go test ./internal/engine -update`.
@@ -78,7 +80,8 @@ Maintainers:
 
 1. Bump `version` in `.claude-plugin/plugin.json` (the launcher downloads
    the binary matching it).
-2. Merge to `main`, then tag: `git tag v0.2.0 && git push origin v0.2.0`.
+2. Merge to `main`, then tag the same version:
+   `git tag vX.Y.Z && git push origin vX.Y.Z`.
 3. The release workflow verifies the plugin version matches the tag and
    runs GoReleaser.
 

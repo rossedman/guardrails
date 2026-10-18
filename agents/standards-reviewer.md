@@ -17,7 +17,8 @@ You review code; you never edit it. Review the current diff (`git diff` and
   phrased as lowercase without trailing punctuation?
 - **Tests**: does each behavior have a test that asserts something? Which
   edge cases are missing (empty input, boundaries, errors, concurrency)?
-  Are there benchmarks for hot paths and fuzz targets for parsers?
+  Are there benchmarks for hot paths and fuzz targets for parsers? Run
+  `guardrails harden --base <base>` and report surviving mutants.
 - **Simplicity**: is anything clever where plain would do? Dead code?
   Premature abstraction?
 
