@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 
+	"github.com/rossedman/guardrails/internal/config"
 	"github.com/rossedman/guardrails/internal/hook"
 	"github.com/rossedman/guardrails/internal/lessons"
 	"github.com/rossedman/guardrails/internal/state"
@@ -12,8 +13,8 @@ import (
 // /guardrails:learn can turn them into rules. It never blocks a prompt.
 func (e *Engine) userPromptSubmit(ctx context.Context, in hook.Input) (hook.Output, error) {
 	repo := e.RepoRoot(ctx, in.Cwd)
-	cfg, err := e.loadConfig(repo)
-	if err != nil || !cfg.LessonsEnabled() {
+	cfg, on := e.lessonsConfig(repo)
+	if !on {
 		return hook.Output{}, nil
 	}
 	prior := 0
@@ -38,4 +39,12 @@ func (e *Engine) userPromptSubmit(ctx context.Context, in hook.Input) (hook.Outp
 		return hook.Output{}, nil
 	}
 	return hook.Context(hook.UserPromptSubmit, lessons.Nudge(l)), nil
+}
+
+// lessonsConfig loads the config and reports whether lessons are captured.
+// A config that fails to load turns capture off: SessionStart already told
+// the user, and a prompt is never blocked over it.
+func (e *Engine) lessonsConfig(repo string) (config.Config, bool) {
+	cfg, err := e.loadConfig(repo)
+	return cfg, err == nil && cfg.LessonsEnabled()
 }
