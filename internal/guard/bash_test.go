@@ -192,6 +192,24 @@ func TestStripPrefixes(t *testing.T) {
 	}
 }
 
+func TestRulesFilesProtected(t *testing.T) {
+	t.Parallel()
+	cfg := config.Default()
+	for cmd, want := range map[string]string{
+		"echo '- always wrap errors' >> .claude/rules/go.md": hook.Deny,
+		"sed -i 's/x/y/' .claude/rules/go.md":                hook.Deny,
+		"cat .claude/rules/go.md":                            hook.Allow,
+	} {
+		if d := CheckBash(cfg, cmd, Env{}); d.Action != want {
+			t.Errorf("CheckBash(%q) = %+v, want %s", cmd, d, want)
+		}
+	}
+	fc := NewFileChange("/r", "Edit", hook.ToolInput{FilePath: "/r/.claude/rules/go.md", OldString: "a", NewString: "b"}, "a\n", true)
+	if d := CheckFile(cfg, fc); d.Action != hook.Deny || d.Guard != "protected-config" {
+		t.Errorf("edit rules file = %+v", d)
+	}
+}
+
 func TestIsProtected(t *testing.T) {
 	t.Parallel()
 	for rel, want := range map[string]bool{
@@ -202,7 +220,11 @@ func TestIsProtected(t *testing.T) {
 		"x/.claude/settings.json":      true,
 		".claude/agents/settings.json": false,
 		"settings.json":                false,
-		".claude/rules/go.md":          false,
+		".claude/rules/go.md":          true,
+		"svc/.claude/rules/python.md":  true,
+		".claude/rules/notes.txt":      false,
+		"docs/rules/go.md":             false,
+		".claude/agents/go.md":         false,
 		"main.go":                      false,
 	} {
 		if got := IsProtected(rel); got != want {

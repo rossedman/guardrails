@@ -635,6 +635,10 @@ func TestStop(t *testing.T) {
 		if err != nil || strings.Count(string(data), `"type":"gate"`) != 5 {
 			t.Errorf("runs.jsonl = %s, %v", data, err)
 		}
+		// Gate records name the modules that ran, for insights.
+		if strings.Count(string(data), `"modules":["stub"]`) != 5 {
+			t.Errorf("gate records should name their modules: %s", data)
+		}
 	})
 	t.Run("pass resets counter and raises baseline", func(t *testing.T) {
 		h := newHarness(t)
