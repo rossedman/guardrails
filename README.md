@@ -31,6 +31,9 @@ every turn — for **Go, Python, Shell, YAML, Terraform and Docker**.
   pass its tests, reach **90% coverage** with a ratchet, cover **90% of the
   lines changed this session**, and pass every linter and scanner for its
   language.
+- **Tests that test.** `guardrails harden` (or `/guardrails:harden`)
+  mutation-tests the Go code you changed and fuzzes its fuzz targets, so
+  high coverage can't hide assertion-free tests.
 - **Nothing to install.** ruff, mypy, shellcheck, yamllint, tflint, trivy,
   golangci-lint and the rest are provisioned automatically:
   pinned versions, checksum-verified, downloaded on first use.
@@ -128,9 +131,10 @@ See the [configuration reference](https://rossedman.github.io/guardrails/configu
 
 ## Status
 
-Guardrails is **early (v0.2)**. All six language modules, tool
-provisioning and the policy guards are implemented; mutation testing,
-benchmarks and fuzzing are next on the
+Guardrails is **early (v0.3)**. All six language modules, tool
+provisioning, the policy guards and on-demand hardening (mutation testing
+and fuzzing) are implemented; Python mutation testing and benchmark
+regression checks are next on the
 [roadmap](https://rossedman.github.io/guardrails/roadmap/). Guardrails
 holds itself to its own gate in CI.
 

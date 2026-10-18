@@ -39,10 +39,11 @@ go:
     on_edit: fast          # fast | full | off
   race: true
   vuln: true
-  # Accepted now, enforced in an upcoming release:
-  mutation: { tool: gremlins, min_score: 70, budget_seconds: 45 }
-  bench: { require_on_hot_paths: true, regression_pct: 10, count: 6 }
-  fuzz: { require_on_parsers: true, fuzztime: 10s }
+  # Used by `guardrails harden` (on demand, not the gate):
+  mutation: { tool: builtin, min_score: 70, budget_seconds: 120 }
+  bench:
+    packages: []         # performance-critical packages, e.g. internal/codec/...
+  fuzz: { fuzztime: 10s, budget_seconds: 60 }
 
 python:
   coverage: { total: 90, ratchet: true }

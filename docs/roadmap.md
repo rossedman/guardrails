@@ -12,9 +12,13 @@
   kubeconform), Terraform (fmt, tflint, validate, trivy, version
   constraints) and Docker (built-in Dockerfile checks, digest pins, non-root,
   `docker build --check`), with pinned, checksum-verified [tool provisioning](tools.md).
-- [ ] **Test depth.** Mutation testing on changed functions (gremlins,
-  mutmut), benchmarks with benchstat regression checks, fuzzing with crash
-  capture, and a `go/analysis` pass to decide when each is warranted.
+- [x] **Hardening, on demand.** `guardrails harden` and
+  `/guardrails:harden`: built-in mutation testing of changed Go functions,
+  short fuzz runs, and benchmark / fuzz-target suggestions; the Go rules
+  teach the same criteria up front.
+- [ ] **Python mutation testing** without writing into the project
+  directory.
+- [ ] **Benchmark regression checks** against the session's base commit.
 - [ ] **v0.5 — Companion tools.** `/guardrails:tf-review`,
   `/guardrails:insights` over `runs.jsonl` with drafted rule updates.
 - [ ] **v1.0 — Same gate everywhere.** A pre-commit hook and a GitHub Action

@@ -1,6 +1,6 @@
 {
   "name": "guardrails",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Quality gates for Claude Code: auto-format and lint on every edit, a coverage-ratcheted test gate before each turn ends, and guards that stop Claude from weakening the standards. Go, Python, Shell, YAML, Terraform and Docker, with every tool provisioned for you.",
   "author": {
     "name": "Ross Edman",
