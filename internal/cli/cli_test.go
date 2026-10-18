@@ -125,7 +125,7 @@ func TestBasicCommands(t *testing.T) {
 		}
 	}
 	for _, h := range []string{"help", "-h", "--help"} {
-		if code := f.run("", h); code != 0 || !strings.Contains(f.stdout.String(), "Commands:") {
+		if code := f.run("", h); code != 0 || !strings.Contains(f.stdout.String(), "Gates:") {
 			t.Errorf("%s: %d", h, code)
 		}
 	}
@@ -152,7 +152,7 @@ func TestConfigCommand(t *testing.T) {
 
 func TestHookCommand(t *testing.T) {
 	f := newFixture(t)
-	if code := f.run("", "hook"); code != 2 || !strings.Contains(f.stderr.String(), "usage: guardrails hook") {
+	if code := f.run("", "hook"); code != 2 || !strings.Contains(f.stderr.String(), "hook takes one event") {
 		t.Errorf("no event: %d", code)
 	}
 	if code := f.run("", "hook", "nope"); code != 2 || !strings.Contains(f.stderr.String(), "unknown hook event") {
@@ -364,7 +364,7 @@ func TestInit(t *testing.T) {
 	if !strings.Contains(string(data), "patch_coverage") || strings.Contains(f.stdout.String(), "rules/go.md") {
 		t.Errorf("--force/--rules=false: %q", f.stdout)
 	}
-	if code := f.run("", "init", "--nope"); code != 1 {
+	if code := f.run("", "init", "--nope"); code != 2 {
 		t.Errorf("bad flag: %d", code)
 	}
 	f.app.Getwd = func() (string, error) { return "", errors.New("gone") }

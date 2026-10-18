@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/rossedman/guardrails/internal/config"
 	"github.com/rossedman/guardrails/internal/feedback"
 	"github.com/rossedman/guardrails/internal/module"
@@ -15,55 +17,79 @@ import (
 	"github.com/rossedman/guardrails/internal/testdepth"
 )
 
-// harden handles `guardrails harden`: on-demand mutation testing and fuzzing
-// of the Go functions changed against a base ref, plus suggestions for
-// benchmarks and fuzz targets. It is advisory tooling for a human or the
-// /guardrails:harden skill, not part of the Stop gate.
-func (a *App) harden(ctx context.Context, args []string) int {
-	fl := newFlags("harden", a.Stderr)
-	base := fl.String("base", "HEAD", "git ref to compare against, e.g. main to review a whole branch")
-	budget := fl.Duration("budget", 0, "time budget for mutation testing (default go.mutation.budget_seconds)")
-	minScore := fl.Float64("min-score", -1, "minimum mutation score (default go.mutation.min_score)")
-	fuzztime := fl.Duration("fuzztime", 0, "fuzzing time per target (default go.fuzz.fuzztime)")
-	noMutation := fl.Bool("no-mutation", false, "skip mutation testing")
-	noFuzz := fl.Bool("no-fuzz", false, "skip fuzzing")
-	asJSON := fl.Bool("json", false, "print results as JSON")
-	if err := fl.Parse(args); err != nil {
-		return 2
+func newHardenCmd(a *App) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "harden",
+		Short: "Mutation-test and fuzz the Go code you changed (on demand)",
+		Long: `Check how well the tests of the Go functions changed against --base
+actually test them, on demand rather than in the Stop gate:
+
+  mutation testing  flips operators and constants in each changed function
+                    and checks a test fails; survivors are reported with
+                    their line, against go.mutation.min_score
+  fuzzing           runs the fuzz targets in touched packages for
+                    go.fuzz.fuzztime each
+  suggestions       benchmarks and fuzz targets worth adding (not failures)
+
+It exits 1 when the mutation score is low or a fuzz target fails. The
+/guardrails:harden skill runs it and has Claude fix what it finds.`,
+		Example: `  guardrails harden --base main
+  guardrails harden --no-fuzz --min-score 80
+  guardrails harden --budget 5m --json`,
+		Args: usageArgs(cobra.NoArgs),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return a.harden(cmd.Context())
+		},
 	}
-	fail := func(err error) int {
-		fmt.Fprintf(a.Stderr, "guardrails: %v\n", err)
-		return 1
-	}
+	f := cmd.Flags()
+	f.String("base", "HEAD", "git ref to compare against, e.g. main to review a whole branch")
+	f.Duration("budget", 0, "time budget for mutation testing (default go.mutation.budget_seconds)")
+	f.Float64("min-score", -1, "minimum mutation score (default go.mutation.min_score)")
+	f.Duration("fuzztime", 0, "fuzzing time per target (default go.fuzz.fuzztime)")
+	f.Bool("no-mutation", false, "skip mutation testing")
+	f.Bool("no-fuzz", false, "skip fuzzing")
+	f.Bool("json", false, "print results as JSON")
+	a.bind(cmd, "harden")
+	return cmd
+}
+
+// harden mutation-tests and fuzzes the Go functions changed against a base
+// ref, and suggests benchmarks and fuzz targets. It is advisory tooling for
+// a human or the /guardrails:harden skill, not part of the Stop gate.
+func (a *App) harden(ctx context.Context) error {
+	v := a.V
+	base := v.GetString("harden.base")
+	budget, minScore, fuzztime := v.GetDuration("harden.budget"), v.GetFloat64("harden.min-score"), v.GetDuration("harden.fuzztime")
+	noMutation, noFuzz, asJSON := v.GetBool("harden.no-mutation"), v.GetBool("harden.no-fuzz"), v.GetBool("harden.json")
 	repo, err := a.repo(ctx)
 	if err != nil {
-		return fail(err)
+		return err
 	}
 	cfg, err := config.Load(a.globalConfig(), repo)
 	if err != nil {
-		return fail(err)
+		return err
 	}
-	if *budget > 0 {
+	if budget > 0 {
 		cfg.Go.Mutation.BudgetSeconds = int(budget.Seconds())
 	}
-	if *minScore >= 0 {
-		cfg.Go.Mutation.MinScore = *minScore
+	if minScore >= 0 {
+		cfg.Go.Mutation.MinScore = minScore
 	}
-	if *fuzztime > 0 {
+	if fuzztime > 0 {
 		cfg.Go.Fuzz.Fuzztime = fuzztime.String()
 	}
 
-	changed, touched, err := testdepth.Changes(ctx, a.Runner, repo, *base)
+	changed, touched, err := testdepth.Changes(ctx, a.Runner, repo, base)
 	if err != nil {
-		return fail(err)
+		return err
 	}
 	funcs, err := testdepth.ChangedFuncs(changed)
 	if err != nil {
-		return fail(err)
+		return err
 	}
 	if len(funcs) == 0 && len(touched) == 0 {
-		fmt.Fprintf(a.Stdout, "guardrails harden: no Go changes against %s; try --base main\n", *base)
-		return 0
+		fmt.Fprintf(a.Stdout, "guardrails harden: no Go changes against %s; try --base main\n", base)
+		return nil
 	}
 
 	byRoot := map[string][]testdepth.Func{}
@@ -91,21 +117,21 @@ func (a *App) harden(ctx context.Context, args []string) int {
 	for _, root := range roots {
 		modPath, err := golang.ModulePath(root)
 		if err != nil {
-			return fail(err)
+			return err
 		}
 		e := testdepth.Env{
 			Env:     module.Env{Runner: a.Runner, Config: cfg, Repo: repo, DataDir: a.DataDir()},
 			Root:    root,
 			ModPath: modPath,
-			Base:    *base,
+			Base:    base,
 			Changed: changed,
 			Now:     a.Now,
 		}
 		fs := byRoot[root]
-		if !*noMutation && len(fs) > 0 {
+		if !noMutation && len(fs) > 0 {
 			res.Merge(testdepth.Mutation(ctx, e, fs))
 		}
-		if !*noFuzz {
+		if !noFuzz {
 			res.Merge(testdepth.Fuzz(ctx, e, fs, touchedByRoot[root]))
 		}
 		suggestions = append(suggestions, testdepth.BenchSuggestions(e, fs, cfg.Go.Bench.Packages)...)
@@ -114,7 +140,7 @@ func (a *App) harden(ctx context.Context, args []string) int {
 
 	report := feedback.Report{Checks: res.Checks}
 	failed := report.Failed()
-	if *asJSON {
+	if asJSON {
 		enc := json.NewEncoder(a.Stdout)
 		enc.SetIndent("", "  ")
 		_ = enc.Encode(map[string]any{
@@ -122,12 +148,12 @@ func (a *App) harden(ctx context.Context, args []string) int {
 			"suggestions": suggestions, "notes": res.Notes, "ran": res.Ran,
 		})
 	} else {
-		a.printHarden(report, failed, len(funcs), *base, res, suggestions)
+		a.printHarden(report, failed, len(funcs), base, res, suggestions)
 	}
 	if len(failed) > 0 {
-		return 1
+		return exitCode(1)
 	}
-	return 0
+	return nil
 }
 
 func (a *App) printHarden(report feedback.Report, failed []feedback.Check, funcs int, base string, res testdepth.Result, suggestions []string) {

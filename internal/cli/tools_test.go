@@ -67,10 +67,10 @@ func TestToolsCommand(t *testing.T) {
 		t.Errorf("root = %s", m.Root)
 	}
 
-	if code := f.run("", "tools"); code != 2 || !strings.Contains(f.stderr.String(), "usage: guardrails tools") {
+	if code := f.run("", "tools"); code != 2 || !strings.Contains(f.stderr.String(), "guardrails tools [command]") {
 		t.Errorf("no args: %d %q", code, f.stderr.String())
 	}
-	if code := f.run("", "tools", "frobnicate"); code != 2 || !strings.Contains(f.stderr.String(), `unknown tools command "frobnicate"`) {
+	if code := f.run("", "tools", "frobnicate"); code != 2 || !strings.Contains(f.stderr.String(), `unknown command "frobnicate" for "guardrails tools"`) {
 		t.Errorf("unknown: %d %q", code, f.stderr.String())
 	}
 

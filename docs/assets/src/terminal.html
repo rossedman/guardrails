@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="brand.css">
+<style>
+  html, body { width: 1280px; height: 640px; }
+  body { background: radial-gradient(900px 500px at 50% 0%, rgba(245,184,61,0.10), transparent 70%), var(--ink); display: grid; place-items: center; }
+  .win { width: 1176px; border-radius: 16px; background: var(--well); border: 1px solid var(--ink-3); box-shadow: 0 30px 80px rgba(0,0,0,0.55); overflow: hidden; }
+  .bar { height: 40px; display: flex; align-items: center; gap: 9px; padding: 0 18px; background: var(--ink-2); position: relative; }
+  .bar i { width: 12px; height: 12px; border-radius: 50%; background: #2a3560; display: block; }
+  .bar span { position: absolute; left: 0; right: 0; text-align: center; font-size: 14px; color: var(--dim); }
+  .body { padding: 22px 28px 26px; font-size: 16.5px; line-height: 1.66; color: #d5dae8; white-space: pre; }
+  .h { color: var(--amber); font-weight: 700; }
+  .cur { display: inline-block; width: 10px; height: 20px; background: var(--amber); vertical-align: -4px; }
+</style></head>
+<body>
+<div class="win mono">
+  <div class="bar"><i></i><i></i><i></i><span>Stop hook — what Claude sees</span></div>
+<div class="body"><span class="d">guardrails: go gate failed (2 of 6 checks)</span>
+
+<span class="h">[coverage]</span> 84.2% <span class="d">&lt;</span> 90.0% <span class="d">(touched: ./internal/sched, ./internal/api)</span>
+  internal/sched/queue.go:41  <span class="s">(*Queue).Drain</span>   0/14 stmts
+  internal/api/handler.go:88  <span class="s">decodeRequest</span>    3/11 stmts
+  <span class="ok">fix:</span> add table-driven tests for the functions above
+
+<span class="h">[lint]</span> 1 issue
+  internal/api/handler.go:102:5  <span class="bad">errcheck</span>  Error return value of `w.Write` is not checked
+  <span class="ok">fix:</span> handle the error; suppression comments are not allowed
+
+<span class="d">attempt 1 of 3 · full report: guardrails explain</span>
+
+<span class="p">$</span> <span class="c">guardrails gate</span>
+<span class="d">guardrails: go gate</span> <span class="ok">passed (6 checks)</span>
+coverage 92.6% <span class="d">(threshold 90%)</span>
+<span class="p">$</span> <span class="cur"></span></div>
+</div>
+</body></html>

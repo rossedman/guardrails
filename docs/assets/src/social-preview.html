@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="brand.css">
+<style>
+  html, body { width: 1280px; height: 640px; }
+  body {
+    background:
+      radial-gradient(800px 480px at 50% 30%, rgba(245,184,61,0.18), transparent 70%),
+      radial-gradient(700px 400px at 90% 110%, rgba(108,196,240,0.10), transparent 70%),
+      var(--ink);
+    display: grid; place-items: center; text-align: center;
+  }
+  .grid { mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, #000 20%, transparent 75%); }
+  .inner { position: relative; }
+  .logo { width: 132px; height: 157px; filter: drop-shadow(0 18px 30px rgba(0,0,0,0.5)); }
+  h1 { margin-top: 26px; font-size: 112px; font-weight: 800; letter-spacing: -5px; line-height: 0.95; }
+  h1 span { color: var(--amber); }
+  p { margin-top: 22px; font-size: 32px; color: var(--mist); }
+  p b { color: var(--cream); font-weight: 600; }
+  .langs { margin-top: 34px; display: flex; gap: 12px; justify-content: center; }
+  .langs span { padding: 8px 18px; border-radius: 999px; border: 1px solid var(--ink-3); background: var(--ink-2); color: var(--amber-2); font-size: 20px; }
+</style></head>
+<body>
+  <div class="grid"></div>
+  <div class="inner">
+    <img class="logo" src="logo.svg" alt="">
+    <h1>guard<span>rails</span></h1>
+    <p>Quality gates for Claude Code. <b>Format every edit. Gate every turn.</b></p>
+    <div class="langs mono"><span>Go</span><span>Python</span><span>Shell</span><span>YAML</span><span>Terraform</span><span>Docker</span></div>
+  </div>
+</body></html>

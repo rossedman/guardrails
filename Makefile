@@ -38,8 +38,8 @@ docs: ## Serve the docs locally
 	mkdocs serve
 
 .PHONY: header
-header: ## Regenerate the README header image
-	python3 scripts/header.py
+header: ## Render the README and social graphics from docs/assets/src
+	docs/assets/render.sh
 
 .PHONY: snapshot
 snapshot: ## Build a local release snapshot with GoReleaser

@@ -1,0 +1,42 @@
+/* Guardrails design tokens, for the README graphics in this directory.
+   Rendered to PNG by ../render.sh. The site defines the same tokens in
+   ../site/landing.css; keep the two in step. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=block');
+
+:root {
+  --ink: #0a0f1e;        /* background */
+  --ink-2: #111831;      /* raised panels */
+  --ink-3: #1c2647;      /* borders, inner panels */
+  --well: #070b17;       /* code and terminal wells */
+  --amber: #f5b83d;      /* primary accent */
+  --amber-2: #ffd27a;    /* light amber */
+  --amber-3: #c98f1c;    /* deep amber */
+  --cream: #f4f1e8;      /* headings */
+  --mist: #a7b0c8;       /* body text */
+  --dim: #6b7594;        /* secondary text */
+  --sky: #6cc4f0;        /* highlights */
+  --pass: #5fd38d;       /* pass */
+  --block: #ff7a6b;      /* block, deny */
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; }
+body {
+  font-family: Inter, sans-serif;
+  color: var(--cream);
+  background: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+.mono {
+  font-family: 'JetBrains Mono', 'DejaVu Sans Mono', monospace;
+  font-variant-ligatures: none; font-feature-settings: 'calt' 0, 'liga' 0;
+}
+.grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(245,184,61,0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,184,61,0.055) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.p { color: var(--amber); } .c { color: var(--cream); } .d { color: var(--dim); }
+.s { color: var(--sky); } .ok { color: var(--pass); } .bad { color: var(--block); } .a2 { color: var(--amber-2); }

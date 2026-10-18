@@ -85,9 +85,13 @@ Maintainers:
 3. The release workflow verifies the plugin version matches the tag and
    runs GoReleaser.
 
-## Regenerating the header image
+## Regenerating the graphics
+
+The README header, social preview and terminal image are HTML pages in
+`docs/assets/src/`, styled with the design tokens in `brand.css` (the site
+uses the same tokens in `docs/assets/site/landing.css`). Render them to PNG
+with headless Chrome or Chromium:
 
 ```bash
-pip install cairosvg
-python3 scripts/header.py
+make header    # or: docs/assets/render.sh [banner|social-preview|terminal]
 ```
