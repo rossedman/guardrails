@@ -10,16 +10,25 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 find_chrome() {
-  if [ -n "${CHROME:-}" ]; then echo "$CHROME"; return; fi
+  if [ -n "${CHROME:-}" ]; then
+    echo "$CHROME"
+    return
+  fi
   # chrome-headless-shell sizes the viewport exactly; prefer it.
   local c
   for c in "${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}"/chromium_headless_shell-*/*/headless_shell \
     "${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}"/chromium-*/chrome-linux/chrome \
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; do
-    if [ -x "$c" ]; then echo "$c"; return; fi
+    if [ -x "$c" ]; then
+      echo "$c"
+      return
+    fi
   done
   for c in chrome-headless-shell google-chrome chromium chromium-browser; do
-    if command -v "$c" >/dev/null; then command -v "$c"; return; fi
+    if command -v "$c" >/dev/null; then
+      command -v "$c"
+      return
+    fi
   done
   echo "render.sh: no Chrome found; set CHROME=/path/to/chrome" >&2
   exit 1
