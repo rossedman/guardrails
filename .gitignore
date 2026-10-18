@@ -36,3 +36,7 @@ go.work.sum
 /dist/
 /site/
 /guardrails
+
+# Python
+__pycache__/
+*.pyc
