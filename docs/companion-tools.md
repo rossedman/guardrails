@@ -11,6 +11,7 @@ less often. They ship in the same plugin.
 | `/guardrails:cover` | Reads the coverage report, lists the biggest gaps, and writes behavior-asserting, table-driven tests until the threshold is met. |
 | `/guardrails:harden` | Mutation-tests and fuzzes the code you changed with [`guardrails harden`](harden.md), adds the test cases that kill surviving mutants, and reports back. |
 | `/guardrails:insights` | Summarizes the gate history with [`guardrails insights`](insights.md) — first-pass rate, the rules Claude trips most, timeouts — and drafts additions to `.claude/rules/*.md` for you to approve. |
+| `/guardrails:learn` | Reads the corrections you've given Claude with [`guardrails lessons`](lessons.md), separates lasting conventions from one-offs, and drafts them as `.claude/rules/*.md` additions for you to approve. |
 | `/guardrails:baseline` | Read-only. Reports existing debt (lint counts, coverage by package) and proposes a ratchet plan as a `.guardrails.yaml` diff for you to apply. |
 
 ## Subagents

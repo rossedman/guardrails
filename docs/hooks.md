@@ -1,20 +1,23 @@
 # Hook events
 
-Six events do the work. Everything that blocks uses a JSON `decision` (or
+Seven events do the work. Everything that blocks uses a JSON `decision` (or
 `permissionDecision`) with exit code 0, never exit 1, which Claude Code
 treats as a non-blocking error.
 
 | Event | Matcher | What runs | Effect on failure | Timeout |
 |---|---|---|---|---|
 | SessionStart | `startup\|resume\|clear\|compact` | Detect toolchains, verify tools, inject the repo's standards and baseline as `additionalContext` | Context only; missing tools go to `systemMessage` | 10s |
-| PreToolUse | `Edit\|Write\|MultiEdit\|NotebookEdit\|Bash` | [Policy guards](guards.md) | `permissionDecision: deny` or `ask`, with a reason | 5s |
+| UserPromptSubmit | — | Record prompts that correct Claude as [lessons](lessons.md) | Context only; never blocks a prompt | 3s |
+| PreToolUse | `Edit\|Write\|MultiEdit\|NotebookEdit\|Bash` | [Policy guards](guards.md) and the [dependency check](dependencies.md) | `permissionDecision: deny` or `ask`, with a reason | 10s |
 | PostToolUse | `Edit\|Write\|MultiEdit` | Auto-format the file, then fast lint on its package; record it as touched | `decision: block` with the report (the edit already happened) | 5s |
 | Stop | — | Full gate over touched packages | `decision: block`; after 3 consecutive blocks, hands off to you | 120s |
 | SubagentStop | `test-writer\|implementer` | Same gate, scoped to the files that subagent touched | Same as Stop | 120s |
 | SessionEnd | `*` | Append a session record to `runs.jsonl` | None | 3s |
 
 SessionStart's timeout is generous because the first call may download the
-binary.
+binary. PreToolUse allows 10s because the dependency check looks packages up
+on deps.dev and OSV; it only does so for install commands and manifest
+edits, and caches what it finds for a day.
 
 ## The plugin's `hooks.json`
 

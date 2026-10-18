@@ -74,7 +74,7 @@ The same gate runs from your terminal, in CI and as a pre-commit hook.`,
 		}
 	}
 	add("claude", newHookCmd(a), newStatuslineCmd(a))
-	add("gates", newGateCmd(a), newHardenCmd(a), newExplainCmd(a), newInsightsCmd(a))
+	add("gates", newGateCmd(a), newHardenCmd(a), newExplainCmd(a), newInsightsCmd(a), newLessonsCmd(a))
 	add("setup", newInitCmd(a), newDoctorCmd(a), newToolsCmd(a), newConfigCmd(a), newSchemaCmd(a))
 	root.AddCommand(newVersionCmd(a))
 	return root

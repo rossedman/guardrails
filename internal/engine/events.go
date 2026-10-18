@@ -9,9 +9,11 @@ import (
 	"strings"
 
 	"github.com/rossedman/guardrails/internal/config"
+	"github.com/rossedman/guardrails/internal/deps"
 	"github.com/rossedman/guardrails/internal/feedback"
 	"github.com/rossedman/guardrails/internal/guard"
 	"github.com/rossedman/guardrails/internal/hook"
+	"github.com/rossedman/guardrails/internal/lessons"
 	"github.com/rossedman/guardrails/internal/module"
 	"github.com/rossedman/guardrails/internal/runlog"
 	"github.com/rossedman/guardrails/internal/state"
@@ -83,11 +85,14 @@ func (e *Engine) sessionStart(ctx context.Context, in hook.Input) (hook.Output, 
 			missing = append(missing, fmt.Sprintf("%s (%s, %s: %s)", t.Name, m.Name(), kind, t.Install))
 		}
 	}
-	if len(active) == 0 {
-		return hook.Output{}, nil
-	}
-	out := hook.Context(hook.SessionStart, standardsSummary(cfg, active, rc))
 	var msgs []string
+	if n, _ := lessons.Pending(e.Store.Root, repo); n > 0 && cfg.LessonsEnabled() {
+		msgs = append(msgs, fmt.Sprintf("%d correction(s) recorded; run /guardrails:learn to turn them into rules", n))
+	}
+	out := hook.Output{}
+	if len(active) > 0 {
+		out = hook.Context(hook.SessionStart, standardsSummary(cfg, active, rc))
+	}
 	if len(installing) > 0 {
 		// Download pinned tools now so the first edit doesn't wait.
 		if err := mgr.Prefetch(installing...); err != nil {
@@ -182,6 +187,9 @@ func (e *Engine) preToolUse(ctx context.Context, in hook.Input) (hook.Output, er
 		}
 		fc := guard.NewFileChange(repo, in.ToolName, t, string(before), exists)
 		d = guard.CheckFile(cfg, fc)
+		if d.Action != hook.Deny {
+			d = guard.Worst(d, e.checkDeps(ctx, cfg, deps.FromManifest(fc.Rel, fc.Before, fc.After)))
+		}
 		if d.Action == hook.Allow && in.AgentType == "test-writer" && !isTestFile(path) {
 			d = guard.Decision{Action: hook.Deny, Guard: "test-writer", Reason: fmt.Sprintf("the test-writer agent may only edit test files; %s is not one.", fc.Rel)}
 		}
@@ -190,6 +198,9 @@ func (e *Engine) preToolUse(ctx context.Context, in hook.Input) (hook.Output, er
 			CurrentBranch: func() string { return e.gitOutput(ctx, repo, "rev-parse", "--abbrev-ref", "HEAD") },
 			KubeContext:   func() string { return e.cmdOutput(ctx, repo, "kubectl", "config", "current-context") },
 		})
+		if d.Action != hook.Deny {
+			d = guard.Worst(d, e.checkDeps(ctx, cfg, deps.FromCommand(t.Command)))
+		}
 	default:
 		return hook.Output{}, nil
 	}

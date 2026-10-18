@@ -16,6 +16,21 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/guardrails",
+            "args": [
+              "hook",
+              "UserPromptSubmit"
+            ],
+            "timeout": 3
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
@@ -27,7 +42,7 @@
               "hook",
               "PreToolUse"
             ],
-            "timeout": 5,
+            "timeout": 10,
             "onFailure": "block"
           }
         ]

@@ -4,6 +4,29 @@ Release notes for each version are published on
 [GitHub Releases](https://github.com/rossedman/guardrails/releases),
 generated from Conventional Commit messages.
 
+## Unreleased
+
+### Added
+
+- Dependency check: packages Claude installs (`npm install`, `pip install`,
+  `uv add`, `go get`, `cargo add`, `npx` and friends) or adds to a
+  manifest (`package.json`, `requirements*.txt`, `pyproject.toml`,
+  `go.mod`, `Cargo.toml`) are looked up on deps.dev and OSV first.
+  Nonexistent (hallucinated) and malicious packages are denied; typosquats,
+  brand-new packages, known vulnerabilities and disallowed licenses ask.
+  Configured under `deps:`.
+- Lessons: the new UserPromptSubmit hook records your corrections of
+  Claude; `guardrails lessons` lists them and `/guardrails:learn` drafts
+  them into `.claude/rules/` for you to apply. Configured under `lessons:`.
+- The CLI is built on Cobra and Viper: grouped, styled help, `--data-dir`
+  and `--config`, `GUARDRAILS_<COMMAND>_<FLAG>` environment overrides and
+  shell completion.
+- The docs site is rebuilt around a design system.
+
+### Changed
+
+- PreToolUse's timeout is 10s, to leave room for dependency lookups.
+
 ## 0.4.0
 
 ### Added

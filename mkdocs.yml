@@ -94,6 +94,7 @@ nav:
       - Feedback format: feedback.md
       - Hardening tests: harden.md
       - Insights: insights.md
+      - Lessons: lessons.md
   - Languages:
       - Go: go.md
       - Python: python.md
@@ -103,6 +104,7 @@ nav:
       - Docker: docker.md
   - Reference:
       - Policy guards: guards.md
+      - Dependency check: dependencies.md
       - Tool provisioning: tools.md
       - Configuration: configuration.md
       - CLI: cli.md

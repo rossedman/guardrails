@@ -47,6 +47,8 @@ type Config struct {
 	Shell     Shell     `yaml:"shell" json:"shell"`
 	Tools     Tools     `yaml:"tools" json:"tools"`
 	Guards    Guards    `yaml:"guards" json:"guards"`
+	Deps      Deps      `yaml:"deps" json:"deps"`
+	Lessons   Lessons   `yaml:"lessons" json:"lessons"`
 	Gate      Gate      `yaml:"gate" json:"gate"`
 }
 
@@ -190,6 +192,45 @@ type Guards struct {
 	ProtectedBranches   []string `yaml:"protected_branches" json:"protected_branches"`
 }
 
+// Deps configures the dependency check: packages Claude installs or adds
+// to a manifest are looked up before the change runs.
+type Deps struct {
+	Enabled *bool `yaml:"enabled" json:"enabled,omitempty"`
+	// MinAgeDays asks before adding a package first published fewer days
+	// ago; 0 disables the check.
+	MinAgeDays int `yaml:"min_age_days" json:"min_age_days"`
+	// MinVersionAgeDays asks before adding a version published fewer days
+	// ago, which catches freshly hijacked releases; 0 disables the check.
+	MinVersionAgeDays int `yaml:"min_version_age_days" json:"min_version_age_days"`
+	// Vulnerabilities is what to do with a version that has known
+	// advisories: ask, deny or allow.
+	Vulnerabilities string `yaml:"vulnerabilities" json:"vulnerabilities"`
+	// Unreachable is what to do when the registries can't be reached in
+	// time: ask or allow.
+	Unreachable string `yaml:"unreachable" json:"unreachable"`
+	// Licenses limits the licenses dependencies may have.
+	Licenses Licenses `yaml:"licenses" json:"licenses"`
+	// Allow lists packages that skip the check, as globs such as
+	// "@acme/*" or "github.com/acme/*".
+	Allow []string `yaml:"allow" json:"allow"`
+}
+
+// Licenses lists SPDX identifiers. An empty allow list allows any license
+// not denied.
+type Licenses struct {
+	Allow []string `yaml:"allow" json:"allow"`
+	Deny  []string `yaml:"deny" json:"deny"`
+}
+
+// Lessons configures capturing your corrections of Claude as candidate
+// rules.
+type Lessons struct {
+	Enabled *bool `yaml:"enabled" json:"enabled,omitempty"`
+	// Nudge tells Claude, when you correct it, that the correction was
+	// recorded and how to turn it into a rule.
+	Nudge bool `yaml:"nudge" json:"nudge"`
+}
+
 // Gate configures the Stop gate.
 type Gate struct {
 	MaxConsecutiveBlocks int `yaml:"max_consecutive_blocks" json:"max_consecutive_blocks"`
@@ -233,7 +274,15 @@ func Default() Config {
 			KubectlSafeContexts: []string{"kind-*", "*-dev"},
 			ProtectedBranches:   []string{"main", "master"},
 		},
-		Gate: Gate{MaxConsecutiveBlocks: 3, TimeoutSeconds: 90},
+		Deps: Deps{
+			MinAgeDays:      30,
+			Vulnerabilities: "ask",
+			Unreachable:     "ask",
+			Licenses:        Licenses{Allow: []string{}, Deny: []string{}},
+			Allow:           []string{},
+		},
+		Lessons: Lessons{Nudge: true},
+		Gate:    Gate{MaxConsecutiveBlocks: 3, TimeoutSeconds: 90},
 	}
 }
 
@@ -259,6 +308,12 @@ func (c Config) TerraformEnabled() bool { return on(c.Terraform.Enabled) }
 func (c Config) DockerEnabled() bool { return on(c.Docker.Enabled) }
 
 func on(b *bool) bool { return b == nil || *b }
+
+// DepsEnabled reports whether the dependency check runs.
+func (c Config) DepsEnabled() bool { return on(c.Deps.Enabled) }
+
+// LessonsEnabled reports whether corrections are captured.
+func (c Config) LessonsEnabled() bool { return on(c.Lessons.Enabled) }
 
 // Hash returns a stable digest of the effective config, used to key caches.
 func (c Config) Hash() string {
@@ -367,6 +422,14 @@ func (c Config) Validate() error {
 	}
 	if c.Gate.TimeoutSeconds < 1 {
 		add("gate.timeout_seconds: must be at least 1")
+	}
+	oneOf("deps.vulnerabilities", c.Deps.Vulnerabilities, "ask", "deny", "allow")
+	oneOf("deps.unreachable", c.Deps.Unreachable, "ask", "allow")
+	if c.Deps.MinAgeDays < 0 {
+		add("deps.min_age_days: must not be negative")
+	}
+	if c.Deps.MinVersionAgeDays < 0 {
+		add("deps.min_version_age_days: must not be negative")
 	}
 	if c.Guards.AllowSuppressionTag == "" {
 		add("guards.allow_suppression_tag: must not be empty")

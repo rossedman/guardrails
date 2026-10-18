@@ -39,6 +39,8 @@ type Session struct {
 	// Gates counts Stop gate runs; Blocked counts the ones that blocked.
 	Gates   int `json:"gates"`
 	Blocked int `json:"blocked"`
+	// Prompts counts the user's prompts this session.
+	Prompts int `json:"prompts,omitempty"`
 	// HandedOff counts times the retry cap was hit.
 	HandedOff int       `json:"handed_off"`
 	Started   time.Time `json:"started"`

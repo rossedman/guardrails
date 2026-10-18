@@ -148,7 +148,7 @@
         <a class="gr-card" href="{{ 'guards/' | url }}">
           <div class="gr-card__icon">{% include ".icons/material/alert-octagon-outline.svg" %}</div>
           <h3>Blast-radius guards</h3>
-          <p><code>terraform apply</code>, force pushes and pushes to <code>main</code> are denied; registry pushes and cluster writes ask first.</p>
+          <p><code>terraform apply</code> and force pushes are denied. Packages that don't exist, are malicious or are days old are stopped before they install.</p>
         </a>
         <a class="gr-card" href="{{ 'harden/' | url }}">
           <div class="gr-card__icon">{% include ".icons/material/bug-check-outline.svg" %}</div>
@@ -162,8 +162,8 @@
         </a>
         <a class="gr-card" href="{{ 'insights/' | url }}">
           <div class="gr-card__icon">{% include ".icons/material/lightbulb-on-outline.svg" %}</div>
-          <h3>Learns from its blocks</h3>
-          <p><code>guardrails insights</code> finds the rules Claude trips most and drafts them into <code>.claude/rules/</code>.</p>
+          <h3>Learns from you</h3>
+          <p>Your corrections and the rules Claude trips most become drafts for <code>.claude/rules/</code>, via <code>/guardrails:learn</code> and <code>insights</code>.</p>
         </a>
       </div>
     </div>
@@ -239,6 +239,7 @@
             <dt>harden</dt><dd>Mutation-test and fuzz the Go you changed</dd>
             <dt>explain</dt><dd>The full report from the last gate</dd>
             <dt>insights</dt><dd>Gate history and rules worth teaching</dd>
+            <dt>lessons</dt><dd>Your corrections, recorded as candidate rules</dd>
           </dl>
         </div>
         <div class="gr-cmdgroup">
