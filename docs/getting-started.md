@@ -3,7 +3,7 @@
 ## 1. Tools: nothing to install
 
 Guardrails runs a lot of tools — golangci-lint, ruff, mypy, shellcheck,
-yamllint, tflint, hadolint and more — but it provisions them itself: pinned
+yamllint, tflint, trivy and more — but it provisions them itself: pinned
 versions, checksum-verified, downloaded on first use into the plugin's data
 directory. Tools you already have on `PATH` are used first.
 

@@ -12,7 +12,7 @@ flowchart LR
     H --> G{guards}
     H --> M[language modules<br/>Go · Python · Shell · YAML · Terraform · Docker]
     M --> P[tool manager<br/>PATH · managed · pinned + verified]
-    P --> T[ruff · mypy · shellcheck · tflint<br/>golangci-lint · hadolint · …]
+    P --> T[ruff · mypy · shellcheck · tflint<br/>golangci-lint · trivy · …]
     G --> D[decision JSON on stdout]
     M --> D
     D --> CC

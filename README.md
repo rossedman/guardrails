@@ -32,7 +32,7 @@ every turn — for **Go, Python, Shell, YAML, Terraform and Docker**.
   lines changed this session**, and pass every linter and scanner for its
   language.
 - **Nothing to install.** ruff, mypy, shellcheck, yamllint, tflint, trivy,
-  hadolint, golangci-lint and the rest are provisioned automatically:
+  golangci-lint and the rest are provisioned automatically:
   pinned versions, checksum-verified, downloaded on first use.
 - **Claude can't move the goalposts.** New `//nolint`, `# noqa`, `t.Skip`,
   lowered thresholds and edits to the guardrail config are denied before
@@ -100,7 +100,7 @@ guardrails gate     # run the same gate Claude faces, on your changes
 | [Shell](https://rossedman.github.io/guardrails/shell/) | shfmt, shellcheck | shellcheck, shfmt diff |
 | [YAML](https://rossedman.github.io/guardrails/yaml/) | yamllint, actionlint, kubeconform | the same, over every touched file |
 | [Terraform](https://rossedman.github.io/guardrails/terraform/) | terraform fmt, tflint | init + validate, tflint, trivy, provider version constraints |
-| [Docker](https://rossedman.github.io/guardrails/docker/) | hadolint | hadolint, digest-pinned bases, non-root `USER`, `docker build --check` |
+| [Docker](https://rossedman.github.io/guardrails/docker/) | built-in Dockerfile checks | built-in checks, digest-pinned bases, non-root `USER`, `docker build --check` |
 
 Read more in [How it works](https://rossedman.github.io/guardrails/how-it-works/).
 

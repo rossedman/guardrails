@@ -43,14 +43,6 @@ tools:
       darwin/amd64: "macosx_10_9_x86_64"
       darwin/arm64: "macosx_11_0_arm64"
 
-  hadolint:
-    version: 2.15.1
-    source: archive
-    url: "https://github.com/hadolint/hadolint/releases/download/v{version}/hadolint-{os}-{arch}"
-    format: raw
-    os: {linux: linux, darwin: macos}
-    arch: {amd64: x86_64, arm64: arm64}
-
   shellcheck:
     version: 0.11.0
     source: archive

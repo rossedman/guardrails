@@ -10,8 +10,8 @@
 - [x] **v0.2 — Every language, no tool installs.** Python (ruff, mypy,
   pytest-cov, uv), Shell (shfmt, shellcheck), YAML (yamllint, actionlint,
   kubeconform), Terraform (fmt, tflint, validate, trivy, version
-  constraints) and Docker (hadolint, digest pins, non-root, `docker build
-  --check`), with pinned, checksum-verified [tool provisioning](tools.md).
+  constraints) and Docker (built-in Dockerfile checks, digest pins, non-root,
+  `docker build --check`), with pinned, checksum-verified [tool provisioning](tools.md).
 - [ ] **Test depth.** Mutation testing on changed functions (gremlins,
   mutmut), benchmarks with benchstat regression checks, fuzzing with crash
   capture, and a `go/analysis` pass to decide when each is warranted.

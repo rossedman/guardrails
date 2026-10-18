@@ -1,8 +1,8 @@
 # Tool provisioning
 
 Guardrails orchestrates a lot of tools — ruff, mypy, shellcheck, shfmt,
-yamllint, actionlint, kubeconform, terraform, tflint, trivy, hadolint,
-golangci-lint and more. **You don't install any of them.** Guardrails
+yamllint, actionlint, kubeconform, terraform, tflint, trivy, golangci-lint
+and more. **You don't install any of them.** Guardrails
 provisions pinned, checksum-verified copies on demand, so a host needs
 little more than the language runtime you already code in.
 
@@ -49,7 +49,7 @@ whose checksum doesn't match are rejected.
 
 | Source | Used for | Integrity |
 |---|---|---|
-| Release archive | shellcheck, actionlint, kubeconform, hadolint, tflint, trivy, terraform, tofu, golangci-lint, gofumpt | SHA-256 pinned in the lock |
+| Release archive | shellcheck, actionlint, kubeconform, tflint, trivy, terraform, tofu, golangci-lint, gofumpt | SHA-256 pinned in the lock |
 | PyPI wheel | uv, shfmt | SHA-256 pinned in the lock, cross-checked against PyPI's digest |
 | uv | ruff, mypy, yamllint | A hash-pinned requirements file per tool, installed with `uv pip install --require-hashes` into an isolated venv |
 | `go install` | goimports, govulncheck | The Go checksum database |
@@ -61,8 +61,8 @@ The lock is generated, never hand-edited: `go run ./internal/tools/lockgen`
 downloads every artifact, hashes it and checks the executable is inside. A
 weekly workflow regenerates it and opens a pull request, and CI installs
 every tool on all four platforms so a broken upstream artifact fails there,
-not on your machine. (It has already caught one: a corrupt macOS hadolint
-wheel on PyPI.)
+not on your machine. (It has already caught one: a corrupt macOS wheel
+published on PyPI.)
 
 ## What you still need
 
