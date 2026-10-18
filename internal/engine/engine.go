@@ -17,6 +17,7 @@ import (
 	"github.com/rossedman/guardrails/internal/feedback"
 	"github.com/rossedman/guardrails/internal/hook"
 	"github.com/rossedman/guardrails/internal/module"
+	"github.com/rossedman/guardrails/internal/module/docker"
 	"github.com/rossedman/guardrails/internal/module/golang"
 	"github.com/rossedman/guardrails/internal/module/python"
 	"github.com/rossedman/guardrails/internal/module/shell"
@@ -48,7 +49,7 @@ func New(store *state.Store, r runner.Runner, globalConfig string) *Engine {
 	return &Engine{
 		Store:        store,
 		Runner:       r,
-		Modules:      []module.Module{golang.New(), python.New(), shell.New(), terraform.New()},
+		Modules:      []module.Module{golang.New(), python.New(), shell.New(), terraform.New(), docker.New()},
 		GlobalConfig: globalConfig,
 		Now:          time.Now,
 	}
