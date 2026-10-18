@@ -110,6 +110,8 @@ type Python struct {
 // PythonCoverage configures Python coverage thresholds.
 type PythonCoverage struct {
 	Total float64 `yaml:"total" json:"total"`
+	// Ratchet keeps each package at or above its SessionStart coverage.
+	Ratchet bool `yaml:"ratchet" json:"ratchet"`
 }
 
 // Terraform configures the Terraform module.
@@ -207,7 +209,7 @@ func Default() Config {
 			Fuzz:          Fuzz{RequireOnParsers: true, Fuzztime: "10s"},
 		},
 		Python: Python{
-			Coverage:      PythonCoverage{Total: 90},
+			Coverage:      PythonCoverage{Total: 90, Ratchet: true},
 			PatchCoverage: 90,
 			Typecheck:     "mypy",
 			Strict:        true,

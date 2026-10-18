@@ -164,6 +164,10 @@
               "minimum": 0,
               "maximum": 100,
               "description": "Minimum total coverage."
+            },
+            "ratchet": {
+              "type": "boolean",
+              "description": "Never allow a package to drop below its SessionStart baseline."
             }
           }
         },

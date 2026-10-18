@@ -45,7 +45,7 @@ go:
   fuzz: { require_on_parsers: true, fuzztime: 10s }
 
 python:
-  coverage: { total: 90 }
+  coverage: { total: 90, ratchet: true }
   patch_coverage: 90
   typecheck: mypy        # mypy | pyright | off
   strict: true           # mypy --strict

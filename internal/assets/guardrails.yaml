@@ -20,7 +20,7 @@ go:
   vuln: true
 
 python:
-  coverage: { total: 90 }
+  coverage: { total: 90, ratchet: true }
   patch_coverage: 90
   typecheck: mypy        # mypy | pyright | off
   strict: true
