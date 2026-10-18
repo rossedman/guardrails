@@ -4,7 +4,10 @@ Release notes for each version are published on
 [GitHub Releases](https://github.com/rossedman/guardrails/releases),
 generated from Conventional Commit messages.
 
-## Unreleased
+## 0.6.0
+
+0.5.0 was tagged but never published, so this release also carries its
+changes: the Cobra CLI and the redesigned docs.
 
 ### Added
 
