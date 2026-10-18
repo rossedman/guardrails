@@ -1,50 +1,64 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 
+	"github.com/spf13/cobra"
+
 	"github.com/rossedman/guardrails/internal/insights"
 )
 
-// insights handles `guardrails insights`: a summary of gate history from
-// runs.jsonl, and rules that recur often enough to teach Claude up front.
-func (a *App) insights(ctx context.Context, args []string) int {
-	fl := newFlags("insights", a.Stderr)
-	days := fl.Int("days", 30, "window in days")
-	allRepos := fl.Bool("all-repos", false, "include every repository, not just this one")
-	minSessions := fl.Int("min-sessions", 5, "sessions a rule must trip in to become a rule candidate")
-	asJSON := fl.Bool("json", false, "print the report as JSON")
-	if err := fl.Parse(args); err != nil {
-		return 2
-	}
-	repo := ""
-	if !*allRepos {
-		r, err := a.repo(ctx)
-		if err != nil {
-			fmt.Fprintf(a.Stderr, "guardrails: %v\n", err)
-			return 1
-		}
-		repo = r
-	}
-	recs, malformed, err := insights.Load(a.DataDir())
-	if err != nil {
-		fmt.Fprintf(a.Stderr, "guardrails: %v\n", err)
-		return 1
-	}
-	rep := insights.Summarize(recs, insights.Options{Days: *days, Repo: repo, MinSessions: *minSessions, Now: a.Now()})
-	rep.Malformed = malformed
+func newInsightsCmd(a *App) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "insights",
+		Short: "Summarize gate history and suggest rules to teach Claude",
+		Long: `Summarize the gate history guardrails logs: how often Claude passes the
+gate first time, blocks per turn, hand-offs, gate time, and the rules that
+trip most.
 
-	if *asJSON {
-		enc := json.NewEncoder(a.Stdout)
-		enc.SetIndent("", "  ")
-		_ = enc.Encode(rep)
-		return 0
+Rules that trip in at least --min-sessions sessions become rule candidates:
+standards worth writing into .claude/rules/ so Claude meets them up front.
+The /guardrails:insights skill drafts those rules for you to review.`,
+		Example: `  guardrails insights
+  guardrails insights --days 7 --all-repos
+  guardrails insights --json | jq .rule_candidates`,
+		Args: usageArgs(cobra.NoArgs),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			v := a.V
+			days, minSessions := v.GetInt("insights.days"), v.GetInt("insights.min-sessions")
+			repo := ""
+			if !v.GetBool("insights.all-repos") {
+				r, err := a.repo(cmd.Context())
+				if err != nil {
+					return err
+				}
+				repo = r
+			}
+			recs, malformed, err := insights.Load(a.DataDir())
+			if err != nil {
+				return err
+			}
+			rep := insights.Summarize(recs, insights.Options{Days: days, Repo: repo, MinSessions: minSessions, Now: a.Now()})
+			rep.Malformed = malformed
+
+			if v.GetBool("insights.json") {
+				enc := json.NewEncoder(a.Stdout)
+				enc.SetIndent("", "  ")
+				return enc.Encode(rep)
+			}
+			printInsights(a.Stdout, rep, days)
+			return nil
+		},
 	}
-	printInsights(a.Stdout, rep, *days)
-	return 0
+	f := cmd.Flags()
+	f.Int("days", 30, "window in days")
+	f.Bool("all-repos", false, "include every repository, not just this one")
+	f.Int("min-sessions", 5, "sessions a rule must trip in to become a rule candidate")
+	f.Bool("json", false, "print the report as JSON")
+	a.bind(cmd, "insights")
+	return cmd
 }
 
 func printInsights(w io.Writer, rep insights.Report, days int) {

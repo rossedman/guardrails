@@ -1,7 +1,37 @@
 # CLI
 
 The same binary that runs the hooks is a CLI, so you can run the checks
-outside Claude and get identical results.
+outside Claude and get identical results. Every command has `--help` with
+examples, and `guardrails help` lists them in groups:
+
+| Group | Commands |
+|---|---|
+| Claude Code | `hook`, `statusline` |
+| Gates | `gate`, `harden`, `explain`, `insights` |
+| Setup | `init`, `doctor`, `tools`, `config`, `schema` |
+| More | `version`, `completion`, `help` |
+
+Exit codes are the same everywhere: 0 on success, 1 when a command fails
+(a gate that doesn't pass, a missing tool), and 2 for a usage mistake such as
+an unknown command or flag.
+
+## Global flags
+
+| Flag | Environment | Meaning |
+|---|---|---|
+| `--data-dir` | `GUARDRAILS_DATA_DIR` | Where state, reports and managed tools live |
+| `--config` | `GUARDRAILS_CONFIG` | The user-wide config file |
+
+## Flags from the environment
+
+Every command flag can also be set as `GUARDRAILS_<COMMAND>_<FLAG>`, with
+dashes as underscores. A flag on the command line wins.
+
+```bash
+GUARDRAILS_GATE_BASE=origin/main guardrails gate
+GUARDRAILS_HARDEN_NO_FUZZ=true guardrails harden
+GUARDRAILS_TOOLS_INSTALL_QUIET=1 guardrails tools install
+```
 
 ## `guardrails gate`
 
@@ -13,6 +43,7 @@ guardrails gate --base main     # changes against another ref
 guardrails gate --all           # every package
 guardrails gate --explain       # full, untruncated report
 guardrails gate --json          # machine-readable
+guardrails gate --staged        # only files staged for commit (pre-commit)
 ```
 
 Exits 0 when the gate passes and 1 when it fails. Patch coverage is
@@ -27,6 +58,16 @@ Exits 1 on surviving mutants below the minimum score or a fuzz crash. See
 
 ```bash
 guardrails harden [--base main] [--budget 3m] [--min-score 80] [--fuzztime 30s] [--no-fuzz] [--json]
+```
+
+## `guardrails insights`
+
+Summarize the gate history: first-pass rate, blocks per turn, gate time and
+the rules that trip most, with rule candidates worth teaching Claude. See
+[Insights](insights.md).
+
+```bash
+guardrails insights [--days 30] [--all-repos] [--min-sessions 5] [--json]
 ```
 
 ## `guardrails explain`
@@ -84,10 +125,22 @@ the decision JSON to stdout. Event names are case- and dash-insensitive
 (`Stop`, `stop`, `post-tool-use`). On internal errors it exits 2 for events
 that can block, so they fail closed, and 1 otherwise.
 
+## `guardrails completion <shell>`
+
+Print a completion script for bash, zsh, fish or PowerShell. Hook events and
+tool names complete too.
+
+```bash
+guardrails completion zsh > "${fpath[1]}/_guardrails"
+```
+
 ## Environment
 
 | Variable | Purpose |
 |---|---|
+| `GUARDRAILS_DATA_DIR` | State directory; overrides everything below |
 | `CLAUDE_PLUGIN_DATA` | State directory (set by Claude Code); falls back to `$XDG_DATA_HOME/guardrails` or `~/.local/share/guardrails` |
+| `GUARDRAILS_CONFIG` | The global config file |
 | `XDG_CONFIG_HOME` | Location of the global config |
+| `NO_COLOR` | Plain help output, even in a terminal |
 | `GUARDRAILS_BIN` | The plugin launcher runs this binary instead of downloading one |
