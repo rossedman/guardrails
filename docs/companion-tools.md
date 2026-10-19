@@ -7,12 +7,12 @@ less often. They ship in the same plugin.
 
 | Skill | What it does |
 |---|---|
-| `/guardrails:check` | Runs the full gate on demand and explains the results, with the smallest set of changes that would make it pass. Useful before you commit. |
+| `/guardrails:status` | What Guardrails is doing in this repo — the languages and their bar, the last gate, corrections waiting — and the one thing to do next, in plain words. Runs [`guardrails status`](cli.md#guardrails-status). |
+| `/guardrails:setup` | Measures where the repo is today (coverage, lint), recommends a [preset](presets.md), and on your OK writes `.guardrails.yaml` and `.claude/rules/`. Offers the status line and the `permissions.deny` block. |
+| `/guardrails:gate` | Runs the full gate on demand and explains the results, with the smallest set of changes that would make it pass. Useful before you commit. |
 | `/guardrails:cover` | Reads the coverage report, lists the biggest gaps, and writes behavior-asserting, table-driven tests until the threshold is met. |
 | `/guardrails:harden` | Mutation-tests and fuzzes the code you changed with [`guardrails harden`](harden.md), adds the test cases that kill surviving mutants, and reports back. |
-| `/guardrails:insights` | Summarizes the gate history with [`guardrails insights`](insights.md) — first-pass rate, the rules Claude trips most, timeouts — and drafts additions to `.claude/rules/*.md` for you to approve. |
-| `/guardrails:learn` | Reads the corrections you've given Claude with [`guardrails lessons`](lessons.md), separates lasting conventions from one-offs, and drafts them as `.claude/rules/*.md` additions for you to approve. |
-| `/guardrails:baseline` | Read-only. Reports existing debt (lint counts, coverage by package) and proposes a ratchet plan as a `.guardrails.yaml` diff for you to apply. |
+| `/guardrails:learn` | Turns what Claude keeps getting wrong into rules: the checks the gate trips most and the corrections you've given Claude, from [`guardrails learn`](learn.md), drafted as `.claude/rules/*.md` additions for you to approve. |
 
 ## Subagents
 
@@ -23,16 +23,16 @@ less often. They ship in the same plugin.
 
 ## Rules
 
-`guardrails init` installs `.claude/rules/go.md`, a path-scoped rule that
+`guardrails init` (which `/guardrails:setup` runs) installs `.claude/rules/go.md`, a path-scoped rule that
 loads only when Claude works on Go files: error wrapping, context first,
 no global state, table-driven tests that would catch a mutant, and when to
 add benchmarks and fuzz targets. Plugins can't ship rules directly, which is why `init` writes them
 into the repo, where you can edit them. Claude can't: rules are protected
-like the rest of the guardrail config, and `/guardrails:insights` proposes
+like the rest of the guardrail config, and `/guardrails:learn` proposes
 changes as diffs instead.
 
 ## Status line
 
 `guardrails statusline` shows the last gate result, coverage against the
 threshold, and the lint count. See
-[Getting started](getting-started.md#5-optional-status-line).
+[Getting started](getting-started.md#status-line-optional).

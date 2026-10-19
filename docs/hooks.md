@@ -7,7 +7,7 @@ treats as a non-blocking error.
 | Event | Matcher | What runs | Effect on failure | Timeout |
 |---|---|---|---|---|
 | SessionStart | `startup\|resume\|clear\|compact` | Detect toolchains, verify tools, inject the repo's standards and baseline as `additionalContext` | Context only; missing tools go to `systemMessage` | 10s |
-| UserPromptSubmit | — | Record prompts that correct Claude as [lessons](lessons.md) | Context only; never blocks a prompt | 3s |
+| UserPromptSubmit | — | Record prompts that correct Claude as [lessons](learn.md#your-corrections) | Context only; never blocks a prompt | 3s |
 | PreToolUse | `Edit\|Write\|MultiEdit\|NotebookEdit\|Bash` | [Policy guards](guards.md) and the [dependency check](dependencies.md) | `permissionDecision: deny` or `ask`, with a reason | 10s |
 | PostToolUse | `Edit\|Write\|MultiEdit` | Auto-format the file, then fast lint on its package; record it as touched | `decision: block` with the report (the edit already happened) | 5s |
 | Stop | — | Full gate over touched packages | `decision: block`; after 3 consecutive blocks, hands off to you | 120s |

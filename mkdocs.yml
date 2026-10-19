@@ -87,29 +87,31 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Getting started: getting-started.md
-  - Concepts:
-      - How it works: how-it-works.md
-      - Hook events: hooks.md
-      - Feedback format: feedback.md
+  - Get started:
+      - Getting started: getting-started.md
+      - Presets: presets.md
+  - Day to day:
+      - What happens: daily.md
+      - What Claude sees: feedback.md
       - Hardening tests: harden.md
-      - Insights: insights.md
-      - Lessons: lessons.md
-  - Languages:
-      - Go: go.md
-      - Python: python.md
-      - Shell: shell.md
-      - YAML: yaml.md
-      - Terraform: terraform.md
-      - Docker: docker.md
-  - Reference:
-      - Policy guards: guards.md
+      - Learn: learn.md
       - Dependency check: dependencies.md
-      - Tool provisioning: tools.md
+      - Policy guards: guards.md
+  - Tune it:
       - Configuration: configuration.md
-      - CLI: cli.md
+      - Languages:
+          - Go: go.md
+          - Python: python.md
+          - Shell: shell.md
+          - YAML: yaml.md
+          - Terraform: terraform.md
+          - Docker: docker.md
+      - Tool provisioning: tools.md
       - CI and pre-commit: ci.md
+  - Reference:
+      - CLI: cli.md
+      - Hook events: hooks.md
+      - How it works: how-it-works.md
       - Companion tools: companion-tools.md
-  - Project:
       - Roadmap: roadmap.md
       - Contributing: contributing.md

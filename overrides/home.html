@@ -124,7 +124,7 @@
   internal/api/handler.go:102:5  <span class="bad">errcheck</span>
   <span class="ok">fix:</span> suppression comments are not allowed
 
-<span class="d">attempt 1 of 3 · guardrails explain</span></pre>
+<span class="d">attempt 1 of 3 · guardrails gate --explain</span></pre>
       </div>
     </div>
   </section>
@@ -135,10 +135,10 @@
       <p class="gr-eyebrow">What you get</p>
       <h2>Standards Claude<br><span>can't talk its way around.</span></h2>
       <div class="gr-features">
-        <a class="gr-card" href="{{ 'go/' | url }}">
+        <a class="gr-card" href="{{ 'presets/' | url }}">
           <div class="gr-card__icon">{% include ".icons/material/chart-line.svg" %}</div>
-          <h3>Coverage with a ratchet</h3>
-          <p>Total, per-package and patch coverage on what Claude touched. Never lower than where the session started.</p>
+          <h3>A bar that fits the repo</h3>
+          <p>Coverage on what Claude touched, at your preset's bar: <b>strict</b>, <b>standard</b> or <b>adopt</b>. Never lower than where the session started.</p>
         </a>
         <a class="gr-card" href="{{ 'guards/' | url }}">
           <div class="gr-card__icon">{% include ".icons/material/shield-lock-outline.svg" %}</div>
@@ -160,10 +160,10 @@
           <h3>Nothing to install</h3>
           <p>ruff, mypy, shellcheck, tflint, trivy, golangci-lint and more: pinned, checksum-verified, downloaded on first use.</p>
         </a>
-        <a class="gr-card" href="{{ 'insights/' | url }}">
+        <a class="gr-card" href="{{ 'learn/' | url }}">
           <div class="gr-card__icon">{% include ".icons/material/lightbulb-on-outline.svg" %}</div>
           <h3>Learns from you</h3>
-          <p>Your corrections and the rules Claude trips most become drafts for <code>.claude/rules/</code>, via <code>/guardrails:learn</code> and <code>insights</code>.</p>
+          <p>Your corrections and the checks Claude trips most become drafts for <code>.claude/rules/</code>, via <code>/guardrails:learn</code>.</p>
         </a>
       </div>
     </div>
@@ -174,8 +174,8 @@
     <div class="gr-wrap gr-split">
       <div>
         <p class="gr-eyebrow">Quick start</p>
-        <h2>Installed in<br><span>two commands.</span></h2>
-        <p class="gr-lede">The plugin's launcher downloads the release binary for your platform, verifies its checksum and caches it. Linters and scanners arrive the same way the first time they're needed. macOS and Linux, amd64 and arm64.</p>
+        <h2>Install it.<br><span>Pick a bar. Work.</span></h2>
+        <p class="gr-lede">The plugin downloads its own binary and every linter and scanner it runs, pinned and checksum-verified, the first time they're needed. Nothing else to install. macOS and Linux, amd64 and arm64.</p>
         <a class="gr-btn" href="{{ 'getting-started/' | url }}">{% include ".icons/material/book-open-page-variant-outline.svg" %} Full getting-started guide</a>
       </div>
       <ol class="gr-steps">
@@ -185,19 +185,21 @@
 <span class="p">›</span> {{ install }}</code></pre>
         </li>
         <li>
-          <h4>Check your setup</h4>
-          <p>Shows your config, runtimes and where every tool resolves from.</p>
-          <pre class="gr-code"><button class="gr-copy" aria-label="Copy">{{ copy_icon }}</button><code><span class="p">$</span> guardrails doctor</code></pre>
+          <h4>It tells you it's on</h4>
+          <p>Your next session opens with one line: the languages it found and the bar Claude is held to. No config needed.</p>
         </li>
         <li>
-          <h4>Optional: tune it for the repo</h4>
-          <p>Writes <code>.guardrails.yaml</code> and path-scoped Claude rules. With no config, the defaults apply.</p>
-          <pre class="gr-code"><button class="gr-copy" aria-label="Copy">{{ copy_icon }}</button><code><span class="p">$</span> guardrails init</code></pre>
+          <h4>Pick the bar for this repo</h4>
+          <p>Claude measures the code and recommends a preset: <b>strict</b> for new code, <b>standard</b>, or <b>adopt</b> for existing repos (coverage never drops; new code is tested).</p>
+          <pre class="gr-code"><button class="gr-copy" aria-label="Copy">{{ copy_icon }}</button><code><span class="p">›</span> /guardrails:setup</code></pre>
         </li>
         <li>
-          <h4>Run the same gate in CI</h4>
-          <p>The GitHub Action and the pre-commit hook run the same binary and config.</p>
-          <pre class="gr-code"><button class="gr-copy" aria-label="Copy">{{ copy_icon }}</button><code><span class="p">$</span> guardrails gate --base origin/main</code></pre>
+          <h4>Work as usual</h4>
+          <p>Edits are fixed, risky moves stopped, and every turn gated. When you want more:</p>
+          <pre class="gr-code"><button class="gr-copy" aria-label="Copy">{{ copy_icon }}</button><code><span class="p">›</span> /guardrails:status   <span class="d"># what's on, what's next</span>
+<span class="p">›</span> /guardrails:gate     <span class="d"># check before you commit</span>
+<span class="p">›</span> /guardrails:harden   <span class="d"># do the tests test?</span>
+<span class="p">›</span> /guardrails:learn    <span class="d"># mistakes into rules</span></code></pre>
         </li>
       </ol>
     </div>
@@ -229,25 +231,23 @@
     <div class="gr-wrap">
       <p class="gr-eyebrow">Commands</p>
       <h2>The same gate,<br><span>from your terminal.</span></h2>
-      <p class="gr-lede gr-lede--center">Everything the hooks do, you can run yourself. Every command has <code>--help</code> with examples.</p>
+      <p class="gr-lede gr-lede--center">Everything the hooks and skills do, you can run yourself, in CI or a pre-commit hook. Every command has <code>--help</code> with examples.</p>
       <div class="gr-cmds">
         <div class="gr-cmdgroup">
-          <h3>Gates</h3>
+          <h3>Daily</h3>
           <dl>
+            <dt>status</dt><dd>What's on, the last gate, and what to do next</dd>
             <dt>gate</dt><dd>Run the full gate on changed files, or <code>--all</code></dd>
             <dt>gate --staged</dt><dd>Gate what's staged, for pre-commit</dd>
             <dt>harden</dt><dd>Mutation-test and fuzz the Go you changed</dd>
-            <dt>explain</dt><dd>The full report from the last gate</dd>
-            <dt>insights</dt><dd>Gate history and rules worth teaching</dd>
-            <dt>lessons</dt><dd>Your corrections, recorded as candidate rules</dd>
+            <dt>learn</dt><dd>Gate history and your corrections, as rules to teach</dd>
           </dl>
         </div>
         <div class="gr-cmdgroup">
           <h3>Setup</h3>
           <dl>
-            <dt>init</dt><dd>Write <code>.guardrails.yaml</code> and Claude rules</dd>
+            <dt>init --preset</dt><dd>Write <code>.guardrails.yaml</code> and Claude rules</dd>
             <dt>doctor</dt><dd>Check config, runtimes and tools</dd>
-            <dt>tools list</dt><dd>Every tool, its pin and where it resolves</dd>
             <dt>tools install</dt><dd>Download pinned tools up front</dd>
             <dt>config</dt><dd>Print the effective configuration</dd>
             <dt>schema</dt><dd>The config's JSON Schema, for editors</dd>
@@ -274,11 +274,11 @@
       <h2>Go deeper.</h2>
       <div class="gr-docs">
         {% for path, name, blurb in [
-          ("getting-started/", "Getting started", "Install, check, configure"),
-          ("how-it-works/", "How it works", "Hooks, state and design"),
+          ("getting-started/", "Getting started", "Install, set up, work"),
+          ("presets/", "Presets", "strict, standard or adopt"),
+          ("daily/", "Day to day", "What happens while Claude works"),
           ("guards/", "Policy guards", "What's denied, what asks first"),
           ("configuration/", "Configuration", "Every setting in .guardrails.yaml"),
-          ("tools/", "Tool provisioning", "Pinned tools, zero installs"),
           ("harden/", "Hardening tests", "Mutation testing and fuzzing"),
           ("ci/", "CI and pre-commit", "The same gate everywhere"),
           ("cli/", "CLI reference", "Every command and flag"),

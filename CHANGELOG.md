@@ -4,6 +4,39 @@ Release notes for each version are published on
 [GitHub Releases](https://github.com/rossedman/guardrails/releases),
 generated from Conventional Commit messages.
 
+## Unreleased
+
+### Added
+
+- `guardrails status` and `/guardrails:status`: what Guardrails is doing in
+  this repo in one view — the languages and their bar, the config, the last
+  gate, corrections waiting, how the binary is running (with the `ln -s`
+  line to use it from your terminal) — and one suggested next step.
+- `/guardrails:setup`: measures the repository, recommends a preset, and
+  writes `.guardrails.yaml` and `.claude/rules/`; offers the status line
+  and the `permissions.deny` block.
+- Presets: `preset: strict | standard | adopt`. strict is the default;
+  adopt suits existing repos (no absolute coverage floor, the ratchet, and
+  80% of changed lines tested). Any key overrides the preset.
+- A one-time message on the first session in a repo saying Guardrails is on,
+  which languages it gates and the bar.
+- `guardrails learn`: the gate history and your recorded corrections in one
+  report (`--json` gives `{"insights": …, "lessons": […]}`), with `--clear`.
+- `guardrails init --preset`, `--full` and `--statusline`.
+
+### Changed
+
+- `guardrails init` writes a short `.guardrails.yaml` (`version` and
+  `preset`); `--full` writes every setting as before.
+- Skills renamed: `/guardrails:check` → `/guardrails:gate`;
+  `/guardrails:insights` and `/guardrails:learn` merged into
+  `/guardrails:learn`; `/guardrails:baseline` → `/guardrails:setup`.
+- CLI help is grouped Daily / Setup / Claude Code. `explain`, `insights`
+  and `lessons` still work but are hidden; use `gate --explain` and
+  `learn`.
+- The docs are organized by task: Get started, Day to day, Tune it,
+  Reference. The Insights and Lessons pages are now one Learn page.
+
 ## 0.6.0
 
 0.5.0 was tagged but never published, so this release also carries its

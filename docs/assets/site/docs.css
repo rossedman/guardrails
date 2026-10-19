@@ -164,3 +164,6 @@
 @media (max-width: 40em) {
   .md-typeset pre > code { font-size: 0.7rem; }
 }
+
+/* Keep command and key names in a table's first column on one line. */
+.md-typeset table:not([class]) td:first-child > code:only-child { white-space: nowrap; }
