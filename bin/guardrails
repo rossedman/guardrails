@@ -13,6 +13,10 @@ set -eu
 repo="rossedman/guardrails"
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 self="$root/bin/guardrails"
+# Tell the binary how it was started, so `guardrails status` and
+# `guardrails init --statusline` can point people at this launcher.
+GUARDRAILS_LAUNCHER=$self
+export GUARDRAILS_LAUNCHER
 
 die() {
 	echo "guardrails: $*" >&2

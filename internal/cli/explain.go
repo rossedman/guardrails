@@ -18,8 +18,10 @@ func newExplainCmd(a *App) *cobra.Command {
 repository, whether Claude's Stop hook or "guardrails gate" ran it.
 
 Claude sees a short report capped to keep its context small; this is
-everything behind it.`,
+everything behind it. Same as "guardrails gate --explain" without re-running
+the gate.`,
 		Example: `  guardrails explain | less`,
+		Hidden:  true,
 		Args:    usageArgs(cobra.NoArgs),
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			repo, err := a.repo(cmd.Context())

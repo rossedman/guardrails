@@ -59,7 +59,7 @@ func TestDetect(t *testing.T) {
 		{"Note that the API returns 404 for missing users.", false, false, ""},
 		{"I don't know why the build is slow, can you look?", false, false, ""},
 		{"Nothing works after the upgrade; please investigate.", false, false, ""},
-		{"/guardrails:check", false, false, ""},
+		{"/guardrails:gate", false, false, ""},
 		{"/plugin install guardrails@guardrails", false, false, ""},
 		{"Should I use errors.Is instead of comparing strings?", false, false, ""},
 		{"We use Postgres 16, how do I connect from the test?", false, false, ""},

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,51 +24,32 @@ now on, run make lint"). They stay on this machine.
 
 Lessons marked * were explicit: you asked for them to be remembered. The
 /guardrails:learn skill drafts .claude/rules additions from them for you to
-review; clear the ones you've handled with --clear.`,
+review; clear the ones you've handled with --clear. "guardrails learn"
+shows these with the gate history.`,
 		Example: `  guardrails lessons
   guardrails lessons --all-repos --json
   guardrails lessons --clear --id 3f9a1c0b2e   # handled one
   guardrails lessons --clear                   # all of this repo's`,
-		Args: usageArgs(cobra.NoArgs),
+		Hidden: true,
+		Args:   usageArgs(cobra.NoArgs),
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			v := a.V
-			ids := v.GetStringSlice("lessons.id")
-			if len(ids) > 0 && !v.GetBool("lessons.clear") {
-				return usageError{errors.New("--id only applies with --clear")}
+			allRepos := v.GetBool("lessons.all-repos")
+			if done, err := a.clearLessons(cmd.Context(), "lessons", allRepos); done || err != nil {
+				return err
 			}
-			repo := ""
-			if !v.GetBool("lessons.all-repos") {
-				r, err := a.repo(cmd.Context())
-				if err != nil {
-					return err
-				}
-				repo = r
-			}
-			if v.GetBool("lessons.clear") {
-				n, err := lessons.Clear(a.DataDir(), repo, ids)
-				if err != nil {
-					return err
-				}
-				fmt.Fprintf(a.Stdout, "guardrails lessons: cleared %d lesson(s)\n", n)
-				return nil
-			}
-			all, _, err := lessons.Load(a.DataDir())
+			repo, err := a.scope(cmd.Context(), allRepos)
 			if err != nil {
 				return err
 			}
-			list := []lessons.Lesson{}
-			for _, l := range all {
-				if repo == "" || l.Repo == repo {
-					list = append(list, l)
-				}
+			list, err := a.lessonsFor(repo)
+			if err != nil {
+				return err
 			}
-			sort.SliceStable(list, func(i, j int) bool { return list[i].Time.After(list[j].Time) })
 			if v.GetBool("lessons.json") {
-				enc := json.NewEncoder(a.Stdout)
-				enc.SetIndent("", "  ")
-				return enc.Encode(list)
+				return writeJSON(a.Stdout, list)
 			}
-			printLessons(a.Stdout, list, repo == "")
+			printLessons(a.Stdout, list, allRepos, true)
 			return nil
 		},
 	}
@@ -80,16 +62,69 @@ review; clear the ones you've handled with --clear.`,
 	return cmd
 }
 
-func printLessons(w io.Writer, list []lessons.Lesson, allRepos bool) {
+// scope is the repo a report covers: this one, or "" for all repos.
+func (a *App) scope(ctx context.Context, allRepos bool) (string, error) {
+	if allRepos {
+		return "", nil
+	}
+	return a.repo(ctx)
+}
+
+// lessonsFor lists the lessons recorded for repo ("" = all), newest first.
+func (a *App) lessonsFor(repo string) ([]lessons.Lesson, error) {
+	all, _, err := lessons.Load(a.DataDir())
+	if err != nil {
+		return nil, err
+	}
+	list := []lessons.Lesson{}
+	for _, l := range all {
+		if repo == "" || l.Repo == repo {
+			list = append(list, l)
+		}
+	}
+	sort.SliceStable(list, func(i, j int) bool { return list[i].Time.After(list[j].Time) })
+	return list, nil
+}
+
+// clearLessons handles --clear and --id for the command whose flags live
+// under prefix. It reports whether it cleared, which ends the command.
+func (a *App) clearLessons(ctx context.Context, prefix string, allRepos bool) (bool, error) {
+	ids := a.V.GetStringSlice(prefix + ".id")
+	if !a.V.GetBool(prefix + ".clear") {
+		if len(ids) > 0 {
+			return true, usageError{errors.New("--id only applies with --clear")}
+		}
+		return false, nil
+	}
+	repo, err := a.scope(ctx, allRepos)
+	if err != nil {
+		return true, err
+	}
+	n, err := lessons.Clear(a.DataDir(), repo, ids)
+	if err != nil {
+		return true, err
+	}
+	fmt.Fprintf(a.Stdout, "guardrails: cleared %d lesson(s)\n", n)
+	return true, nil
+}
+
+func writeJSON(w io.Writer, v any) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	return enc.Encode(v)
+}
+
+// printLessons lists lessons; hint adds the pointer to the skill.
+func printLessons(w io.Writer, list []lessons.Lesson, allRepos, hint bool) {
 	scope := "this repo"
 	if allRepos {
 		scope = "all repos"
 	}
 	if len(list) == 0 {
-		fmt.Fprintf(w, "guardrails lessons: no corrections recorded for %s yet.\n", scope)
+		fmt.Fprintf(w, "Your corrections: none recorded for %s yet.\n", scope)
 		return
 	}
-	fmt.Fprintf(w, "guardrails lessons — %d recorded, %s\n\n", len(list), scope)
+	fmt.Fprintf(w, "Your corrections — %d recorded, %s\n\n", len(list), scope)
 	for _, l := range list {
 		mark := " "
 		if l.Explicit {
@@ -104,5 +139,8 @@ func printLessons(w io.Writer, list []lessons.Lesson, allRepos bool) {
 			fmt.Fprintf(w, "  %s  %s\n", strings.Repeat(" ", 10+len(l.ID)), l.Repo)
 		}
 	}
-	fmt.Fprintf(w, "\n* you asked for it to be remembered\nRun /guardrails:learn in Claude Code to turn these into rules.\n")
+	fmt.Fprintf(w, "\n* you asked for it to be remembered\n")
+	if hint {
+		fmt.Fprintf(w, "Run /guardrails:learn in Claude Code to turn these into rules.\n")
+	}
 }

@@ -68,7 +68,7 @@ func TestInsightsText(t *testing.T) {
 		"api/h.go",
 		"Rule candidates",
 		"5 sessions → .claude/rules/go.md",
-		"/guardrails:insights",
+		"/guardrails:learn",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)

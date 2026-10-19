@@ -52,9 +52,14 @@ func TestHelpLayout(t *testing.T) {
 	f := newFixture(t)
 	f.run("", "help")
 	out := f.stdout.String()
-	for _, want := range []string{"Claude Code:\n  hook", "Gates:\n  gate", "Setup:\n  init", "More:", "--data-dir"} {
+	for _, want := range []string{"Daily:\n  status ", "  learn ", "Setup:\n  init", "Claude Code:\n  hook", "More:", "--data-dir"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("help lacks %q:\n%s", want, out)
+		}
+	}
+	for _, hidden := range []string{"  explain ", "  insights ", "  lessons "} {
+		if strings.Contains(out, hidden) {
+			t.Errorf("help lists the old command %q:\n%s", hidden, out)
 		}
 	}
 	if strings.Contains(out, "guardrails [flags]") {

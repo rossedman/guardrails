@@ -62,11 +62,8 @@ func (e *Engine) sessionStart(ctx context.Context, in hook.Input) (hook.Output, 
 		installing []string
 	)
 	mgr := e.manager(cfg, false)
-	for _, m := range e.Modules {
-		if !m.Enabled(cfg) || !present(repo, m) {
-			continue
-		}
-		active = append(active, m)
+	active = e.ActiveModules(repo, cfg)
+	for _, m := range active {
 		for _, t := range m.Tools() {
 			if _, err := e.Runner.LookPath(t.Name); err == nil {
 				continue
@@ -86,6 +83,13 @@ func (e *Engine) sessionStart(ctx context.Context, in hook.Input) (hook.Output, 
 		}
 	}
 	var msgs []string
+	if len(active) > 0 && !rc.Welcomed {
+		// Tell the human once that Guardrails is working in this repo, and
+		// where to look; after that, it speaks up only when it has to.
+		msgs = append(msgs, Welcome(cfg, active))
+		rc.Welcomed = true
+		_ = e.Store.SaveRepo(repo, rc)
+	}
 	if n, _ := lessons.Pending(e.Store.Root, repo); n > 0 && cfg.LessonsEnabled() {
 		msgs = append(msgs, fmt.Sprintf("%d correction(s) recorded; run /guardrails:learn to turn them into rules", n))
 	}
@@ -110,13 +114,79 @@ func (e *Engine) sessionStart(ctx context.Context, in hook.Input) (hook.Output, 
 	return out, nil
 }
 
+// ActiveModules returns the modules that are enabled and have files in repo.
+func (e *Engine) ActiveModules(repo string, cfg config.Config) []module.Module {
+	var active []module.Module
+	for _, m := range e.Modules {
+		if m.Enabled(cfg) && present(repo, m) {
+			active = append(active, m)
+		}
+	}
+	return active
+}
+
+// DisplayName is a module's name as people write it: Go, YAML, Terraform.
+func DisplayName(name string) string {
+	switch name {
+	case "go":
+		return "Go"
+	case "yaml":
+		return "YAML"
+	}
+	if name == "" {
+		return name
+	}
+	return strings.ToUpper(name[:1]) + name[1:]
+}
+
+// Bar describes what a module requires, in a few words.
+func Bar(cfg config.Config, name string) string {
+	switch name {
+	case "go":
+		return coverageBar(cfg.Go.Coverage.Total, cfg.Go.PatchCoverage)
+	case "python":
+		return coverageBar(cfg.Python.Coverage.Total, cfg.Python.PatchCoverage)
+	}
+	return "lint and format"
+}
+
+func coverageBar(total, patch float64) string {
+	cov := fmt.Sprintf("%g%% coverage", total)
+	if total == 0 {
+		cov = "coverage may not drop"
+	}
+	return fmt.Sprintf("%s, %g%% of changed lines", cov, patch)
+}
+
+// Welcome is the one-time message telling the human Guardrails is on.
+func Welcome(cfg config.Config, active []module.Module) string {
+	var names []string
+	bar := ""
+	for _, m := range active {
+		names = append(names, DisplayName(m.Name()))
+		if b := Bar(cfg, m.Name()); bar == "" && strings.Contains(b, "changed lines") {
+			bar = b
+		}
+	}
+	preset := cfg.Preset
+	if preset == "" {
+		preset = config.PresetStrict
+	}
+	if bar != "" {
+		preset += " (" + bar + ")"
+	}
+	return fmt.Sprintf("on in this repo for %s · %s · Claude's work is checked when it stops · /guardrails:status for details, /guardrails:setup to tune",
+		strings.Join(names, ", "), preset)
+}
+
 // present reports whether the repo has files the module owns, checking the
-// root and one level down so detection stays fast.
+// root and one level down so detection stays fast. Guardrails' own config
+// doesn't count: it would make every repo a YAML repo.
 func present(repo string, m module.Module) bool {
 	for _, pattern := range []string{"*", "*/*"} {
 		matches, _ := filepath.Glob(filepath.Join(repo, pattern))
 		for _, p := range matches {
-			if m.Match(p) {
+			if p != filepath.Join(repo, config.RepoFile) && m.Match(p) {
 				return true
 			}
 		}

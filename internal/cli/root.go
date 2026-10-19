@@ -23,15 +23,18 @@ stops, the changed code must build, pass its tests and meet coverage, or
 Claude gets a short report and keeps working.
 
 The same gate runs from your terminal, in CI and as a pre-commit hook.`,
-		Example: `  # Set a repo up: .guardrails.yaml and Claude rules
+		Example: `  # What is guardrails doing in this repo?
+  guardrails status
+
+  # Set a repo up (an existing repo below the bar: --preset adopt)
   guardrails init
 
-  # Gate your changes, or everything
+  # Run the gate Claude faces, on your changes or on everything
   guardrails gate
   guardrails gate --all
 
-  # Mutation-test and fuzz what changed on this branch
-  guardrails harden --base main`,
+  # What Claude keeps getting wrong, from the gate and your corrections
+  guardrails learn`,
 		Version:       fmt.Sprintf("%s (commit %s, built %s)", Version, Commit, Date),
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -63,9 +66,9 @@ The same gate runs from your terminal, in CI and as a pre-commit hook.`,
 	_ = a.V.BindPFlag(keyConfig, pf.Lookup("config"))
 
 	root.AddGroup(
-		&cobra.Group{ID: "claude", Title: "Claude Code:"},
-		&cobra.Group{ID: "gates", Title: "Gates:"},
+		&cobra.Group{ID: "daily", Title: "Daily:"},
 		&cobra.Group{ID: "setup", Title: "Setup:"},
+		&cobra.Group{ID: "claude", Title: "Claude Code:"},
 	)
 	add := func(group string, cmds ...*cobra.Command) {
 		for _, c := range cmds {
@@ -73,9 +76,12 @@ The same gate runs from your terminal, in CI and as a pre-commit hook.`,
 			root.AddCommand(c)
 		}
 	}
-	add("claude", newHookCmd(a), newStatuslineCmd(a))
-	add("gates", newGateCmd(a), newHardenCmd(a), newExplainCmd(a), newInsightsCmd(a), newLessonsCmd(a))
+	add("daily", newStatusCmd(a), newGateCmd(a), newHardenCmd(a), newLearnCmd(a))
 	add("setup", newInitCmd(a), newDoctorCmd(a), newToolsCmd(a), newConfigCmd(a), newSchemaCmd(a))
+	add("claude", newHookCmd(a), newStatuslineCmd(a))
+	// Older names, kept working but out of the way: gate --explain and learn
+	// cover them.
+	add("daily", newExplainCmd(a), newInsightsCmd(a), newLessonsCmd(a))
 	root.AddCommand(newVersionCmd(a))
 	return root
 }

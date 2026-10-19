@@ -31,9 +31,9 @@ Start a session in a repository. The first time, Guardrails tells you what
 it found and what it will hold Claude to:
 
 ```text
-guardrails is on here: Go, Shell · strict (90% coverage, 90% of changed lines)
-· Claude's work is checked when it stops · /guardrails:status for details,
-/guardrails:setup to tune
+guardrails: on in this repo for Go, Shell · strict (90% coverage, 90% of
+changed lines) · Claude's work is checked when it stops · /guardrails:status
+for details, /guardrails:setup to tune
 ```
 
 With no config, the **strict** preset applies to every language the repo

@@ -22,7 +22,7 @@ guardrails learn --json           # for scripts and the skill
 ```
 
 ```text
-guardrails learn — last 30 days, this repo
+Gate history — last 30 days, this repo
 
   first-pass rate   62% (31 of 50 turns passed the gate first time)
   blocks per turn   0.6
@@ -41,7 +41,8 @@ Rule candidates (tripped in many sessions; teach them up front)
   coverage                             11 sessions → .claude/rules/go.md
   lint/SC2086                          5 sessions → .claude/rules/shell.md
 
-Your corrections — 3 recorded
+Your corrections — 3 recorded, this repo
+
   2026-10-16  7c21d04e9a * From now on, run make lint before you say you're done.
   2026-10-14  3f9a1c0b2e   Don't mock the database in the store tests.
   2026-10-12  b80e5a1f33   We don't use testify in this codebase.

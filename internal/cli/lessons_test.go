@@ -14,7 +14,7 @@ import (
 
 func TestLessonsCommand(t *testing.T) {
 	f := newFixture(t)
-	if code := f.run("", "lessons"); code != 0 || !strings.Contains(f.stdout.String(), "no corrections recorded for this repo") {
+	if code := f.run("", "lessons"); code != 0 || !strings.Contains(f.stdout.String(), "none recorded for this repo") {
 		t.Fatalf("empty: %d %q", code, f.stdout)
 	}
 	at := time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC)
