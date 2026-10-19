@@ -4,7 +4,7 @@ Release notes for each version are published on
 [GitHub Releases](https://github.com/rossedman/guardrails/releases),
 generated from Conventional Commit messages.
 
-## Unreleased
+## 0.7.0
 
 ### Added
 
