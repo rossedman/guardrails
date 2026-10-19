@@ -70,7 +70,7 @@ runs:
         } >> "$GITHUB_OUTPUT"
 
     - name: Cache tools
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ${{ runner.temp }}/guardrails-data/tools
         key: guardrails-tools-${{ steps.resolve.outputs.version }}-${{ hashFiles('internal/tools/tools.lock.json') }}-${{ steps.resolve.outputs.os }}-${{ steps.resolve.outputs.arch }}
