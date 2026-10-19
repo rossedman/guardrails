@@ -7,9 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/rossedman/guardrails/internal/config"
 	"github.com/rossedman/guardrails/internal/deps"
 	"github.com/rossedman/guardrails/internal/hook"
 	"github.com/rossedman/guardrails/internal/lessons"
+	"github.com/rossedman/guardrails/internal/module"
 )
 
 // withRegistry points the dependency check at a fake deps.dev where no
@@ -141,3 +143,69 @@ func TestUserPromptSubmitExplicitFirstPrompt(t *testing.T) {
 		t.Errorf("hint without active modules: %+v %v", out, err)
 	}
 }
+
+func TestSessionStartWelcomesOnce(t *testing.T) {
+	h := newHarness(t)
+	start := func(id string) hook.Output {
+		t.Helper()
+		out, err := h.eng.Handle(context.Background(), hook.SessionStart, h.in(hook.SessionStart, map[string]any{"session_id": id, "source": "startup"}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return out
+	}
+	if out := start("a"); !strings.Contains(out.SystemMessage, "on in this repo for Stub · strict ·") {
+		t.Fatalf("first session: %q", out.SystemMessage)
+	}
+	if out := start("b"); strings.Contains(out.SystemMessage, "on in this repo") {
+		t.Errorf("welcomed twice: %q", out.SystemMessage)
+	}
+}
+
+func TestWelcomeAndBar(t *testing.T) {
+	cfg := config.Default()
+	goMod, sh := &named{name: "go"}, &named{name: "shell"}
+	if got := Welcome(cfg, []module.Module{sh, goMod}); !strings.Contains(got, "for Shell, Go · strict (90% coverage, 90% of changed lines) ·") {
+		t.Errorf("Welcome = %q", got)
+	}
+	if err := config.ApplyPreset(&cfg, config.PresetAdopt); err != nil {
+		t.Fatal(err)
+	}
+	if got := Bar(cfg, "python"); got != "coverage may not drop, 80% of changed lines" {
+		t.Errorf("Bar(python) = %q", got)
+	}
+	if got := Welcome(cfg, []module.Module{sh}); !strings.Contains(got, "for Shell · adopt ·") {
+		t.Errorf("Welcome without coverage = %q", got)
+	}
+	for in, want := range map[string]string{"go": "Go", "yaml": "YAML", "terraform": "Terraform", "": ""} {
+		if got := DisplayName(in); got != want {
+			t.Errorf("DisplayName(%q) = %q", in, got)
+		}
+	}
+}
+
+// named is a module with only a name, for the display helpers.
+type named struct {
+	stub
+	name string
+}
+
+func (n *named) Name() string { return n.name }
+
+func TestPresentIgnoresOwnConfig(t *testing.T) {
+	h := newHarness(t)
+	yamlish := &yamlStub{}
+	h.config("version: 1\n")
+	if present(h.repo, yamlish) {
+		t.Error(".guardrails.yaml made the repo a YAML repo")
+	}
+	h.write("ci.yaml", "on: push\n")
+	if !present(h.repo, yamlish) {
+		t.Error("a real YAML file was not detected")
+	}
+}
+
+// yamlStub owns *.yaml files.
+type yamlStub struct{ stub }
+
+func (*yamlStub) Match(p string) bool { return strings.HasSuffix(p, ".yaml") }

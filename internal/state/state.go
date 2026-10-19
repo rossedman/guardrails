@@ -175,6 +175,8 @@ type RepoCache struct {
 	LastGate *GateSummary `json:"last_gate,omitempty"`
 	// LastReport is the path of the most recent full gate report.
 	LastReport string `json:"last_report,omitempty"`
+	// Welcomed records that the human was told Guardrails is on here.
+	Welcomed bool `json:"welcomed,omitempty"`
 }
 
 // GateSummary is the status-line view of a gate run.

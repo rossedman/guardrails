@@ -94,7 +94,7 @@ func IsProtected(rel string) bool {
 		return dir == ".claude" || strings.HasSuffix(dir, "/.claude")
 	}
 	// Rules teach Claude the standards; changes go through the human, e.g.
-	// as diffs drafted by /guardrails:insights.
+	// as diffs drafted by /guardrails:learn.
 	if strings.HasSuffix(base, ".md") {
 		return dir == ".claude/rules" || strings.HasSuffix(dir, "/.claude/rules")
 	}

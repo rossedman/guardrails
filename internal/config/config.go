@@ -1,6 +1,7 @@
 // Package config loads and validates Guardrails configuration.
 //
-// Configuration is layered: built-in defaults, then the global file
+// Configuration is layered: built-in defaults, then the preset the files
+// name (the repo's wins over the global one), then the global file
 // (~/.config/guardrails/config.yaml), then the repository's .guardrails.yaml.
 // Each layer overrides the previous one key by key. Unknown keys are an
 // error so a typo can never silently disable a check.
@@ -37,8 +38,11 @@ var Schema []byte
 
 // Config is the full Guardrails configuration.
 type Config struct {
-	Version   int       `yaml:"version" json:"version"`
-	Mode      string    `yaml:"mode" json:"mode"`
+	Version int    `yaml:"version" json:"version"`
+	Mode    string `yaml:"mode" json:"mode"`
+	// Preset picks a starting bar: strict (the default), standard or adopt.
+	// Keys set in the config files override it.
+	Preset    string    `yaml:"preset" json:"preset,omitempty"`
 	Go        Go        `yaml:"go" json:"go"`
 	Python    Python    `yaml:"python" json:"python"`
 	Terraform Terraform `yaml:"terraform" json:"terraform"`
@@ -339,13 +343,24 @@ func GlobalPath() string {
 // defaults.
 func Load(globalPath, repoRoot string) (Config, error) {
 	cfg := Default()
+	repoPath := ""
+	if repoRoot != "" {
+		repoPath = filepath.Join(repoRoot, RepoFile)
+	}
+	preset, err := presetOf(globalPath, repoPath)
+	if err != nil {
+		return Config{}, err
+	}
+	if err := ApplyPreset(&cfg, preset); err != nil {
+		return Config{}, err
+	}
 	if globalPath != "" {
 		if err := mergeFile(&cfg, globalPath); err != nil {
 			return Config{}, err
 		}
 	}
-	if repoRoot != "" {
-		if err := mergeFile(&cfg, filepath.Join(repoRoot, RepoFile)); err != nil {
+	if repoPath != "" {
+		if err := mergeFile(&cfg, repoPath); err != nil {
 			return Config{}, err
 		}
 	}
@@ -390,6 +405,9 @@ func (c Config) Validate() error {
 	}
 	if c.Mode != ModeEnforce && c.Mode != ModeWarn {
 		add("mode: %q must be enforce or warn", c.Mode)
+	}
+	if !validPreset(c.Preset) {
+		add("preset: %q must be one of %s", c.Preset, strings.Join(Presets, ", "))
 	}
 	pct := func(name string, v float64) {
 		if v < 0 || v > 100 {

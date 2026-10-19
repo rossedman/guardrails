@@ -55,6 +55,8 @@ type App struct {
 	NewTools func(root string) *tools.Manager
 	// Modules overrides the engine's language modules when non-nil.
 	Modules []module.Module
+	// Executable returns this binary's path; nil uses os.Executable.
+	Executable func() (string, error)
 
 	// V holds flag values and GUARDRAILS_* environment overrides. Run
 	// replaces it on every invocation.
@@ -64,13 +66,14 @@ type App struct {
 // New returns an App wired to the real process.
 func New() *App {
 	return &App{
-		Stdin:  os.Stdin,
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
-		Runner: runner.Exec{},
-		Getenv: os.Getenv,
-		Getwd:  os.Getwd,
-		Now:    time.Now,
+		Stdin:      os.Stdin,
+		Stdout:     os.Stdout,
+		Stderr:     os.Stderr,
+		Runner:     runner.Exec{},
+		Getenv:     os.Getenv,
+		Getwd:      os.Getwd,
+		Now:        time.Now,
+		Executable: os.Executable,
 		NewTools: func(root string) *tools.Manager {
 			lock, err := tools.DefaultLock()
 			if err != nil {
@@ -158,6 +161,20 @@ func (a *App) repo(ctx context.Context) (string, error) {
 		return "", err
 	}
 	return a.engine().RepoRoot(ctx, wd), nil
+}
+
+// launcher is the command that runs guardrails: the plugin's launcher
+// script when it started us (it sets GUARDRAILS_LAUNCHER), else this binary.
+func (a *App) launcher() string {
+	if p := a.Getenv("GUARDRAILS_LAUNCHER"); p != "" {
+		return p
+	}
+	if a.Executable != nil {
+		if p, err := a.Executable(); err == nil {
+			return p
+		}
+	}
+	return "guardrails"
 }
 
 func trimLines(s string) []string {

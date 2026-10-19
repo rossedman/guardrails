@@ -125,7 +125,7 @@ func TestBasicCommands(t *testing.T) {
 		}
 	}
 	for _, h := range []string{"help", "-h", "--help"} {
-		if code := f.run("", h); code != 0 || !strings.Contains(f.stdout.String(), "Gates:") {
+		if code := f.run("", h); code != 0 || !strings.Contains(f.stdout.String(), "Daily:") {
 			t.Errorf("%s: %d", h, code)
 		}
 	}
@@ -351,18 +351,21 @@ func TestInit(t *testing.T) {
 	if !strings.Contains(f.stdout.String(), `"permissions"`) {
 		t.Error("settings snippet not printed")
 	}
-	if _, err := config.Load("", f.repo); err != nil {
-		t.Errorf("written config does not load: %v", err)
+	if cfg, err := config.Load("", f.repo); err != nil || cfg.Preset != config.PresetStrict {
+		t.Errorf("written config: %+v %v", cfg.Preset, err)
+	}
+	if data, _ := os.ReadFile(filepath.Join(f.repo, config.RepoFile)); strings.Contains(string(data), "patch_coverage:") {
+		t.Errorf("default config should be minimal:\n%s", data)
 	}
 	f.write(config.RepoFile, "version: 1\n")
 	f.run("", "init")
 	if !strings.Contains(f.stdout.String(), "skip   .guardrails.yaml") {
 		t.Errorf("existing file should be skipped: %q", f.stdout)
 	}
-	f.run("", "init", "--force", "--rules=false")
+	f.run("", "init", "--force", "--rules=false", "--full")
 	data, _ := os.ReadFile(filepath.Join(f.repo, config.RepoFile))
-	if !strings.Contains(string(data), "patch_coverage") || strings.Contains(f.stdout.String(), "rules/go.md") {
-		t.Errorf("--force/--rules=false: %q", f.stdout)
+	if !strings.Contains(string(data), "patch_coverage: 90") || strings.Contains(f.stdout.String(), "rules/go.md") {
+		t.Errorf("--force/--rules=false/--full: %q", f.stdout)
 	}
 	if code := f.run("", "init", "--nope"); code != 2 {
 		t.Errorf("bad flag: %d", code)
@@ -370,6 +373,58 @@ func TestInit(t *testing.T) {
 	f.app.Getwd = func() (string, error) { return "", errors.New("gone") }
 	if code := f.run("", "init"); code != 1 {
 		t.Errorf("getwd: %d", code)
+	}
+}
+
+func TestInitPresets(t *testing.T) {
+	for _, tc := range []struct {
+		preset string
+		full   bool
+		total  float64
+		patch  float64
+	}{
+		{"adopt", false, 0, 80},
+		{"standard", false, 80, 80},
+		{"adopt", true, 0, 80},
+		{"standard", true, 80, 80},
+	} {
+		f := newFixture(t)
+		args := []string{"init", "--rules=false", "--preset", tc.preset}
+		if tc.full {
+			args = append(args, "--full")
+		}
+		if code := f.run("", args...); code != 0 {
+			t.Fatalf("%v: %d %q", args, code, f.stderr)
+		}
+		cfg, err := config.Load("", f.repo)
+		if err != nil || cfg.Preset != tc.preset || cfg.Go.Coverage.Total != tc.total || cfg.Python.PatchCoverage != tc.patch {
+			t.Errorf("%v: %+v %v", args, cfg.Go.Coverage, err)
+		}
+	}
+	f := newFixture(t)
+	if code := f.run("", "init", "--preset", "lax"); code != 2 || !strings.Contains(f.stderr.String(), "strict, standard, adopt") {
+		t.Errorf("bad preset: %d %q", code, f.stderr)
+	}
+}
+
+func TestInitStatusline(t *testing.T) {
+	f := newFixture(t)
+	f.env["GUARDRAILS_LAUNCHER"] = "/opt/plugin/bin/guardrails"
+	if code := f.run("", "init", "--statusline"); code != 0 || !strings.Contains(f.stdout.String(), `"command": "/opt/plugin/bin/guardrails statusline"`) {
+		t.Errorf("--statusline: %d\n%s", code, f.stdout)
+	}
+	delete(f.env, "GUARDRAILS_LAUNCHER")
+	f.app.Executable = func() (string, error) { return "/usr/local/bin/guardrails", nil }
+	if f.app.launcher() != "/usr/local/bin/guardrails" {
+		t.Errorf("launcher = %q", f.app.launcher())
+	}
+	f.app.Executable = func() (string, error) { return "", errors.New("unknown") }
+	if f.app.launcher() != "guardrails" {
+		t.Errorf("launcher fallback = %q", f.app.launcher())
+	}
+	f.app.Executable = nil
+	if f.app.launcher() != "guardrails" {
+		t.Errorf("launcher without Executable = %q", f.app.launcher())
 	}
 }
 

@@ -25,8 +25,7 @@ builds, tests, measures coverage and lints the files changed against --base
 (plus untracked files), or every package with --all.
 
 It exits 1 when a check fails and prints the same short report Claude sees;
---explain prints all of it. The report is saved, so "guardrails explain"
-shows it again.
+--explain prints all of it.
 
 --staged gates only files staged for commit, for pre-commit hooks.`,
 		Example: `  guardrails gate

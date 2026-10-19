@@ -18,6 +18,14 @@
         "warn"
       ]
     },
+    "preset": {
+      "enum": [
+        "strict",
+        "standard",
+        "adopt"
+      ],
+      "description": "Starting bar: strict (90% coverage, 90% of changed lines), standard (80%/80%) or adopt (coverage may not drop, 80% of changed lines). Keys set in the file override it."
+    },
     "go": {
       "type": "object",
       "additionalProperties": false,

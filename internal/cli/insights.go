@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 
@@ -20,35 +19,28 @@ trip most.
 
 Rules that trip in at least --min-sessions sessions become rule candidates:
 standards worth writing into .claude/rules/ so Claude meets them up front.
-The /guardrails:insights skill drafts those rules for you to review.`,
+"guardrails learn" shows this with your recorded corrections, and the
+/guardrails:learn skill drafts the rules for you to review.`,
 		Example: `  guardrails insights
   guardrails insights --days 7 --all-repos
   guardrails insights --json | jq .rule_candidates`,
-		Args: usageArgs(cobra.NoArgs),
+		Hidden: true,
+		Args:   usageArgs(cobra.NoArgs),
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			v := a.V
-			days, minSessions := v.GetInt("insights.days"), v.GetInt("insights.min-sessions")
-			repo := ""
-			if !v.GetBool("insights.all-repos") {
-				r, err := a.repo(cmd.Context())
-				if err != nil {
-					return err
-				}
-				repo = r
-			}
-			recs, malformed, err := insights.Load(a.DataDir())
+			days := v.GetInt("insights.days")
+			repo, err := a.scope(cmd.Context(), v.GetBool("insights.all-repos"))
 			if err != nil {
 				return err
 			}
-			rep := insights.Summarize(recs, insights.Options{Days: days, Repo: repo, MinSessions: minSessions, Now: a.Now()})
-			rep.Malformed = malformed
-
-			if v.GetBool("insights.json") {
-				enc := json.NewEncoder(a.Stdout)
-				enc.SetIndent("", "  ")
-				return enc.Encode(rep)
+			rep, err := a.insightsReport(repo, days, v.GetInt("insights.min-sessions"))
+			if err != nil {
+				return err
 			}
-			printInsights(a.Stdout, rep, days)
+			if v.GetBool("insights.json") {
+				return writeJSON(a.Stdout, rep)
+			}
+			printInsights(a.Stdout, rep, days, true)
 			return nil
 		},
 	}
@@ -61,16 +53,28 @@ The /guardrails:insights skill drafts those rules for you to review.`,
 	return cmd
 }
 
-func printInsights(w io.Writer, rep insights.Report, days int) {
+// insightsReport summarizes the gate history for repo ("" = all repos).
+func (a *App) insightsReport(repo string, days, minSessions int) (insights.Report, error) {
+	recs, malformed, err := insights.Load(a.DataDir())
+	if err != nil {
+		return insights.Report{}, err
+	}
+	rep := insights.Summarize(recs, insights.Options{Days: days, Repo: repo, MinSessions: minSessions, Now: a.Now()})
+	rep.Malformed = malformed
+	return rep, nil
+}
+
+// printInsights prints the report; hint adds the pointer to the skill.
+func printInsights(w io.Writer, rep insights.Report, days int, hint bool) {
 	scope := "this repo"
 	if rep.Repo == "" {
 		scope = "all repos"
 	}
 	if rep.GateRuns == 0 {
-		fmt.Fprintf(w, "guardrails insights: no gate runs in the last %d days (%s) yet.\n", days, scope)
+		fmt.Fprintf(w, "Gate history: no gate runs in the last %d days (%s) yet.\n", days, scope)
 		return
 	}
-	fmt.Fprintf(w, "guardrails insights — last %d days, %s\n\n", days, scope)
+	fmt.Fprintf(w, "Gate history — last %d days, %s\n\n", days, scope)
 	fmt.Fprintf(w, "  first-pass rate   %.0f%% (%d of %d turns passed the gate first time)\n", rep.FirstPassRate*100, rep.FirstPass, rep.Turns)
 	fmt.Fprintf(w, "  blocks per turn   %.1f\n", rep.BlocksPerTurn)
 	fmt.Fprintf(w, "  hand-offs         %d\n", rep.HandOffs)
@@ -104,7 +108,9 @@ func printInsights(w io.Writer, rep insights.Report, days int) {
 			}
 			fmt.Fprintf(w, "  %-36s %d sessions → %s\n", r.Name(), r.Sessions, target)
 		}
-		fmt.Fprintf(w, "\nRun /guardrails:insights in Claude Code to draft these rules for review.\n")
+		if hint {
+			fmt.Fprintf(w, "\nRun /guardrails:learn in Claude Code to draft these rules for review.\n")
+		}
 	}
 }
 

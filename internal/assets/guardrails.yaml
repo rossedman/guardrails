@@ -5,6 +5,7 @@
 # Docs: https://rossedman.github.io/guardrails/configuration/
 version: 1
 mode: enforce            # enforce | warn (warn = never block, report only)
+preset: strict           # strict | standard | adopt; the keys below override it
 
 go:
   coverage:
