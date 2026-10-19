@@ -27,7 +27,7 @@ group.
 
 **Caps.** At most 10 issues per check and 4,000 characters in total. The rest
 is written to a report file in the session directory and the message ends
-with a pointer to it. `guardrails explain` prints the last full report.
+with a pointer to it. `guardrails gate --explain` runs the gate and prints the full report.
 
 **Dedup.** Per-edit issues already reported this session are summarized as a
 count (`(3 previously reported, unchanged)`) instead of repeated.

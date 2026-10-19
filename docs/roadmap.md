@@ -20,12 +20,15 @@
   directory.
 - [ ] **Benchmark regression checks** against the session's base commit.
 - [x] **v0.4 — Dependents, insights, same gate everywhere.** The Go gate
-  tests the packages that import changed code; `/guardrails:insights`
+  tests the packages that import changed code; `/guardrails:insights` (now `/guardrails:learn`)
   drafts rule updates from `runs.jsonl`; a GitHub Action and a pre-commit
   hook run the identical binary and config.
 - [x] **v0.6 — Supply chain and memory.** A dependency check on every
   install command and manifest edit, lessons captured from your corrections
   with `/guardrails:learn`, and a Cobra/Viper CLI.
+- [x] **v0.7 — Easier to use.** `/guardrails:status` and a first-session
+  welcome, presets (strict, standard, adopt) with `/guardrails:setup`, one
+  `/guardrails:learn`, and docs organized by task.
 - [ ] **Companion tools.** `/guardrails:tf-review`, `/guardrails:pr-ready`,
   `/guardrails:flaky`, `/guardrails:deps`.
 - [ ] **TypeScript / JavaScript module.** eslint, prettier, tsc, vitest/jest.

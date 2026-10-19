@@ -1,5 +1,5 @@
 ---
-name: check
+name: gate
 description: Run the full Guardrails quality gate on demand and explain the results. Use before committing, when the user asks whether the work meets the standards, or to see why the Stop gate is blocking.
 ---
 

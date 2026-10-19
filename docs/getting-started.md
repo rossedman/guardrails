@@ -1,16 +1,9 @@
 # Getting started
 
-## 1. Tools: nothing to install
+Three steps: install the plugin, let it tell you it's on, and pick how strict
+it should be for this repository.
 
-Guardrails runs a lot of tools — golangci-lint, ruff, mypy, shellcheck,
-yamllint, tflint, trivy and more — but it provisions them itself: pinned
-versions, checksum-verified, downloaded on first use into the plugin's data
-directory. Tools you already have on `PATH` are used first.
-
-You only need the runtime for the language you write, such as Go or a
-Python project environment. See [Tool provisioning](tools.md) for details.
-
-## 2. Install the plugin
+## 1. Install the plugin
 
 In Claude Code:
 
@@ -19,93 +12,106 @@ In Claude Code:
 /plugin install guardrails@guardrails
 ```
 
-On first use the plugin's launcher downloads the release binary for your
-platform from GitHub, verifies it against `checksums.txt`, and caches it in
-the plugin data directory. If you prefer to build it yourself:
+That's all you install. On first use the plugin downloads its own binary
+for your platform, verifies it against the release checksums, and caches
+it. The linters and scanners it runs — golangci-lint, ruff, mypy,
+shellcheck, tflint, trivy and the rest — are provisioned the same way:
+pinned, checksum-verified, downloaded on first use. Tools you already have
+on `PATH` are used first. You only need the runtime for the language you
+write, such as Go or a Python project environment. See
+[Tool provisioning](tools.md).
+
+!!! note "Platforms"
+    The plugin supports macOS and Linux (amd64 and arm64). On Windows, use
+    WSL.
+
+## 2. It tells you it's on
+
+Start a session in a repository. The first time, Guardrails tells you what
+it found and what it will hold Claude to:
+
+```text
+guardrails is on here: Go, Shell · strict (90% coverage, 90% of changed lines)
+· Claude's work is checked when it stops · /guardrails:status for details,
+/guardrails:setup to tune
+```
+
+With no config, the **strict** preset applies to every language the repo
+uses. Ask for `/guardrails:status` at any time to see what it's doing and
+what to do next.
+
+## 3. Set it up for this repository
+
+In Claude Code, run:
+
+```text
+/guardrails:setup
+```
+
+Claude measures where the code is today (coverage, lint issues), recommends
+a [preset](presets.md), and, once you agree, writes a short
+`.guardrails.yaml` and the `.claude/rules/` files that teach Claude your
+standards before it writes code:
+
+| Preset | For | The bar |
+|---|---|---|
+| **strict** | New or already-clean repos | 90% coverage, 90% of changed lines tested |
+| **standard** | Repos close to the bar | 80% coverage, 80% of changed lines tested |
+| **adopt** | Existing repos well below the bar | Coverage may never drop; 80% of changed lines tested |
+
+Setup also offers the status line and a `permissions.deny` block for
+`.claude/settings.json`, which keeps the protections in place even if a hook
+fails. Plugins cannot ship permission rules, so you add it yourself.
+
+That's it. See [Day to day](daily.md) for what happens next.
+
+## From a terminal (optional)
+
+Everything also works as a `guardrails` command, so you can run the same
+gate in your shell, CI or a pre-commit hook. Inside Claude Code it's already
+on `PATH`. For your own terminal, either link the plugin's binary —
+`guardrails status` (or `/guardrails:status`) prints the exact command:
+
+```bash
+ln -s <path printed by status> ~/.local/bin/guardrails
+```
+
+or install it with Go:
 
 ```bash
 go install github.com/rossedman/guardrails/cmd/guardrails@latest
 ```
 
-The launcher falls back to a `guardrails` binary on your `PATH`, and
-`GUARDRAILS_BIN=/path/to/guardrails` overrides everything (useful when
-developing Guardrails itself).
-
-!!! note "Platforms"
-    The plugin launcher supports macOS and Linux (amd64 and arm64). On
-    Windows, use WSL.
-
-## 3. Check your setup
+Then:
 
 ```bash
-guardrails doctor        # config and runtimes
-guardrails tools list    # every tool and where it resolves from
+guardrails status          # what's on, the last gate, what to do next
+guardrails init            # write .guardrails.yaml and .claude/rules (what setup runs)
+guardrails gate            # the same gate Claude faces, on your changes
+guardrails doctor          # config, runtimes and every tool
+guardrails tools install   # download every tool up front, e.g. before going offline
 ```
 
-To download everything up front, for example before going offline:
+`GUARDRAILS_BIN=/path/to/guardrails` makes the plugin use a binary you
+built yourself (useful when developing Guardrails). See the [CLI](cli.md).
 
-```bash
-guardrails tools install
-```
+## Status line (optional)
 
-## 4. Configure the repository (optional)
-
-With no config, the defaults apply to every language the repo uses: 90%
-coverage with a ratchet and 90% patch coverage, clean linters and type
-checkers, and the policy guards. To tune them:
-
-```bash
-guardrails init
-```
-
-This writes:
-
-- `.guardrails.yaml` with every default spelled out (see
-  [Configuration](configuration.md)).
-- `.claude/rules/*.md`, path-scoped rules for each language that teach
-  Claude the standards up front, so it hits the gate less often.
-
-It also prints a `permissions.deny` block for `.claude/settings.json`.
-Plugins cannot ship permission rules, and those denies hold even if a hook
-fails, so adding them is recommended.
-
-## 5. Optional: status line
-
-Show the last gate result in Claude Code's status line by adding this to
-`~/.claude/settings.json`:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "guardrails statusline",
-    "refreshInterval": 10
-  }
-}
-```
+Show the last gate result in Claude Code's status line:
 
 ```text
 ⛨ gate ✓ · cov 92.6%/90% · lint 0
 ```
 
-## 6. Work as usual
+`guardrails init --statusline` prints the snippet with the full path to
+the binary; add it to `~/.claude/settings.json`:
 
-Ask Claude for a change. You'll see edits formatted as they land, lint
-feedback within seconds, and, when Claude tries to finish, the gate. Run the
-same gate yourself any time:
-
-```bash
-guardrails gate            # files changed against HEAD
-guardrails gate --all      # every package
-guardrails explain         # the full report from the last gate
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "/path/printed/by/init/guardrails statusline",
+    "refreshInterval": 10
+  }
+}
 ```
-
-Before committing, check that the tests behind your changes really assert
-something — ask Claude to run `/guardrails:harden`, or run it yourself:
-
-```bash
-guardrails harden              # mutation-test and fuzz what changed since HEAD
-guardrails harden --base main  # the whole branch
-```
-
-See [Hardening tests](harden.md).

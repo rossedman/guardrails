@@ -1,14 +1,30 @@
 # Configuration
 
+Most repositories need two lines. Pick a [preset](presets.md) — **strict**
+(the default), **standard** or **adopt** — and override only what you want
+different:
+
+```yaml
+# .guardrails.yaml
+version: 1
+preset: adopt
+```
+
+`/guardrails:setup` (or `guardrails init --preset adopt`) writes this file
+for you. `guardrails init --full` writes every setting instead, with its
+default and a comment.
+
 Configuration is layered. Each layer overrides the previous one key by key:
 
 1. Built-in defaults.
-2. The global file, `~/.config/guardrails/config.yaml` (or
+2. The [preset](presets.md) (`preset:` in either file below; the
+   repository's wins).
+3. The global file, `~/.config/guardrails/config.yaml` (or
    `$XDG_CONFIG_HOME/guardrails/config.yaml`).
-3. The repository's `.guardrails.yaml`.
+4. The repository's `.guardrails.yaml`.
 
-With no files at all, the defaults apply and every module whose files exist
-is on. Lists replace rather than merge.
+With no files at all, the strict preset applies and every module whose files
+exist is on. Lists replace rather than merge.
 
 **Unknown keys are an error.** The loader is strict, so a typo can never
 silently disable a check. Point your editor at the
@@ -22,8 +38,11 @@ in chat and you apply them.
 
 ## Reference
 
+Every key, with the strict preset's values:
+
 ```yaml
 version: 1
+preset: strict           # strict | standard | adopt
 mode: enforce            # enforce | warn (warn = never block, report only)
 
 go:
