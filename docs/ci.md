@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-go@v6 # the language runtimes your repo needs
         with:
           go-version-file: go.mod
-      - uses: rossedman/guardrails@v0.6.0
+      - uses: rossedman/guardrails@v0.7.0
 ```
 
 On pull requests the action runs `gate --base origin/<base> --explain`:
@@ -46,7 +46,7 @@ the job summary; the job fails when the gate fails.
 
 | Input | Default | Meaning |
 |---|---|---|
-| `version` | `latest` | Guardrails release to run, e.g. `0.6.0` |
+| `version` | `latest` | Guardrails release to run, e.g. `0.7.0` |
 | `args` | (see above) | Arguments for `guardrails`, e.g. `gate --all` or `harden --base origin/main` |
 | `working-directory` | `.` | Where to run |
 | `binary` | | A prebuilt `guardrails` to use instead of downloading one |
@@ -62,7 +62,7 @@ Running [`harden`](harden.md) on pull requests is a good fit for CI, where a
 few minutes don't block anyone:
 
 ```yaml
-      - uses: rossedman/guardrails@v0.6.0
+      - uses: rossedman/guardrails@v0.7.0
         with:
           args: harden --base origin/${{ github.base_ref }}
 ```
@@ -74,7 +74,7 @@ Add Guardrails to `.pre-commit-config.yaml`:
 ```yaml
 repos:
   - repo: https://github.com/rossedman/guardrails
-    rev: v0.6.0
+    rev: v0.7.0
     hooks:
       - id: guardrails
 ```
@@ -95,7 +95,7 @@ the release matching `rev`, verifies its checksum and caches it under
 Anything that can run a shell command can run the gate. With Go available:
 
 ```bash
-go install github.com/rossedman/guardrails/cmd/guardrails@v0.6.0
+go install github.com/rossedman/guardrails/cmd/guardrails@v0.7.0
 guardrails gate --base origin/main --explain    # changes on this branch
 guardrails gate --all --explain                 # everything
 ```
@@ -108,7 +108,7 @@ guardrails:
   variables:
     GIT_DEPTH: 0
   script:
-    - go install github.com/rossedman/guardrails/cmd/guardrails@v0.6.0
+    - go install github.com/rossedman/guardrails/cmd/guardrails@v0.7.0
     - guardrails gate --base origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME --explain
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
