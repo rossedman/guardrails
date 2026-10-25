@@ -5,29 +5,36 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    commit-message:
-      prefix: "chore(deps)"
     groups:
-      go-dependencies:
-        patterns: ["*"]
+      minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "build(deps)"
+    labels: [dependencies]
+    open-pull-requests-limit: 5
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
       day: monday
-    commit-message:
-      prefix: "chore(ci)"
     groups:
-      actions:
-        patterns: ["*"]
+      minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "ci(deps)"
+    labels: [dependencies]
+    open-pull-requests-limit: 5
 
   - package-ecosystem: pip
     directory: /docs
     schedule:
-      interval: monthly
-    commit-message:
-      prefix: "chore(docs)"
+      interval: weekly
+      day: monday
     groups:
-      docs:
-        patterns: ["*"]
+      minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "docs(deps)"
+    labels: [dependencies]
+    open-pull-requests-limit: 5
