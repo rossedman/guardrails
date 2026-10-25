@@ -42,11 +42,11 @@ func generate(root *cobra.Command, dir string) error {
 		return err
 	}
 	for _, f := range old {
-		if err := os.Remove(f); err != nil {
+		if err := os.Remove(f); err != nil { //nolint:gosec // G703: dir is the developer's own argument
 			return err
 		}
 	}
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil { //nolint:gosec // G703: dir is the developer's own argument
 		return err
 	}
 	root.DisableAutoGenTag = true
@@ -69,14 +69,14 @@ func generate(root *cobra.Command, dir string) error {
 // with the page's H1, so MkDocs takes it as the title instead of adding its
 // own above it.
 func promoteTitle(page string) error {
-	b, err := os.ReadFile(page)
+	b, err := os.ReadFile(page) //nolint:gosec // G703: page is under the developer's own dir
 	if err != nil {
 		return err
 	}
 	if rest, ok := strings.CutPrefix(string(b), "## "); ok {
 		b = []byte("# " + rest)
 	}
-	return os.WriteFile(page, b, 0o644)
+	return os.WriteFile(page, b, 0o644) //nolint:gosec // G703: page is under the developer's own dir
 }
 
 // link turns a generated file name into the page link: the same file name,

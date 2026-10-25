@@ -14,6 +14,9 @@ import (
 	"github.com/rossedman/guardrails/internal/ui"
 )
 
+// init keeps commands in the order they're added, which help groups by.
+func init() { cobra.EnableCommandSorting = false }
+
 // NewRootCmd builds the command tree.
 func NewRootCmd(a *App) *cobra.Command {
 	root := &cobra.Command{
@@ -61,7 +64,6 @@ The same gate runs from your terminal, in CI and as a pre-commit hook.`,
 	root.SetOut(a.Stdout)
 	root.SetErr(a.Stderr)
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error { return usageError{err} })
-	cobra.EnableCommandSorting = false
 
 	pf := root.PersistentFlags()
 	pf.String("data-dir", "", "where guardrails keeps state (default $CLAUDE_PLUGIN_DATA, else ~/.local/share/guardrails)")
