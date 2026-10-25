@@ -70,6 +70,8 @@ type moduleResult struct {
 	measured bool
 }
 
+// gateModule runs the full gate for one Go module root: build, tests with coverage, lint, go mod tidy and govulncheck.
+// It stops early if the build fails.
 func (m *Module) gateModule(ctx context.Context, env module.Env, root string, files []string, in module.GateInput) moduleResult {
 	out := moduleResult{coverage: map[string]float64{}}
 	cfg := env.Config.Go
@@ -162,6 +164,8 @@ func (m *Module) gateModule(ctx context.Context, env module.Env, root string, fi
 	return out
 }
 
+// testAndCover runs go test with a coverage profile on pkgs and records the totals in out.
+// It adds checks for test failures, the coverage floors and ratchet, and patch coverage of the changed lines.
 func (m *Module) testAndCover(ctx context.Context, env module.Env, root, modPath string, pkgs, files []string, in module.GateInput, out *moduleResult) {
 	cfg := env.Config.Go
 	tmp, err := os.CreateTemp("", "guardrails-cover-*.out")
@@ -229,6 +233,8 @@ func (m *Module) testAndCover(ctx context.Context, env module.Env, root, modPath
 	}
 }
 
+// coverageCheck compares coverage with the total bar, the per-package floor and the session baseline.
+// It returns a failed Check, and true, when any is missed, listing the worst-covered functions.
 func coverageCheck(env module.Env, prof *coverage.Profile, byPkg map[string]coverage.Stats, total coverage.Stats, pkgs []string, baseline map[string]float64, resolve coverage.Resolver) (feedback.Check, bool) {
 	cfg := env.Config.Go.Coverage
 	var problems []string
@@ -271,6 +277,8 @@ func coverageCheck(env module.Env, prof *coverage.Profile, byPkg map[string]cove
 	}, true
 }
 
+// patchCheck returns a failed Check, and true, when the changed lines are covered below threshold.
+// It lists the uncovered line ranges grouped by function.
 func patchCheck(env module.Env, pr coverage.PatchResult, prof *coverage.Profile, resolve coverage.Resolver, threshold float64) (feedback.Check, bool) {
 	if pr.Total == 0 || pr.Percent()+1e-9 >= threshold {
 		return feedback.Check{}, false
@@ -336,6 +344,7 @@ func (m *Module) changedLines(ctx context.Context, env module.Env, base string, 
 	return out
 }
 
+// allLines returns every line number of the file at path, or nil if it cannot be read.
 func allLines(path string) coverage.LineSet {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -348,6 +357,7 @@ func allLines(path string) coverage.LineSet {
 	return set
 }
 
+// resolver maps a Go import-path file name inside modPath to its path under root.
 func resolver(root, modPath string) coverage.Resolver {
 	return func(file string) (string, bool) {
 		rel, ok := strings.CutPrefix(file, modPath+"/")
@@ -358,6 +368,7 @@ func resolver(root, modPath string) coverage.Resolver {
 	}
 }
 
+// excluded reports whether a local file is left out of coverage: it matches an exclude pattern or is generated.
 func excluded(root, local string, patterns []string) bool {
 	rel, err := filepath.Rel(root, local)
 	if err != nil {
@@ -372,6 +383,7 @@ func excluded(root, local string, patterns []string) bool {
 
 var failRe = regexp.MustCompile(`^\s*--- FAIL: (\S+)`)
 
+// testFailure builds the failed tests Check from go test output, with the failing test names and source locations.
 func testFailure(repo, root, modPath, out string) feedback.Check {
 	var failed []string
 	for _, l := range strings.Split(out, "\n") {
@@ -425,6 +437,7 @@ func testLocations(root, modPath, out string) []feedback.Issue {
 	return issues
 }
 
+// vulnLines picks the vulnerability, found-in and fixed-in lines from govulncheck output, or its last lines if there are none.
 func vulnLines(out string) []string {
 	var lines []string
 	for _, l := range strings.Split(out, "\n") {
@@ -439,6 +452,7 @@ func vulnLines(out string) []string {
 	return lines
 }
 
+// funcAt returns the name of the function that holds line in file, or "(top level)" if none does.
 func funcAt(funcs []coverage.Func, file string, line int) string {
 	best := "(top level)"
 	for _, f := range funcs {
@@ -467,6 +481,7 @@ func ranges(ls []int) string {
 	return strings.Join(parts, ",")
 }
 
+// displayPath returns p relative to repo with forward slashes when it is inside repo.
 func displayPath(repo, p string) string {
 	if rel, err := filepath.Rel(repo, p); err == nil && !strings.HasPrefix(rel, "..") {
 		return filepath.ToSlash(rel)
@@ -474,6 +489,7 @@ func displayPath(repo, p string) string {
 	return filepath.ToSlash(p)
 }
 
+// linesIfNoIssues returns the first lines of out only when no file locations could be parsed from it.
 func linesIfNoIssues(out string) []string {
 	if len(module.ParseLocations(out, "")) > 0 {
 		return nil
@@ -481,6 +497,7 @@ func linesIfNoIssues(out string) []string {
 	return firstLines(out, 15)
 }
 
+// lastLines returns the last n non-blank lines of s.
 func lastLines(s string, n int) []string {
 	all := firstLines(s, 1<<30)
 	if len(all) > n {
@@ -489,6 +506,7 @@ func lastLines(s string, n int) []string {
 	return all
 }
 
+// capList keeps the first n items and adds a "+N more" entry for the rest.
 func capList(items []string, n int) []string {
 	if len(items) <= n {
 		return items
@@ -529,6 +547,7 @@ func skipUnreadable(d os.DirEntry) error {
 	return nil
 }
 
+// appendUnique appends each of items to dst that it does not already hold.
 func appendUnique(dst []string, items ...string) []string {
 	for _, it := range items {
 		found := false
@@ -545,6 +564,7 @@ func appendUnique(dst []string, items ...string) []string {
 	return dst
 }
 
+// hasCheck reports whether checks has one named name.
 func hasCheck(checks []feedback.Check, name string) bool {
 	for _, c := range checks {
 		if c.Name == name {

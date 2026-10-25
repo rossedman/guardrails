@@ -51,6 +51,7 @@ type tool struct {
 	Module     string            `yaml:"module"`
 }
 
+// main parses the flags and runs lockgen, exiting 1 on any error.
 func main() {
 	in := flag.String("in", "internal/tools/tools.yaml", "tool specification")
 	out := flag.String("out", "internal/tools/tools.lock.json", "lock file to write")
@@ -63,6 +64,8 @@ func main() {
 	}
 }
 
+// run reads the tool spec and writes the lock file, or only checks it when check is set.
+// With only set it regenerates just those tools and keeps the rest; a tool that fails keeps its previous entry when the version is unchanged.
 func run(inPath, outPath, only string, check bool) error {
 	data, err := os.ReadFile(inPath)
 	if err != nil {
@@ -165,6 +168,8 @@ func checkLock(s spec, l *tools.Lock) error {
 	return nil
 }
 
+// lockTool builds the lock entry for one tool.
+// Downloaded artifacts are hashed, and PyPI wheels are also checked against PyPI's published digest.
 func lockTool(ctx context.Context, platforms []string, name string, t tool) (tools.Tool, error) {
 	out := tools.Tool{Version: t.Version, Source: t.Source}
 	switch t.Source {
@@ -226,6 +231,7 @@ func lockTool(ctx context.Context, platforms []string, name string, t tool) (too
 	return out, nil
 }
 
+// render fills {version}, {os} and {arch} in tmpl for platform, applying the tool's OS and arch name overrides.
 func render(tmpl string, t tool, platform string) string {
 	goos, goarch, _ := strings.Cut(platform, "/")
 	if v, ok := t.OS[goos]; ok {
@@ -291,6 +297,7 @@ type pypiFile struct {
 	} `json:"digests"`
 }
 
+// pypiFiles lists the release files PyPI has for a package version.
 func pypiFiles(ctx context.Context, pkg, version string) ([]pypiFile, error) {
 	url := fmt.Sprintf("%s/pypi/%s/%s/json", pypiBase, pkg, version)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -314,6 +321,7 @@ func pypiFiles(ctx context.Context, pkg, version string) ([]pypiFile, error) {
 	return body.URLs, nil
 }
 
+// pickWheel returns the first wheel file whose name contains tag.
 func pickWheel(files []pypiFile, tag string) (pypiFile, bool) {
 	for _, f := range files {
 		if strings.HasSuffix(f.Filename, ".whl") && strings.Contains(f.Filename, tag) {

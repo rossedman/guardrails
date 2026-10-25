@@ -10,6 +10,7 @@ import (
 	"github.com/rossedman/guardrails/internal/tools"
 )
 
+// newToolsCmd builds the tools parent command; run alone it prints help and exits 2.
 func newToolsCmd(a *App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tools",

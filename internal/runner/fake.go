@@ -138,6 +138,7 @@ func (f *Fake) LookPath(name string) (string, error) {
 	return "", fmt.Errorf("%s: %w", name, ErrNotFound)
 }
 
+// longest returns the value whose key is the longest prefix of line.
 func longest[V any](m map[string]V, line string) (V, bool) {
 	var (
 		best  V

@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// newToolsPathCmd builds the tools path command.
 func newToolsPathCmd(a *App) *cobra.Command {
 	return &cobra.Command{
 		Use:   "path <tool>",

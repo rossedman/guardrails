@@ -82,6 +82,10 @@ or install it with Go:
 go install github.com/rossedman/guardrails/cmd/guardrails@latest
 ```
 
+Release archives are signed with cosign and carry build provenance; see
+[verifying releases](https://github.com/rossedman/guardrails/blob/main/SECURITY.md#verifying-releases)
+to check one you downloaded yourself.
+
 Then:
 
 ```bash

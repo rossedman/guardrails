@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// newToolsInstallCmd builds the tools install command.
 func newToolsInstallCmd(a *App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install [tool...]",

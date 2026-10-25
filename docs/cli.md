@@ -4,7 +4,9 @@ The same binary that runs the hooks is a CLI, so you can run the checks
 outside Claude and get identical results. Inside Claude Code it's already on
 `PATH`; to use it in your own terminal, see
 [From a terminal](getting-started.md#from-a-terminal-optional). Every command
-has `--help` with examples, and `guardrails help` lists them in groups:
+has `--help` with examples, and `guardrails help` lists them in groups. The
+[command reference](reference/commands/guardrails.md) is generated from the
+same help text, one page per command:
 
 | Group | Commands |
 |---|---|
@@ -25,7 +27,7 @@ an unknown command or flag.
 | Flag | Environment | Meaning |
 |---|---|---|
 | `--data-dir` | `GUARDRAILS_DATA_DIR` | Where state, reports and managed tools live |
-| `--config` | `GUARDRAILS_CONFIG` | The user-wide config file |
+| `--config` | `GUARDRAILS_CONFIG` | The config file for all your repos |
 
 ## Flags from the environment
 

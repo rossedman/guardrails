@@ -11,6 +11,7 @@ import (
 
 var hookEvents = []string{"SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop", "SubagentStop", "SessionEnd"}
 
+// newHookCmd builds the hook command, which handles one Claude Code hook event.
 func newHookCmd(a *App) *cobra.Command {
 	return &cobra.Command{
 		Use:   "hook <event>",

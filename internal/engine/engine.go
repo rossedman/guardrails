@@ -121,10 +121,12 @@ func (e *Engine) RepoRoot(ctx context.Context, cwd string) string {
 	return filepath.Clean(cwd)
 }
 
+// loadConfig loads the global config merged with the repo's own.
 func (e *Engine) loadConfig(repo string) (config.Config, error) {
 	return config.Load(e.GlobalConfig, repo)
 }
 
+// env builds the module environment for repo, attaching the tool manager when there is one.
 func (e *Engine) env(repo string, cfg config.Config, blocking bool) module.Env {
 	env := module.Env{Runner: e.Runner, Config: cfg, Repo: repo, DataDir: e.Store.Root}
 	if m := e.manager(cfg, blocking); m != nil {
@@ -157,10 +159,12 @@ func (e *Engine) moduleFor(cfg config.Config, path string) module.Module {
 	return nil
 }
 
+// configError is the output for an unreadable config: it tells the human that checks are paused.
 func configError(err error) hook.Output {
 	return hook.Output{SystemMessage: "guardrails: config error, checks are paused until it is fixed: " + err.Error()}
 }
 
+// agentKey identifies the calling agent by ID, falling back to its type.
 func agentKey(in hook.Input) string {
 	if in.AgentID != "" {
 		return in.AgentID
@@ -168,6 +172,7 @@ func agentKey(in hook.Input) string {
 	return in.AgentType
 }
 
+// absPath makes p absolute by joining it to cwd. An empty p stays empty.
 func absPath(cwd, p string) string {
 	if p == "" {
 		return ""
@@ -178,11 +183,13 @@ func absPath(cwd, p string) string {
 	return filepath.Join(cwd, p)
 }
 
+// within reports whether p is inside repo.
 func within(repo, p string) bool {
 	rel, err := filepath.Rel(repo, p)
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, "../")
 }
 
+// notes joins ns into one "guardrails:" system message, or "" if there are none.
 func notes(ns []string) string {
 	if len(ns) == 0 {
 		return ""
@@ -190,6 +197,7 @@ func notes(ns []string) string {
 	return "guardrails: " + strings.Join(ns, "; ")
 }
 
+// failures lists a run log entry for each failed check, one per issue when it has any.
 func failures(checks []feedback.Check) []runlog.Failure {
 	var out []runlog.Failure
 	for _, c := range checks {
@@ -207,6 +215,7 @@ func failures(checks []feedback.Check) []runlog.Failure {
 	return out
 }
 
+// countIssues totals the issues found by the lint and vet checks.
 func countIssues(checks []feedback.Check) int {
 	n := 0
 	for _, c := range checks {
@@ -217,6 +226,7 @@ func countIssues(checks []feedback.Check) int {
 	return n
 }
 
+// sortedKeys returns the keys of m in sorted order.
 func sortedKeys(m map[string]float64) []string {
 	out := make([]string, 0, len(m))
 	for k := range m {

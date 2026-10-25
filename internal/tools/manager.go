@@ -87,6 +87,7 @@ func (m *Manager) WithBlocking(b bool) *Manager {
 	return &c
 }
 
+// platform returns the manager's platform override, or the current "os/arch" if none is set.
 func (m *Manager) platform() string {
 	if m.Platform != "" {
 		return m.Platform

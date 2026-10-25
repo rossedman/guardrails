@@ -170,6 +170,7 @@ func mutIsBoundary(from, to token.Token) bool {
 	return false
 }
 
+// mutSource prints the expression back to Go source, or "" if printing fails.
 func mutSource(fset *token.FileSet, e ast.Expr) string {
 	var b bytes.Buffer
 	if err := printer.Fprint(&b, fset, e); err != nil {

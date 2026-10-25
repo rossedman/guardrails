@@ -20,6 +20,7 @@ type popularList struct {
 	set   map[string]bool
 }
 
+// newPopular builds a popularList from whitespace-separated package names.
 func newPopular(text string) popularList {
 	p := popularList{set: map[string]bool{}}
 	for _, n := range strings.Fields(text) {

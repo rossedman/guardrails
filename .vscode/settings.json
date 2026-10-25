@@ -1,0 +1,15 @@
+{
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": ["--fast-only"],
+  "gopls": {
+    "formatting.gofumpt": true,
+    "ui.semanticTokens": true,
+    "ui.diagnostic.staticcheck": true,
+    "ui.diagnostic.analyses": {
+      "unusedparams": true,
+      "unusedwrite": true,
+      "shadow": false
+    },
+    "build.directoryFilters": ["-dist", "-site", "-node_modules"]
+  }
+}

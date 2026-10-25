@@ -38,6 +38,8 @@ func (m *Module) Gate(ctx context.Context, env module.Env, in module.GateInput) 
 	return res
 }
 
+// buildCheck runs docker build --check on each Dockerfile and adds the result to res.
+// It is skipped, with a note, when docker or its daemon is unavailable.
 func (m *Module) buildCheck(ctx context.Context, env module.Env, files []string, res *module.GateResult) {
 	if _, err := env.Tool(ctx, "docker"); err != nil {
 		res.Notes = append(res.Notes, "docker build --check skipped: "+module.Unavailable(m.Tools()[0], err))

@@ -20,9 +20,13 @@ govulncheck.
 git clone https://github.com/rossedman/guardrails
 cd guardrails
 make test      # go test -race ./...
-make lint      # golangci-lint run
+make lint      # golangci-lint, one command per file, doc comments
+make cover     # the 90% coverage gate on hand-written code
+make check     # everything CI checks, before you push
 make gate      # build the binary and run its own gate on itself
 make harden    # mutation-test and fuzz what this branch changed
+make bench     # benchmarks into bench.txt, for benchstat
+make fuzz      # every fuzz target for FUZZTIME (default 30s)
 ```
 
 To try your build inside Claude Code, point the plugin launcher at it:
@@ -49,12 +53,44 @@ Guardrails holds itself to its own gate, and CI enforces it:
 - `golangci-lint run` is clean. No `//nolint` without a specific linter and
   a reason.
 - Code is gofumpt-formatted.
+- Every function and method, exported or not, has a doc comment starting
+  with its name, and every package has a package comment
+  (`go run ./tools/doccheck ./...`).
+- Each file in `internal/cli` defines at most one cobra command
+  (`tools/check-cmds.sh`).
+- Every critical path below has a benchmark, and every one that takes
+  outside input has a fuzz target that runs 30s clean in CI.
 
 Tests should assert behavior, not just execute code; `make harden`
 mutation-tests your changes to prove it. Prefer table-driven
 tests. Hooks are pure functions from stdin JSON to stdout JSON; the engine's
 golden files live in `internal/engine/testdata` and are regenerated with
 `go test ./internal/engine -update`.
+
+## Critical paths
+
+These functions parse input Guardrails doesn't control, run in hot loops,
+or resolve configuration. Each has a `Benchmark` and, where it takes outside
+input, a `Fuzz` target that asserts properties (determinism, invariants),
+not just "didn't crash". Add to this list when you add code like this, and
+commit any failing fuzz input under the package's `testdata/fuzz/`.
+
+| Path | Why | Bench | Fuzz |
+| --- | --- | --- | --- |
+| `hook.ReadInput`, `Input.Tool` | every hook event's JSON from Claude Code | yes | yes |
+| `guard.CheckBash`, `guard.Segments` | every Bash command, before it runs | yes | yes |
+| `guard.CheckFile`, `guard.IsProtected` | every edit, before it lands | yes | yes |
+| `lessons.Detect` | every prompt the user sends | yes | yes |
+| `glob.Match`, `glob.Any` | every file against every pattern | yes | yes |
+| `deps.FromCommand` | every Bash command, for package installs | yes | yes |
+| `deps.FromManifest` | every manifest edit | yes | yes |
+| `deps.Suggest` | typosquat check against the popular-package lists | yes | yes |
+| `config.Merge`, `config.Load` | config resolution from user and repo files | yes | `Merge` |
+| `coverage.Parse` | every Go coverage profile | yes | yes |
+| `diff.ParseUnified` | every `git diff` the gate reads | yes | yes |
+| `docker.Parse` | every Dockerfile edited or gated | yes | yes |
+| mypy output parsing (`python`) | every mypy run | yes | yes |
+| `feedback.Render` | every gate report shown to Claude | yes | yes |
 
 ## Adding a language module
 

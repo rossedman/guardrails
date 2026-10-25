@@ -15,6 +15,7 @@ import (
 	"github.com/rossedman/guardrails/internal/config"
 )
 
+// newInitCmd builds the init command.
 func newInitCmd(a *App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
@@ -105,6 +106,7 @@ for you.`,
 	return cmd
 }
 
+// validPresetName reports whether name is one of the config presets.
 func validPresetName(name string) bool { return slices.Contains(config.Presets, name) }
 
 const schemaLine = "# yaml-language-server: $schema=https://raw.githubusercontent.com/rossedman/guardrails/main/internal/config/schema.json\n"

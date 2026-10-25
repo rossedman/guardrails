@@ -1,6 +1,7 @@
 .DEFAULT_GOAL := help
 
 BIN := dist/guardrails
+FUZZTIME ?= 30s
 
 .PHONY: help
 help: ## Show this help
@@ -15,9 +16,23 @@ test: ## Run tests with the race detector and coverage
 	go test -race -count=1 -coverprofile=coverage.out ./...
 	@go tool cover -func=coverage.out | tail -n 1
 
+.PHONY: cover
+cover: test ## Fail if hand-written code is below 90% coverage
+	tools/cover.sh coverage.out 90
+
+.PHONY: bench
+bench: ## Run benchmarks 6 times into bench.txt, for benchstat
+	go test -run='^$$' -bench=. -benchmem -count=6 ./... | tee bench.txt
+
+.PHONY: fuzz
+fuzz: ## Run every fuzz target for FUZZTIME (default 30s)
+	FUZZTIME=$(FUZZTIME) tools/fuzz.sh
+
 .PHONY: lint
-lint: ## Run golangci-lint
+lint: ## Run golangci-lint, the one-command-per-file check and doccheck
 	golangci-lint run
+	tools/check-cmds.sh
+	go run ./tools/doccheck ./...
 
 .PHONY: fmt
 fmt: ## Format with gofumpt and goimports
@@ -33,9 +48,24 @@ harden: build ## Mutation-test and fuzz the Go changed on this branch
 	$(BIN) harden --base origin/main
 
 .PHONY: docs
-docs: ## Serve the docs locally
+docs: gendocs ## Serve the docs locally
 	pip install -q -r docs/requirements.txt
 	mkdocs serve
+
+.PHONY: gendocs
+gendocs: ## Regenerate the command reference in docs/reference/commands
+	go run ./tools/gendocs
+
+.PHONY: docs-build
+docs-build: gendocs ## Build the docs site strictly, as CI does
+	mkdocs build --strict
+
+.PHONY: check
+check: lint cover ## Everything CI checks: lint, tests, coverage, benches, fuzzing, docs, release config
+	go test -run='^$$' -bench=. -benchtime=1x ./...
+	FUZZTIME=10s tools/fuzz.sh
+	go run github.com/goreleaser/goreleaser/v2@latest check
+	$(MAKE) docs-build
 
 .PHONY: header
 header: ## Render the README and social graphics from docs/assets/src
@@ -47,4 +77,4 @@ version: ## Set the release version everywhere it's pinned (VERSION=X.Y.Z)
 
 .PHONY: snapshot
 snapshot: ## Build a local release snapshot with GoReleaser
-	goreleaser release --snapshot --clean
+	goreleaser release --snapshot --clean --skip=sign

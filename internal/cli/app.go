@@ -136,6 +136,7 @@ func (a *App) globalConfig() string {
 	return ""
 }
 
+// engine builds the gate engine from the App's data dir, runner, config and tools.
 func (a *App) engine() *engine.Engine {
 	e := engine.New(state.New(a.DataDir()), a.Runner, a.globalConfig())
 	e.Now = a.Now
@@ -155,6 +156,7 @@ func (a *App) toolManager() *tools.Manager {
 	return a.NewTools(filepath.Join(a.DataDir(), "tools"))
 }
 
+// repo returns the root of the repository holding the working directory.
 func (a *App) repo(ctx context.Context) (string, error) {
 	wd, err := a.Getwd()
 	if err != nil {
@@ -177,6 +179,7 @@ func (a *App) launcher() string {
 	return "guardrails"
 }
 
+// trimLines splits s into lines, trimming each and dropping blank ones.
 func trimLines(s string) []string {
 	var out []string
 	for _, l := range strings.Split(strings.TrimSpace(s), "\n") {
@@ -187,6 +190,7 @@ func trimLines(s string) []string {
 	return out
 }
 
+// printYAML writes v to w as YAML with two-space indents.
 func printYAML(w io.Writer, v any) error {
 	enc := yaml.NewEncoder(w)
 	enc.SetIndent(2)

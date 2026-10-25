@@ -23,6 +23,7 @@ func FromCommand(command string) []Request {
 	return out
 }
 
+// fromArgs extracts the package requests from one parsed install command, such as npm install or pip install.
 func fromArgs(args []string) []Request {
 	bin := filepath.Base(args[0])
 	rest := args[1:]
@@ -151,6 +152,7 @@ func parseFlags(args []string, valueFlags map[string]bool) parsed {
 	return p
 }
 
+// has reports whether any of the named flags was given.
 func (p parsed) has(names ...string) bool {
 	for _, n := range names {
 		if len(p.values[n]) > 0 || p.bools[n] {
@@ -160,6 +162,7 @@ func (p parsed) has(names ...string) bool {
 	return false
 }
 
+// all returns every value given for the named flags, in order.
 func (p parsed) all(names ...string) []string {
 	var out []string
 	for _, n := range names {
@@ -370,6 +373,7 @@ func cargoSpecs(args []string, install bool) []Request {
 	return out
 }
 
+// set builds a lookup set from names.
 func set(names ...string) map[string]bool {
 	m := make(map[string]bool, len(names))
 	for _, n := range names {
@@ -378,6 +382,7 @@ func set(names ...string) map[string]bool {
 	return m
 }
 
+// union returns a new set holding the keys of both a and b.
 func union(a, b map[string]bool) map[string]bool {
 	m := make(map[string]bool, len(a)+len(b))
 	for k := range a {
@@ -389,6 +394,7 @@ func union(a, b map[string]bool) map[string]bool {
 	return m
 }
 
+// b2i returns 1 for true and 0 for false.
 func b2i(b bool) int {
 	if b {
 		return 1

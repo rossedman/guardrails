@@ -51,6 +51,7 @@ type statusGate struct {
 	Report    string    `json:"report,omitempty"`
 }
 
+// newStatusCmd builds the status command.
 func newStatusCmd(a *App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
@@ -81,6 +82,8 @@ In Claude Code, /guardrails:status shows the same.`,
 	return cmd
 }
 
+// status gathers what guardrails is doing in the current repo: the binary,
+// the languages and their bar, the config, the last gate and pending corrections.
 func (a *App) status(cmd *cobra.Command) (statusReport, error) {
 	repo, err := a.repo(cmd.Context())
 	if err != nil {
@@ -157,6 +160,8 @@ func (a *App) status(cmd *cobra.Command) (statusReport, error) {
 	return rep, nil
 }
 
+// printStatus writes rep as the human-readable status report, showing the
+// last gate's age relative to now.
 func printStatus(w io.Writer, rep statusReport, now time.Time) {
 	fmt.Fprintf(w, "guardrails %s\n", rep.Version)
 	fmt.Fprintf(w, "  command   %s\n", rep.Command)

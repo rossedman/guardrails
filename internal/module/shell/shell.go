@@ -85,6 +85,7 @@ func (*Module) Tools() []module.Tool {
 	}
 }
 
+// tool returns the module's declared tool called name, or a bare one if there is none.
 func (m *Module) tool(name string) module.Tool {
 	for _, t := range m.Tools() {
 		if t.Name == name {
@@ -183,6 +184,7 @@ func (m *Module) Gate(ctx context.Context, env module.Env, in module.GateInput) 
 	return res
 }
 
+// unavailable is the failed Check for a tool that is missing and cannot be installed.
 func (m *Module) unavailable(name string, err error) feedback.Check {
 	return feedback.Check{
 		Name: "tools", Failed: true,
@@ -191,6 +193,7 @@ func (m *Module) unavailable(name string, err error) feedback.Check {
 	}
 }
 
+// startFailure is the failed Check for shellcheck failing to start.
 func startFailure(err error) feedback.Check {
 	return feedback.Check{Name: "shellcheck", Failed: true, Summary: "could not run: " + err.Error()}
 }
@@ -291,6 +294,7 @@ func existing(files []string) []string {
 	return out
 }
 
+// rel returns p relative to repo with forward slashes, or p unchanged if it is relative or outside repo.
 func rel(repo, p string) string {
 	if !filepath.IsAbs(p) {
 		return filepath.ToSlash(p)
@@ -301,6 +305,7 @@ func rel(repo, p string) string {
 	return filepath.ToSlash(p)
 }
 
+// plural returns "s" unless n is 1.
 func plural(n int) string {
 	if n == 1 {
 		return ""
@@ -308,6 +313,7 @@ func plural(n int) string {
 	return "s"
 }
 
+// firstLine returns the first line of s.
 func firstLine(s string) string {
 	s = strings.TrimSpace(s)
 	if i := strings.IndexByte(s, '\n'); i >= 0 {

@@ -120,6 +120,7 @@ func (s *Store) SessionDir(id string) string {
 	return filepath.Join(s.Root, "sessions", safe(id))
 }
 
+// sessionFile is the path of the state file for session id.
 func (s *Store) sessionFile(id string) string {
 	return filepath.Join(s.SessionDir(id), "state.json")
 }
@@ -188,6 +189,7 @@ type GateSummary struct {
 	At        time.Time `json:"at"`
 }
 
+// repoFile is the path of the cache file for repo.
 func (s *Store) repoFile(repo string) string {
 	return filepath.Join(s.Root, "repos", Key(repo)+".json")
 }

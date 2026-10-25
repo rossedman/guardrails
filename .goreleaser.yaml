@@ -44,6 +44,14 @@ checksum:
 sboms:
   - artifacts: archive
 
+# Keyless Sigstore signing with the release workflow's GitHub OIDC identity.
+# The checksums file covers every archive and SBOM.
+signs:
+  - cmd: cosign
+    artifacts: checksum
+    signature: "${artifact}.sigstore.json"
+    args: ["sign-blob", "--bundle=${signature}", "${artifact}", "--yes"]
+
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 

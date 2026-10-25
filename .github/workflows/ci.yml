@@ -17,43 +17,82 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      - uses: golangci/golangci-lint-action@v9
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           version: v2.15.0
       - name: actionlint
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+      - name: One cobra command per file
+        run: tools/check-cmds.sh
+      - name: Doc comments
+        run: go run ./tools/doccheck ./...
+      - name: Command reference is current
+        run: |
+          go run ./tools/gendocs
+          git diff --exit-code -- docs/reference || {
+            echo "::error::docs/reference is stale; run make gendocs and commit it"
+            exit 1
+          }
+          test -z "$(git status --porcelain -- docs/reference)"
 
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
       - name: Test
         run: go test -race -count=1 -coverprofile=coverage.out ./...
-      - name: Coverage summary
+      - name: Coverage gate (hand-written code, 90%)
         if: runner.os == 'Linux'
-        run: go tool cover -func=coverage.out | tail -n 1
+        run: tools/cover.sh coverage.out 90
+
+  bench-fuzz:
+    name: Benchmarks and fuzzing (smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Benchmarks, one iteration each
+        run: go test -run='^$' -bench=. -benchtime=1x ./...
+      - name: Fuzz every target for 30s
+        env:
+          FUZZTIME: 30s
+        run: tools/fuzz.sh
 
   gate:
     # Dogfood: the binary holds itself to its own gate (build, race tests,
     # 90% coverage, golangci-lint, go mod tidy, govulncheck).
     name: Guardrails gate (dogfood)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
       - name: Build
@@ -72,13 +111,16 @@ jobs:
     # replaced upstream artifact fails here instead of on a user's machine.
     name: Tools (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
       - name: Lock matches tools.yaml
@@ -95,18 +137,20 @@ jobs:
     # Exercises action.yml on every PR with a binary built from this commit.
     name: Action (self-test)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
       - name: Build
         run: go build -o "$RUNNER_TEMP/guardrails" ./cmd/guardrails
       - name: Run the action
         id: guardrails
-        uses: ./
+        uses: ./ # zizmor: ignore[self-repository] tests this commit's action.yml
         with:
           binary: ${{ runner.temp }}/guardrails
           args: gate --all --explain
@@ -118,8 +162,11 @@ jobs:
   plugin:
     name: Plugin package
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Validate JSON manifests
         run: |
           for f in .claude-plugin/plugin.json .claude-plugin/marketplace.json hooks/hooks.json internal/config/schema.json; do
@@ -139,15 +186,18 @@ jobs:
   release-check:
     name: GoReleaser snapshot
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      - uses: anchore/sbom-action/download-syft@v0
-      - uses: goreleaser/goreleaser-action@v7
+          cache: false # same as the release workflow
+      - uses: anchore/sbom-action/download-syft@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+      - uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:
           version: "~> v2"
-          args: release --snapshot --clean
+          args: release --snapshot --clean --skip=sign

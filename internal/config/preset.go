@@ -20,6 +20,7 @@ const (
 // Presets lists the preset names, strictest first.
 var Presets = []string{PresetStrict, PresetStandard, PresetAdopt}
 
+// validPreset reports whether name is empty or a known preset.
 func validPreset(name string) bool { return name == "" || slices.Contains(Presets, name) }
 
 // ApplyPreset sets the coverage bar for a preset on cfg:
@@ -47,6 +48,7 @@ func ApplyPreset(cfg *Config, name string) error {
 	return nil
 }
 
+// setBar sets the Go and Python coverage totals and patch bars, and turns the ratchet on.
 func setBar(cfg *Config, total, floor, patch float64) {
 	cfg.Go.Coverage.Total, cfg.Go.Coverage.PerPackageFloor, cfg.Go.PatchCoverage = total, floor, patch
 	cfg.Python.Coverage.Total, cfg.Python.PatchCoverage = total, patch

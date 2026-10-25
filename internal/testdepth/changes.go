@@ -42,6 +42,7 @@ func Changes(ctx context.Context, r runner.Runner, repo, base string) (map[strin
 	return changed, touched, nil
 }
 
+// allLines returns every line number of the file at path; the set is empty if it cannot be read.
 func allLines(path string) coverage.LineSet {
 	set := coverage.LineSet{}
 	data, err := os.ReadFile(path)

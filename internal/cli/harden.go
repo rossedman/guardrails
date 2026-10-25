@@ -17,10 +17,11 @@ import (
 	"github.com/rossedman/guardrails/internal/testdepth"
 )
 
+// newHardenCmd builds the harden command.
 func newHardenCmd(a *App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "harden",
-		Short: "Mutation-test and fuzz the Go code you changed (on demand)",
+		Short: "Run mutation tests and fuzzing on the Go code you changed (on demand)",
 		Long: `Check how well the tests of the Go functions changed against --base
 actually test them, on demand rather than in the Stop gate:
 
@@ -156,6 +157,8 @@ func (a *App) harden(ctx context.Context) error {
 	return nil
 }
 
+// printHarden prints the harden report: a title with the result and what
+// ran, the failed checks in full, then suggestions and notes.
 func (a *App) printHarden(report feedback.Report, failed []feedback.Check, funcs int, base string, res testdepth.Result, suggestions []string) {
 	ran := "nothing to run"
 	if len(res.Ran) > 0 {
@@ -178,6 +181,7 @@ func (a *App) printHarden(report feedback.Report, failed []feedback.Check, funcs
 	}
 }
 
+// uniq returns items without duplicates, keeping the first of each in order.
 func uniq(items []string) []string {
 	seen := map[string]bool{}
 	var out []string

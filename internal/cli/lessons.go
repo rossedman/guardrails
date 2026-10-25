@@ -14,6 +14,7 @@ import (
 	"github.com/rossedman/guardrails/internal/lessons"
 )
 
+// newLessonsCmd builds the hidden lessons command, the older name for learn.
 func newLessonsCmd(a *App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lessons",
@@ -108,6 +109,7 @@ func (a *App) clearLessons(ctx context.Context, prefix string, allRepos bool) (b
 	return true, nil
 }
 
+// writeJSON writes v to w as indented JSON.
 func writeJSON(w io.Writer, v any) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")

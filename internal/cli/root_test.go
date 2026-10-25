@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bytes"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,39 +11,17 @@ import (
 	"github.com/rossedman/guardrails/internal/runner"
 )
 
-func TestHelpIsColoredOnlyInATerminal(t *testing.T) {
+func TestHelpIsPlainWithoutATerminal(t *testing.T) {
 	f := newFixture(t)
-	orig := isTerminal
-	t.Cleanup(func() { isTerminal = orig })
-
-	isTerminal = func(io.Writer) bool { return true }
 	if code := f.run("", "gate", "--help"); code != 0 {
 		t.Fatalf("gate --help: %d", code)
 	}
-	out := f.stdout.String()
-	for _, want := range []string{styleHeading + "Usage:", styleName + "      --base", styleCode + "guardrails gate --base main"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("colored help lacks %q:\n%s", want, out)
-		}
-	}
-	f.run("", "--help")
-	if !strings.Contains(f.stdout.String(), styleName+"gate") || !strings.Contains(f.stdout.String(), styleDim+"Run \"guardrails [command] --help\"") || !strings.Contains(f.stdout.String(), styleDim+"# Set a repo up") {
-		t.Errorf("root help: %q", f.stdout)
-	}
-
-	f.env["NO_COLOR"] = "1"
-	f.run("", "gate", "--help")
 	if strings.Contains(f.stdout.String(), "\x1b[") {
-		t.Errorf("NO_COLOR still colored: %q", f.stdout)
+		t.Errorf("a buffer is not a terminal, but help is colored: %q", f.stdout)
 	}
-	delete(f.env, "NO_COLOR")
-	isTerminal = orig
-	f.run("", "gate", "--help")
-	if strings.Contains(f.stdout.String(), "\x1b[") {
-		t.Errorf("a buffer is not a terminal: %q", f.stdout)
-	}
-	if isTerminal(os.Stdout) && isTerminal(&bytes.Buffer{}) {
-		t.Error("a buffer is a terminal")
+	f.run("", "gat")
+	if strings.Contains(f.stderr.String(), "\x1b[") {
+		t.Errorf("a buffer is not a terminal, but the error is colored: %q", f.stderr)
 	}
 }
 
@@ -52,35 +29,22 @@ func TestHelpLayout(t *testing.T) {
 	f := newFixture(t)
 	f.run("", "help")
 	out := f.stdout.String()
-	for _, want := range []string{"Daily:\n  status ", "  learn ", "Setup:\n  init", "Claude Code:\n  hook", "More:", "--data-dir"} {
+	for _, want := range []string{"DAILY", "status ", "learn ", "SETUP", "init ", "CLAUDE CODE", "hook <event>", "--data-dir", "# Set a repo up"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("help lacks %q:\n%s", want, out)
 		}
 	}
-	for _, hidden := range []string{"  explain ", "  insights ", "  lessons "} {
+	if strings.Index(out, "DAILY") > strings.Index(out, "SETUP") || strings.Index(out, "SETUP") > strings.Index(out, "CLAUDE CODE") {
+		t.Errorf("groups out of order:\n%s", out)
+	}
+	for _, hidden := range []string{"explain ", "insights ", "lessons "} {
 		if strings.Contains(out, hidden) {
 			t.Errorf("help lists the old command %q:\n%s", hidden, out)
 		}
 	}
-	if strings.Contains(out, "guardrails [flags]") {
-		t.Errorf("a command with subcommands shows a bare use line:\n%s", out)
-	}
 	f.run("", "help", "tools", "path")
-	if !strings.Contains(f.stdout.String(), "guardrails tools path <tool>") || !strings.Contains(f.stdout.String(), "Global flags:") {
+	if !strings.Contains(f.stdout.String(), "guardrails tools path <tool>") || !strings.Contains(f.stdout.String(), "--data-dir") {
 		t.Errorf("tools path help: %q", f.stdout)
-	}
-
-	var buf bytes.Buffer
-	a := f.app
-	a.V = newViper()
-	root := NewRootCmd(a)
-	if err := a.renderUsage(&buf, root); err != nil || !strings.Contains(buf.String(), "Usage:") || strings.Contains(buf.String(), "Quality gates") {
-		t.Errorf("usage = %q, %v", buf.String(), err)
-	}
-	root.SetOut(&buf)
-	buf.Reset()
-	if err := root.Usage(); err != nil || !strings.Contains(buf.String(), "Usage:") {
-		t.Errorf("Usage() = %q, %v", buf.String(), err)
 	}
 }
 
@@ -190,5 +154,27 @@ func TestToolsPathWithoutProvisioning(t *testing.T) {
 	}
 	if code := f.run("", "tools", "install"); code != 1 || !strings.Contains(f.stderr.String(), "unavailable") {
 		t.Errorf("tools install: %d %q", code, f.stderr)
+	}
+}
+
+func TestErrorsAreColoredInATerminal(t *testing.T) {
+	t.Setenv("CLICOLOR_FORCE", "1")
+	f := newFixture(t)
+	if code := f.run("", "gate", "extra"); code != 2 {
+		t.Fatalf("gate extra: %d", code)
+	}
+	if out := f.stderr.String(); !strings.Contains(out, "\x1b[") || !strings.Contains(out, "gate --help") {
+		t.Errorf("forced color, but the error is plain: %q", out)
+	}
+}
+
+func TestCommandBuildsTheTree(t *testing.T) {
+	t.Parallel()
+	root := New().Command()
+	if root.Name() != "guardrails" {
+		t.Errorf("root = %q", root.Name())
+	}
+	if c, _, err := root.Find([]string{"tools", "path"}); err != nil || c.Name() != "path" {
+		t.Errorf("tools path = %v, %v", c, err)
 	}
 }

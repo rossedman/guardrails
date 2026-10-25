@@ -175,6 +175,7 @@ var (
 	rename     = os.Rename
 )
 
+// readLines returns the non-empty lines of the lessons file in dataDir, or nil if it does not exist.
 func readLines(dataDir string) ([]string, error) {
 	f, err := os.Open(filepath.Join(dataDir, FileName))
 	if errors.Is(err, os.ErrNotExist) {
@@ -195,6 +196,7 @@ func readLines(dataDir string) ([]string, error) {
 	return out, sc.Err()
 }
 
+// parse decodes one lessons file line, reporting false if it is not valid JSON or has no ID.
 func parse(line string) (Lesson, bool) {
 	var l Lesson
 	if err := json.Unmarshal([]byte(line), &l); err != nil || l.ID == "" {
@@ -203,6 +205,7 @@ func parse(line string) (Lesson, bool) {
 	return l, true
 }
 
+// truncate cuts s to at most n runes.
 func truncate(s string, n int) string {
 	r := []rune(s)
 	if len(r) <= n {

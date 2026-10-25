@@ -110,6 +110,7 @@ func fuzzFailure(out string) string {
 	return "failing input"
 }
 
+// fuzzFirstLines returns up to n non-blank lines of s, with trailing whitespace trimmed.
 func fuzzFirstLines(s string, n int) []string {
 	var out []string
 	for _, l := range strings.Split(s, "\n") {

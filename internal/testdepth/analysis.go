@@ -120,6 +120,7 @@ func lineComments(fset *token.FileSet, file *ast.File) map[int]string {
 	return out
 }
 
+// annotations collects the guardrails directives from fn's doc comment and the line above it, keyed by name.
 func annotations(fn *ast.FuncDecl, lineAbove string) map[string]string {
 	out := map[string]string{}
 	var texts []string
@@ -148,6 +149,7 @@ type Signals struct {
 // Any reports whether there is any signal.
 func (s Signals) Any() bool { return len(s.Reasons) > 0 }
 
+// add records a reason, and marks the signals strong if strong is set.
 func (s *Signals) add(strong bool, reason string) {
 	s.Reasons = append(s.Reasons, reason)
 	s.Strong = s.Strong || strong
@@ -169,6 +171,7 @@ var (
 	inputImport = []string{"encoding/", "bufio", "net/http", "net/url", "mime", "archive/", "text/template", "html/template"}
 )
 
+// wordSet returns words as a lookup set.
 func wordSet(words ...string) map[string]bool {
 	m := make(map[string]bool, len(words))
 	for _, w := range words {
@@ -294,6 +297,7 @@ func Parser(f Func) Signals {
 	return s
 }
 
+// withoutString returns in with the "string" entries removed.
 func withoutString(in []string) []string {
 	var out []string
 	for _, t := range in {
@@ -319,6 +323,7 @@ func inputParams(fn *ast.FuncDecl) []string {
 	return out
 }
 
+// returnsError reports whether fn has a result of type error.
 func returnsError(fn *ast.FuncDecl) bool {
 	if fn.Type.Results == nil {
 		return false
@@ -331,6 +336,7 @@ func returnsError(fn *ast.FuncDecl) bool {
 	return false
 }
 
+// typeString renders a simple type expression such as []T, *T, pkg.T or ...T, or "" for anything else.
 func typeString(e ast.Expr) string {
 	switch t := e.(type) {
 	case *ast.Ident:
@@ -463,6 +469,7 @@ func IndexTests(dir string) (*Tests, error) {
 	return t, nil
 }
 
+// calledIdents returns the names of the functions and methods called in body.
 func calledIdents(body *ast.BlockStmt) map[string]bool {
 	out := map[string]bool{}
 	ast.Inspect(body, func(n ast.Node) bool {

@@ -113,7 +113,7 @@ func TestNewWiresRealProcess(t *testing.T) {
 
 func TestBasicCommands(t *testing.T) {
 	f := newFixture(t)
-	if code := f.run(""); code != 2 || !strings.Contains(f.stderr.String(), "Usage:") {
+	if code := f.run(""); code != 2 || !strings.Contains(f.stderr.String(), "USAGE") {
 		t.Errorf("no args: %d %q", code, f.stderr)
 	}
 	if code := f.run("", "frobnicate"); code != 2 || !strings.Contains(f.stderr.String(), `unknown command "frobnicate"`) {
@@ -125,7 +125,7 @@ func TestBasicCommands(t *testing.T) {
 		}
 	}
 	for _, h := range []string{"help", "-h", "--help"} {
-		if code := f.run("", h); code != 0 || !strings.Contains(f.stdout.String(), "Daily:") {
+		if code := f.run("", h); code != 0 || !strings.Contains(f.stdout.String(), "DAILY") {
 			t.Errorf("%s: %d", h, code)
 		}
 	}

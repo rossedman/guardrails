@@ -10,6 +10,7 @@ import (
 	"github.com/rossedman/guardrails/internal/state"
 )
 
+// newStatuslineCmd builds the statusline command for Claude Code's status line.
 func newStatuslineCmd(a *App) *cobra.Command {
 	return &cobra.Command{
 		Use:   "statusline",

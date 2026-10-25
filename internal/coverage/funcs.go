@@ -81,6 +81,7 @@ type span struct {
 	start, end int
 }
 
+// funcSpans parses file and returns the name and line range of each function that has a body.
 func funcSpans(file string) ([]span, error) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, file, nil, parser.SkipObjectResolution)
@@ -110,6 +111,7 @@ func FuncName(fn *ast.FuncDecl) string {
 	return fmt.Sprintf("(%s).%s", recvType(fn.Recv.List[0].Type), fn.Name.Name)
 }
 
+// recvType renders a receiver type expression as a string, with "*" for pointers and type parameters dropped.
 func recvType(e ast.Expr) string {
 	switch t := e.(type) {
 	case *ast.StarExpr:

@@ -9,6 +9,7 @@ import (
 	"github.com/rossedman/guardrails/internal/insights"
 )
 
+// newInsightsCmd builds the hidden insights command, the older name for learn.
 func newInsightsCmd(a *App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "insights",
@@ -114,6 +115,7 @@ func printInsights(w io.Writer, rep insights.Report, days int, hint bool) {
 	}
 }
 
+// ms formats a duration in milliseconds, as seconds from one second up.
 func ms(v int64) string {
 	if v >= 1000 {
 		return fmt.Sprintf("%.1fs", float64(v)/1000)

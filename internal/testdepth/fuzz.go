@@ -25,6 +25,7 @@ func Fuzz(ctx context.Context, e Env, funcs []Func, touched []string) Result {
 // fuzzIndex caches IndexTests per package directory.
 type fuzzIndex map[string]*Tests
 
+// get returns the indexed tests for dir, indexing it on first use. It returns nil if indexing fails.
 func (x fuzzIndex) get(dir string) *Tests {
 	if t, ok := x[dir]; ok {
 		return t

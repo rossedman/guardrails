@@ -26,6 +26,7 @@ type Decision struct {
 // Allowed is the zero-risk verdict.
 var Allowed = Decision{Action: hook.Allow}
 
+// severity ranks an action: deny is 2, ask is 1, anything else is 0.
 func severity(action string) int {
 	switch action {
 	case hook.Deny:
@@ -51,10 +52,12 @@ func worst(ds ...Decision) Decision {
 	return out
 }
 
+// deny returns a Decision that denies, from the named guard and for the given reason.
 func deny(guard, reason string) Decision {
 	return Decision{Action: hook.Deny, Guard: guard, Reason: reason}
 }
 
+// ask returns a Decision that asks the human, from the named guard and for the given reason.
 func ask(guard, reason string) Decision {
 	return Decision{Action: hook.Ask, Guard: guard, Reason: reason}
 }

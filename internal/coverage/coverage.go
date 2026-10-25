@@ -125,6 +125,7 @@ func (s Stats) Percent() float64 {
 	return float64(s.Covered) * 100 / float64(s.Total)
 }
 
+// add counts a block's statements toward Total, and toward Covered if it ran.
 func (s *Stats) add(b Block) {
 	s.Total += b.NumStmt
 	if b.Covered() {

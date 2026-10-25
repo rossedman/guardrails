@@ -96,6 +96,7 @@ func (l *Lock) Names() []string {
 	return out
 }
 
+// validate checks that the tool has a version and what its source needs: platform artifacts with a URL and SHA-256, requirements and an entrypoint, or a module.
 func (t Tool) validate() error {
 	if t.Version == "" {
 		return fmt.Errorf("missing version")

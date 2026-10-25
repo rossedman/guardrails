@@ -4,6 +4,25 @@ Release notes for each version are published on
 [GitHub Releases](https://github.com/rossedman/guardrails/releases),
 generated from Conventional Commit messages.
 
+## Unreleased
+
+### Changed
+
+- Help, usage and errors are rendered with Charmbracelet's fang in the
+  Guardrails palette, adapting to light and dark terminals. Output stays
+  plain when it isn't a terminal or `NO_COLOR` is set. `guardrails man`
+  prints a man page.
+- Releases are signed: `checksums.txt` carries a keyless cosign signature
+  and every archive a build provenance attestation. See
+  [verifying releases](SECURITY.md#verifying-releases).
+
+### Fixed
+
+- The report Claude sees could run past its character cap when issues were
+  capped and the "full report" pointer was added, and a cut with no line
+  break could split a multi-byte character. Both were found by the new
+  `FuzzRender`.
+
 ## 0.7.0
 
 ### Added

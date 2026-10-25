@@ -1,6 +1,6 @@
 site_name: Guardrails
 site_description: Quality gates for Claude Code — format on every edit, gate every turn.
-site_url: https://rossedman.github.io/guardrails/
+site_url: https://rossedman.io/guardrails/
 repo_url: https://github.com/rossedman/guardrails
 repo_name: rossedman/guardrails
 edit_uri: edit/main/docs/
@@ -110,6 +110,23 @@ nav:
       - CI and pre-commit: ci.md
   - Reference:
       - CLI: cli.md
+      - Commands:
+          - reference/commands/guardrails.md
+          - reference/commands/guardrails_status.md
+          - reference/commands/guardrails_gate.md
+          - reference/commands/guardrails_harden.md
+          - reference/commands/guardrails_learn.md
+          - reference/commands/guardrails_init.md
+          - reference/commands/guardrails_doctor.md
+          - reference/commands/guardrails_tools.md
+          - reference/commands/guardrails_tools_install.md
+          - reference/commands/guardrails_tools_list.md
+          - reference/commands/guardrails_tools_path.md
+          - reference/commands/guardrails_config.md
+          - reference/commands/guardrails_schema.md
+          - reference/commands/guardrails_hook.md
+          - reference/commands/guardrails_statusline.md
+          - reference/commands/guardrails_version.md
       - Hook events: hooks.md
       - How it works: how-it-works.md
       - Companion tools: companion-tools.md

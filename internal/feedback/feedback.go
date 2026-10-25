@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/rossedman/guardrails/internal/state"
 )
@@ -172,21 +173,29 @@ func Render(r Report, opts Options) Rendered {
 
 	out.Full = full.String()
 	out.Text = short.String()
-	if len(out.Text) > opts.MaxChars {
+	overflow := ""
+	if opts.OverflowPath != "" {
+		overflow = "\nfull report: " + filepath.ToSlash(opts.OverflowPath) + "\n"
+	}
+	// A capped report gets the overflow pointer, which must fit too.
+	tooLong := len(out.Text) > opts.MaxChars ||
+		capped && len(strings.TrimRight(out.Text, "\n"))+len(overflow) > opts.MaxChars
+	if tooLong {
 		pointer := "\n… output truncated"
-		budget := opts.MaxChars - len(pointer) - len(opts.OverflowPath) - 20
+		budget := opts.MaxChars - len(pointer) - len(overflow) - 5
 		out.Text = cut(out.Text, budget) + pointer
 		capped = true
 	}
 	if capped {
 		out.Truncated = true
-		if opts.OverflowPath != "" {
-			out.Text = strings.TrimRight(out.Text, "\n") + "\nfull report: " + filepath.ToSlash(opts.OverflowPath) + "\n"
+		if overflow != "" {
+			out.Text = strings.TrimRight(out.Text, "\n") + overflow
 		}
 	}
 	return out
 }
 
+// orDash returns s, or "-" if it is empty.
 func orDash(s string) string {
 	if s == "" {
 		return "-"
@@ -205,6 +214,15 @@ func cut(s string, n int) string {
 	s = s[:n]
 	if i := strings.LastIndexByte(s, '\n'); i > 0 {
 		return s[:i+1]
+	}
+	// No line to cut at: drop a multi-byte character the cut split.
+	for i := len(s) - 1; i >= 0 && i >= len(s)-utf8.UTFMax; i-- {
+		if utf8.RuneStart(s[i]) {
+			if !utf8.FullRuneInString(s[i:]) {
+				s = s[:i]
+			}
+			break
+		}
 	}
 	return s
 }

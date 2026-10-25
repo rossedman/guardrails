@@ -282,6 +282,7 @@ func editableGoFiles(files []string) []string {
 	return out
 }
 
+// isGenerated reports whether data has a "Code generated ... DO NOT EDIT" header in its first 20 lines.
 func isGenerated(data []byte) bool {
 	sc := bufio.NewScanner(strings.NewReader(string(data)))
 	for i := 0; i < 20 && sc.Scan(); i++ {
@@ -360,11 +361,13 @@ func packagesOf(root string, files []string) []string {
 	return out
 }
 
+// hasGoFiles reports whether dir directly holds any .go files.
 func hasGoFiles(dir string) bool {
 	matches, _ := filepath.Glob(filepath.Join(dir, "*.go"))
 	return len(matches) > 0
 }
 
+// fileSet returns the cleaned paths in files as a lookup set.
 func fileSet(files []string) map[string]bool {
 	m := map[string]bool{}
 	for _, f := range files {
@@ -400,15 +403,18 @@ func only(issues []feedback.Issue, repo string, want map[string]bool) []feedback
 	return out
 }
 
+// typecheckFailure reports whether linter output shows a compile or type error, not just lint findings.
 func typecheckFailure(out string) bool {
 	return strings.Contains(out, "vet: ") || strings.Contains(out, "undefined: ") ||
 		strings.Contains(out, "cannot use ") || strings.Contains(out, "syntax error")
 }
 
+// toolError is the failed Check for a tool that could not run.
 func toolError(name string, err error) feedback.Check {
 	return feedback.Check{Name: name, Failed: true, Summary: "could not run: " + err.Error()}
 }
 
+// plural returns "s" unless n is 1.
 func plural(n int) string {
 	if n == 1 {
 		return ""
@@ -416,6 +422,7 @@ func plural(n int) string {
 	return "s"
 }
 
+// firstLines returns up to n non-blank lines of s.
 func firstLines(s string, n int) []string {
 	var out []string
 	for _, l := range strings.Split(strings.TrimSpace(s), "\n") {
