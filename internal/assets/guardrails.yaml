@@ -2,7 +2,7 @@
 #
 # Guardrails configuration. Keys override ~/.config/guardrails/config.yaml,
 # which overrides the built-in defaults. Unknown keys are an error.
-# Docs: https://rossedman.github.io/guardrails/configuration/
+# Docs: https://rossedman.io/guardrails/configuration/
 version: 1
 mode: enforce            # enforce | warn (warn = never block, report only)
 preset: strict           # strict | standard | adopt; the keys below override it

@@ -6,7 +6,7 @@
     "name": "Ross Edman",
     "url": "https://github.com/rossedman"
   },
-  "homepage": "https://rossedman.github.io/guardrails/",
+  "homepage": "https://rossedman.io/guardrails/",
   "repository": "https://github.com/rossedman/guardrails",
   "license": "MIT",
   "keywords": ["quality", "testing", "coverage", "lint", "go", "python", "terraform", "docker", "shell", "yaml", "hooks", "guardrails"]

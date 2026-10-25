@@ -119,7 +119,7 @@ func configFile(preset string, full bool) []byte {
 		return []byte(schemaLine + `#
 # Presets: strict (90% coverage, 90% of changed lines), standard (80%/80%),
 # adopt (coverage may not drop, 80% of changed lines). Any key set here
-# overrides the preset. Docs: https://rossedman.github.io/guardrails/configuration/
+# overrides the preset. Docs: https://rossedman.io/guardrails/configuration/
 version: 1
 preset: ` + preset + "\n")
 	}

@@ -1,5 +1,5 @@
 // Command guardrails enforces code quality standards on Claude Code through
-// hooks. See https://rossedman.github.io/guardrails/.
+// hooks. See https://rossedman.io/guardrails/.
 package main
 
 import (
