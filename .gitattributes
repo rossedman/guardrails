@@ -1,0 +1,9 @@
+* text=auto eol=lf
+
+*.png binary
+*.woff2 binary
+
+# Generated: collapsed in GitHub diffs and left out of language stats.
+docs/reference/commands/** linguist-generated=true
+internal/tools/tools.lock.json linguist-generated=true
+internal/deps/popular/*.txt linguist-generated=true
