@@ -18,6 +18,7 @@ jobs:
     permissions:
       contents: write # push the lock branch
       pull-requests: write # open the pull request
+      actions: write # dispatch the required checks on the pull request
     steps:
       # Credentials stay: create-pull-request pushes the branch with them.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 # zizmor: ignore[artipacked]
@@ -28,6 +29,7 @@ jobs:
       - name: Regenerate lock
         run: go run ./internal/tools/lockgen
       - name: Open pull request
+        id: cpr
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           branch: chore/tools-lock
@@ -36,3 +38,15 @@ jobs:
           body: |
             Regenerated `internal/tools/tools.lock.json` from `internal/tools/tools.yaml`.
             Every artifact was downloaded, hashed and checked for its executable.
+      - name: Run the required checks on the pull request
+        # A pull request opened with GITHUB_TOKEN triggers no workflows, but a
+        # dispatch does, and its check runs count toward the main ruleset's
+        # required checks on the branch's head commit.
+        if: steps.cpr.outputs.pull-request-operation == 'created' || steps.cpr.outputs.pull-request-operation == 'updated'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: ${{ steps.cpr.outputs.pull-request-branch }}
+        run: |
+          gh workflow run ci.yml --ref "$BRANCH"
+          gh workflow run codeql.yml --ref "$BRANCH"
