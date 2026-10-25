@@ -2,7 +2,7 @@ module github.com/rossedman/guardrails
 
 go 1.26.0
 
-toolchain go1.26.9
+toolchain go1.26.10
 
 require (
 	charm.land/fang/v2 v2.0.1
