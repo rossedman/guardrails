@@ -9,14 +9,15 @@ on:
   schedule:
     - cron: "17 6 * * 1"
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   lock:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write # push the lock branch
+      pull-requests: write # open the pull request
     steps:
       # Credentials stay: create-pull-request pushes the branch with them.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 # zizmor: ignore[artipacked]
