@@ -44,6 +44,16 @@ Then add your checkout as a local marketplace and install from it:
 /plugin install guardrails@guardrails
 ```
 
+### Scanner feedback with sarifix
+
+`sarifix.yaml` configures [sarifix](https://github.com/rossedman/sarifix)
+with golangci-lint and gitleaks. Run `sarifix check` to see the findings
+your uncommitted changes introduce. With the
+[sarifix plugin](https://github.com/rossedman/claude/tree/main/plugins/sarifix)
+installed in Claude Code, the same check runs before Claude finishes a turn.
+The `sarifix` workflow runs it on pull requests, and on `main` uploads to
+code scanning.
+
 ## The bar
 
 Guardrails holds itself to its own gate, and CI enforces it:
