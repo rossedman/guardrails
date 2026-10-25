@@ -104,11 +104,27 @@ commit any failing fuzz input under the package's `testdata/fuzz/`.
 5. Document it in `docs/` and add a rule file under
    `internal/assets/rules/`.
 
+## Pull requests
+
+- Every change to `main` goes through a pull request. It needs an approval
+  from a code owner (`.github/CODEOWNERS`), every CI check green on an
+  up-to-date branch, and all review conversations resolved.
+- Pull requests are squash-merged, so the PR title becomes the commit
+  message: write it as a Conventional Commit.
+- The branch and tag rules live in `.github/rulesets/` and are reviewed like
+  code. When you change them, a maintainer applies them with
+  `gh api -X PUT repos/rossedman/guardrails/rulesets/<id> --input .github/rulesets/<file>.json`.
+  Add new CI jobs that run on every pull request to the required checks in
+  `main.json`.
+- Questions and ideas go in a
+  [GitHub issue](https://github.com/rossedman/guardrails/issues/new/choose).
+
 ## Commit messages
 
 Use [Conventional Commits](https://www.conventionalcommits.org/):
-`feat:`, `fix:`, `docs:`, `test:`, `chore:`. Release notes are generated
-from them.
+`feat:`, `fix:`, `docs:`, `test:`, `build:`, `ci:`, `chore:`, for example
+`fix(go): test packages that depend on the change`.
+Release notes are generated from them.
 
 ## Releasing
 
