@@ -1,4 +1,4 @@
-## guardrails init
+# guardrails init
 
 Write .guardrails.yaml and Claude rules into this repo
 

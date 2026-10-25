@@ -1,4 +1,4 @@
-## guardrails
+# guardrails
 
 Quality gates for Claude Code
 

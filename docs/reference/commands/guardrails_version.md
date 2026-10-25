@@ -1,4 +1,4 @@
-## guardrails version
+# guardrails version
 
 Print version information
 

@@ -1,4 +1,4 @@
-## guardrails tools path
+# guardrails tools path
 
 Print the command used to run a tool, installing it if needed
 

@@ -1,4 +1,4 @@
-## guardrails doctor
+# guardrails doctor
 
 Check that required tools are installed
 

@@ -1,4 +1,4 @@
-## guardrails hook
+# guardrails hook
 
 Handle a Claude Code hook event (reads JSON on stdin)
 

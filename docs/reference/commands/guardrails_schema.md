@@ -1,4 +1,4 @@
-## guardrails schema
+# guardrails schema
 
 Print the config JSON Schema
 

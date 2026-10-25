@@ -1,4 +1,4 @@
-## guardrails tools list
+# guardrails tools list
 
 Show every tool, its pinned version and where it resolves from
 

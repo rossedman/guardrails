@@ -1,4 +1,4 @@
-## guardrails harden
+# guardrails harden
 
 Run mutation tests and fuzzing on the Go code you changed (on demand)
 

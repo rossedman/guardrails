@@ -29,10 +29,13 @@ func TestRun(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"## guardrails gate", "--staged", "[guardrails](guardrails.md)"} {
+	for _, want := range []string{"# guardrails gate\n", "--staged", "[guardrails](guardrails.md)"} {
 		if !strings.Contains(string(gate), want) {
 			t.Errorf("gate page lacks %q:\n%s", want, gate)
 		}
+	}
+	if strings.HasPrefix(string(gate), "##") {
+		t.Error("the page title is not an H1")
 	}
 	if strings.Contains(string(gate), "Auto generated") {
 		t.Error("pages carry a date stamp, so they drift every day")
@@ -54,5 +57,23 @@ func TestRunError(t *testing.T) {
 	}
 	if code := run([]string{"[bad"}, &stderr); code != 1 {
 		t.Errorf("bad glob = %d", code)
+	}
+}
+
+func TestPromoteTitle(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if err := promoteTitle(filepath.Join(dir, "missing.md")); err == nil {
+		t.Error("a missing page is not an error")
+	}
+	page := filepath.Join(dir, "plain.md")
+	if err := os.WriteFile(page, []byte("no heading\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := promoteTitle(page); err != nil {
+		t.Fatal(err)
+	}
+	if b, _ := os.ReadFile(page); string(b) != "no heading\n" {
+		t.Errorf("a page without a heading changed: %q", b)
 	}
 }

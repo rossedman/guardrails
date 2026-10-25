@@ -1,4 +1,4 @@
-## guardrails tools install
+# guardrails tools install
 
 Install pinned tools (all supported tools when none are named)
 

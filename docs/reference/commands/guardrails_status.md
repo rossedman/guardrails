@@ -1,4 +1,4 @@
-## guardrails status
+# guardrails status
 
 What guardrails is doing in this repo, and what to do next
 

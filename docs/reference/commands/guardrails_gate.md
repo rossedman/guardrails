@@ -1,4 +1,4 @@
-## guardrails gate
+# guardrails gate
 
 Run the full quality gate on changed files (or --all)
 

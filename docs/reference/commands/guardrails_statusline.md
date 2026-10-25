@@ -1,4 +1,4 @@
-## guardrails statusline
+# guardrails statusline
 
 Print a one-line status for Claude Code's status line
 

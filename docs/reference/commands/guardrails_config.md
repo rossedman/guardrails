@@ -1,4 +1,4 @@
-## guardrails config
+# guardrails config
 
 Print the effective configuration
 
