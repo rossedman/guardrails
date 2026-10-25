@@ -11,10 +11,10 @@
 </p>
 
 <p align="center">
-  <b><a href="https://rossedman.github.io/guardrails/">Documentation</a></b> ·
-  <a href="https://rossedman.github.io/guardrails/getting-started/">Getting started</a> ·
-  <a href="https://rossedman.github.io/guardrails/daily/">Day to day</a> ·
-  <a href="https://rossedman.github.io/guardrails/presets/">Presets</a>
+  <b><a href="https://rossedman.io/guardrails/">Documentation</a></b> ·
+  <a href="https://rossedman.io/guardrails/getting-started/">Getting started</a> ·
+  <a href="https://rossedman.io/guardrails/daily/">Day to day</a> ·
+  <a href="https://rossedman.io/guardrails/presets/">Presets</a>
 </p>
 
 ---
@@ -93,7 +93,7 @@ this repository:
 ```
 
 Claude measures where the code is today, recommends a
-[preset](https://rossedman.github.io/guardrails/presets/), and writes a
+[preset](https://rossedman.io/guardrails/presets/), and writes a
 two-line `.guardrails.yaml` and the `.claude/rules/` that teach Claude your
 standards. Day to day, four commands cover it:
 
@@ -105,7 +105,7 @@ standards. Day to day, four commands cover it:
 | `/guardrails:learn` | Turn what Claude keeps getting wrong into rules |
 
 The plugin downloads its own binary and the
-[tools it runs](https://rossedman.github.io/guardrails/tools/) on first use,
+[tools it runs](https://rossedman.io/guardrails/tools/) on first use,
 each pinned and checksum-verified; tools already on your `PATH` are used
 first.
 
@@ -125,8 +125,8 @@ go install github.com/rossedman/guardrails/cmd/guardrails@latest
 | Event | What runs | On failure |
 |---|---|---|
 | **SessionStart** | Detect languages, prefetch their tools, inject the standards and coverage baseline | Context for Claude |
-| **UserPromptSubmit** | Record your corrections of Claude as [lessons](https://rossedman.github.io/guardrails/learn/) | Context for Claude |
-| **PreToolUse** | [Policy guards](https://rossedman.github.io/guardrails/guards/) and the [dependency check](https://rossedman.github.io/guardrails/dependencies/) on edits and shell commands | `deny` or `ask`, with a reason |
+| **UserPromptSubmit** | Record your corrections of Claude as [lessons](https://rossedman.io/guardrails/learn/) | Context for Claude |
+| **PreToolUse** | [Policy guards](https://rossedman.io/guardrails/guards/) and the [dependency check](https://rossedman.io/guardrails/dependencies/) on edits and shell commands | `deny` or `ask`, with a reason |
 | **PostToolUse** | Auto-format, then fast lint and type checks on the edited file | Block with a `file:line` report |
 | **Stop** | Build, tests, coverage, patch coverage, full lint, scanners, per language | Block; after 3 attempts, hand off to you |
 | **SubagentStop** | The same gate, scoped to the subagent's files | Same as Stop |
@@ -134,14 +134,14 @@ go install github.com/rossedman/guardrails/cmd/guardrails@latest
 
 | Language | On edit | At Stop |
 |---|---|---|
-| [Go](https://rossedman.github.io/guardrails/go/) | gofumpt, goimports, go vet, golangci-lint | build, `go test -race` on touched packages and their dependents, coverage, golangci-lint, `go mod tidy`, govulncheck |
-| [Python](https://rossedman.github.io/guardrails/python/) | ruff format + fix, ruff, mypy | pytest + coverage, mypy, ruff, `uv lock --check` |
-| [Shell](https://rossedman.github.io/guardrails/shell/) | shfmt, shellcheck | shellcheck, shfmt diff |
-| [YAML](https://rossedman.github.io/guardrails/yaml/) | yamllint, actionlint, kubeconform | the same, over every touched file |
-| [Terraform](https://rossedman.github.io/guardrails/terraform/) | terraform fmt, tflint | init + validate, tflint, trivy, provider version constraints |
-| [Docker](https://rossedman.github.io/guardrails/docker/) | built-in Dockerfile checks | built-in checks, digest-pinned bases, non-root `USER`, `docker build --check` |
+| [Go](https://rossedman.io/guardrails/go/) | gofumpt, goimports, go vet, golangci-lint | build, `go test -race` on touched packages and their dependents, coverage, golangci-lint, `go mod tidy`, govulncheck |
+| [Python](https://rossedman.io/guardrails/python/) | ruff format + fix, ruff, mypy | pytest + coverage, mypy, ruff, `uv lock --check` |
+| [Shell](https://rossedman.io/guardrails/shell/) | shfmt, shellcheck | shellcheck, shfmt diff |
+| [YAML](https://rossedman.io/guardrails/yaml/) | yamllint, actionlint, kubeconform | the same, over every touched file |
+| [Terraform](https://rossedman.io/guardrails/terraform/) | terraform fmt, tflint | init + validate, tflint, trivy, provider version constraints |
+| [Docker](https://rossedman.io/guardrails/docker/) | built-in Dockerfile checks | built-in checks, digest-pinned bases, non-root `USER`, `docker build --check` |
 
-Read more in [How it works](https://rossedman.github.io/guardrails/how-it-works/).
+Read more in [How it works](https://rossedman.io/guardrails/how-it-works/).
 
 ## Same gate in CI and pre-commit
 
@@ -162,7 +162,7 @@ repos:
 ```
 
 Same binary, same config, same result as Claude's hooks. See
-[CI and pre-commit](https://rossedman.github.io/guardrails/ci/).
+[CI and pre-commit](https://rossedman.io/guardrails/ci/).
 
 ## Configuration
 
@@ -178,8 +178,8 @@ go:
 ```
 
 Unknown keys are an error, so a typo can never silently disable a check.
-See [presets](https://rossedman.github.io/guardrails/presets/) and the
-[configuration reference](https://rossedman.github.io/guardrails/configuration/).
+See [presets](https://rossedman.io/guardrails/presets/) and the
+[configuration reference](https://rossedman.io/guardrails/configuration/).
 
 ## Status
 
@@ -188,7 +188,7 @@ provisioning, the policy guards, the dependency check, on-demand hardening
 (mutation testing and fuzzing) and learning from the gate and your
 corrections are implemented; Python mutation testing and benchmark
 regression checks are next on the
-[roadmap](https://rossedman.github.io/guardrails/roadmap/). Guardrails
+[roadmap](https://rossedman.io/guardrails/roadmap/). Guardrails
 holds itself to its own gate in CI.
 
 ## Contributing

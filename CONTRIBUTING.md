@@ -44,6 +44,16 @@ Then add your checkout as a local marketplace and install from it:
 /plugin install guardrails@guardrails
 ```
 
+### Scanner feedback with sarifix
+
+`sarifix.yaml` configures [sarifix](https://github.com/rossedman/sarifix)
+with golangci-lint and gitleaks. Run `sarifix check` to see the findings
+your uncommitted changes introduce. With the
+[sarifix plugin](https://github.com/rossedman/claude/tree/main/plugins/sarifix)
+installed in Claude Code, the same check runs before Claude finishes a turn.
+The `sarifix` workflow runs it on pull requests, and on `main` uploads to
+code scanning.
+
 ## The bar
 
 Guardrails holds itself to its own gate, and CI enforces it:
@@ -104,11 +114,27 @@ commit any failing fuzz input under the package's `testdata/fuzz/`.
 5. Document it in `docs/` and add a rule file under
    `internal/assets/rules/`.
 
+## Pull requests
+
+- Every change to `main` goes through a pull request. It needs an approval
+  from a code owner (`.github/CODEOWNERS`), every CI check green on an
+  up-to-date branch, and all review conversations resolved.
+- Pull requests are squash-merged, so the PR title becomes the commit
+  message: write it as a Conventional Commit.
+- The branch and tag rules live in `.github/rulesets/` and are reviewed like
+  code. When you change them, a maintainer applies them with
+  `gh api -X PUT repos/rossedman/guardrails/rulesets/<id> --input .github/rulesets/<file>.json`.
+  Add new CI jobs that run on every pull request to the required checks in
+  `main.json`.
+- Questions and ideas go in a
+  [GitHub issue](https://github.com/rossedman/guardrails/issues/new/choose).
+
 ## Commit messages
 
 Use [Conventional Commits](https://www.conventionalcommits.org/):
-`feat:`, `fix:`, `docs:`, `test:`, `chore:`. Release notes are generated
-from them.
+`feat:`, `fix:`, `docs:`, `test:`, `build:`, `ci:`, `chore:`, for example
+`fix(go): test packages that depend on the change`.
+Release notes are generated from them.
 
 ## Releasing
 

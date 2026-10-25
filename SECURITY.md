@@ -13,8 +13,9 @@ Please **do not** open a public issue. Report privately through
 [GitHub security advisories](https://github.com/rossedman/guardrails/security/advisories/new).
 Include steps to reproduce and the impact you observed.
 
-You can expect an acknowledgement within a few days and a fix or mitigation
-plan within two weeks for confirmed issues.
+You can expect an acknowledgement within 3 business days and a fix or
+mitigation plan within two weeks for confirmed issues. Reporters are
+credited in the published advisory unless they ask not to be.
 
 ## Verifying releases
 
@@ -36,7 +37,7 @@ gh attestation verify guardrails_*.tar.gz --repo rossedman/guardrails
 ## In scope
 
 - A command or edit that should be denied by a [policy
-  guard](https://rossedman.github.io/guardrails/guards/) but is allowed
+  guard](https://rossedman.io/guardrails/guards/) but is allowed
   (for example, a shell construct that hides `terraform apply` or a write to
   `.guardrails.yaml`).
 - A way for Claude to make the Stop gate pass without meeting the configured

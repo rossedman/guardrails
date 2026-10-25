@@ -1,0 +1,4 @@
+go test fuzz v1
+string("crates/app/Cargo.toml")
+string("\x18")
+string("[dependenCies]#0000000000000000000000000000000000000000\n00000000= { package = \"\" } ")

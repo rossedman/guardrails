@@ -12,3 +12,4 @@
 - [ ] `make lint` is clean (no new `//nolint`)
 - [ ] Docs updated for user-visible changes
 - [ ] Config changes are reflected in `internal/config/schema.json`
+- [ ] The PR title is a Conventional Commit (it becomes the squash commit)

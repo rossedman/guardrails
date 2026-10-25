@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/rossedman/guardrails/internal/guard"
 )
 
 // installBins are the binaries fromArgs recognizes; a command naming none of
@@ -32,7 +34,13 @@ func FuzzFromCommand(f *testing.F) {
 		if !reflect.DeepEqual(got, FromCommand(cmd)) {
 			t.Fatalf("FromCommand(%q) is not deterministic", cmd)
 		}
-		if !slices.ContainsFunc(installBins, func(b string) bool { return strings.Contains(cmd, b) }) && len(got) > 0 {
+		// Match against the words the shell would run, after quote removal:
+		// g\o get is go get.
+		var words string
+		for _, args := range guard.Commands(cmd) {
+			words += strings.Join(args, " ") + "\n"
+		}
+		if !slices.ContainsFunc(installBins, func(b string) bool { return strings.Contains(words, b) }) && len(got) > 0 {
 			t.Fatalf("FromCommand(%q) = %+v without any install binary", cmd, got)
 		}
 		for _, r := range got {

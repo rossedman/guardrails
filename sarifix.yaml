@@ -1,0 +1,27 @@
+version: 1
+scanners:
+  # The same linter and config CI runs, so Claude is held to the same bar.
+  - name: golangci-lint
+    command: ["golangci-lint", "run", "--output.sarif.path={out}", "./..."]
+    workdir: "{dir}"
+  - name: gitleaks
+    command:
+      - gitleaks
+      - dir
+      - "{dir}"
+      - --report-format
+      - sarif
+      - --report-path
+      - "{out}"
+      - --exit-code
+      - "0"
+rules:
+  # gitleaks findings carry no level, which SARIF reads as warning.
+  # golangci-lint reports everything as error, so this adds no lint noise.
+  min_level: warning
+  # Only these become GitHub issues in CI (the local hook ignores this list).
+  # Secrets stay in code scanning and PR checks, not public issues.
+  allow: ["golangci-lint/*"]
+  deny: []
+paths:
+  deny: ["**/testdata/**", "dist/**", "site/**"]

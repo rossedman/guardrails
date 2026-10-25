@@ -39,6 +39,9 @@ func FromManifest(rel, before, after string) []Request {
 	was, _ := parse(before)
 	names := make([]string, 0, len(now))
 	for name, version := range now {
+		if name == "" { // e.g. a Cargo rename to package = ""; nothing to look up
+			continue
+		}
 		if old, existed := was[name]; !existed || old != version {
 			names = append(names, name)
 		}

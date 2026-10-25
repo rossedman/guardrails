@@ -73,7 +73,7 @@ changelog:
   filters:
     exclude:
       - "^test:"
-      - "^chore\\(deps\\):"
+      - "^(build|ci|docs|chore)\\(deps\\):"
       - "Merge pull request"
 
 release:

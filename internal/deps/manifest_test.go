@@ -79,6 +79,7 @@ cc = "1.0"
 			[]Request{r(Cargo, "cc", "1.0", "crates/app/Cargo.toml"), r(Cargo, "nover", "", "crates/app/Cargo.toml"), r(Cargo, "proptest", "", "crates/app/Cargo.toml"), r(Cargo, "real-crate", "0.2", "crates/app/Cargo.toml"), r(Cargo, "serde", "1", "crates/app/Cargo.toml"), r(Cargo, "tokio", "1.38", "crates/app/Cargo.toml")},
 		},
 		{"Cargo.toml invalid", "Cargo.toml", "", "[dependencies\n", nil},
+		{"Cargo.toml empty names", "Cargo.toml", "", "[dependencies]\nx = { package = \"\", version = \"1\" }\n\"\" = \"2\"\nserde = \"1\"\n", []Request{r(Cargo, "serde", "1", "Cargo.toml")}},
 		{"other file", "src/main.go", "", "package main", nil},
 	}
 	for _, tc := range tests {
