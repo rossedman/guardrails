@@ -16,6 +16,23 @@ Include steps to reproduce and the impact you observed.
 You can expect an acknowledgement within a few days and a fix or mitigation
 plan within two weeks for confirmed issues.
 
+## Verifying releases
+
+Every release's `checksums.txt` is signed keylessly with
+[cosign](https://docs.sigstore.dev/) by the release workflow, and every
+archive has a GitHub build provenance attestation. To check a download,
+fetch the archive, `checksums.txt` and `checksums.txt.sigstore.json` from the
+release, then:
+
+```bash
+cosign verify-blob checksums.txt \
+  --bundle checksums.txt.sigstore.json \
+  --certificate-identity-regexp '^https://github.com/rossedman/guardrails/.github/workflows/release.yml@refs/tags/v' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+sha256sum --ignore-missing -c checksums.txt
+gh attestation verify guardrails_*.tar.gz --repo rossedman/guardrails
+```
+
 ## In scope
 
 - A command or edit that should be denied by a [policy

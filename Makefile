@@ -47,4 +47,4 @@ version: ## Set the release version everywhere it's pinned (VERSION=X.Y.Z)
 
 .PHONY: snapshot
 snapshot: ## Build a local release snapshot with GoReleaser
-	goreleaser release --snapshot --clean
+	goreleaser release --snapshot --clean --skip=sign
