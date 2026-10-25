@@ -4,10 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
+	"charm.land/fang/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
+	"github.com/rossedman/guardrails/internal/ui"
 )
 
 // NewRootCmd builds the command tree.
@@ -57,18 +61,18 @@ The same gate runs from your terminal, in CI and as a pre-commit hook.`,
 	root.SetOut(a.Stdout)
 	root.SetErr(a.Stderr)
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error { return usageError{err} })
-	a.setupHelp(root)
+	cobra.EnableCommandSorting = false
 
 	pf := root.PersistentFlags()
 	pf.String("data-dir", "", "where guardrails keeps state (default $CLAUDE_PLUGIN_DATA, else ~/.local/share/guardrails)")
-	pf.String("config", "", "user-wide config file (default ~/.config/guardrails/config.yaml)")
+	pf.String("config", "", "config file for all your repos (default ~/.config/guardrails/config.yaml)")
 	_ = a.V.BindPFlag(keyDataDir, pf.Lookup("data-dir"))
 	_ = a.V.BindPFlag(keyConfig, pf.Lookup("config"))
 
 	root.AddGroup(
-		&cobra.Group{ID: "daily", Title: "Daily:"},
-		&cobra.Group{ID: "setup", Title: "Setup:"},
-		&cobra.Group{ID: "claude", Title: "Claude Code:"},
+		&cobra.Group{ID: "daily", Title: "Daily"},
+		&cobra.Group{ID: "setup", Title: "Setup"},
+		&cobra.Group{ID: "claude", Title: "Claude Code"},
 	)
 	add := func(group string, cmds ...*cobra.Command) {
 		for _, c := range cmds {
@@ -86,13 +90,17 @@ The same gate runs from your terminal, in CI and as a pre-commit hook.`,
 	return root
 }
 
-// Run executes args (without the program name) and returns the exit code:
-// 0 on success, 1 when a command fails, 2 for usage errors.
+// Run executes args (without the program name) through fang and returns the
+// exit code: 0 on success, 1 when a command fails, 2 for usage errors.
 func (a *App) Run(ctx context.Context, args []string) int {
 	a.V = newViper()
 	root := NewRootCmd(a)
 	root.SetArgs(args)
-	cmd, err := root.ExecuteContextC(ctx)
+	err := fang.Execute(ctx, root,
+		fang.WithColorSchemeFunc(ui.ColorScheme),
+		fang.WithErrorHandler(printError(root, args)),
+		fang.WithoutVersion(),
+	)
 	if err == nil {
 		return 0
 	}
@@ -100,13 +108,31 @@ func (a *App) Run(ctx context.Context, args []string) int {
 	if errors.As(err, &code) {
 		return int(code)
 	}
-	fmt.Fprintf(a.Stderr, "guardrails: %v\n", err)
-	var usage usageError
-	if errors.As(err, &usage) {
-		fmt.Fprintf(a.Stderr, "Run '%s --help' for usage.\n", cmd.CommandPath())
+	if errors.As(err, new(usageError)) {
 		return 2
 	}
 	return 1
+}
+
+// printError returns fang's error handler: a "guardrails: <error>" line,
+// and for a usage error a pointer to the failing command's help. fang strips
+// the colors when stderr is not a terminal. Errors that carry an exit code
+// print nothing, since their command already reported.
+func printError(root *cobra.Command, args []string) fang.ErrorHandler {
+	return func(w io.Writer, styles fang.Styles, err error) {
+		if errors.As(err, new(exitCode)) {
+			return
+		}
+		_, _ = fmt.Fprintf(w, "%s %v\n", styles.Program.Name.Render("guardrails:"), err)
+		if !errors.As(err, new(usageError)) {
+			return
+		}
+		cmd := root
+		if c, _, ferr := root.Find(args); ferr == nil {
+			cmd = c
+		}
+		_, _ = fmt.Fprintf(w, "Run '%s' for usage.\n", styles.Program.Flag.Render(cmd.CommandPath()+" --help"))
+	}
 }
 
 // exitCode ends a command with a status after it printed its own output,
@@ -134,7 +160,9 @@ func usageArgs(check cobra.PositionalArgs) cobra.PositionalArgs {
 // helpAndFail prints help to stderr for a command that needs a subcommand
 // it wasn't given, and exits 2.
 func (a *App) helpAndFail(cmd *cobra.Command) error {
-	_ = a.renderHelp(a.Stderr, cmd)
+	cmd.SetOut(a.Stderr)
+	cmd.HelpFunc()(cmd, nil)
+	cmd.SetOut(a.Stdout)
 	return exitCode(2)
 }
 

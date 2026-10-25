@@ -20,7 +20,7 @@ import (
 func newHardenCmd(a *App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "harden",
-		Short: "Mutation-test and fuzz the Go code you changed (on demand)",
+		Short: "Run mutation tests and fuzzing on the Go code you changed (on demand)",
 		Long: `Check how well the tests of the Go functions changed against --base
 actually test them, on demand rather than in the Stop gate:
 
