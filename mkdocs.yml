@@ -1,6 +1,6 @@
 site_name: Guardrails
 site_description: Quality gates for Claude Code — format on every edit, gate every turn.
-site_url: https://rossedman.github.io/guardrails/
+site_url: https://rossedman.io/guardrails/
 repo_url: https://github.com/rossedman/guardrails
 repo_name: rossedman/guardrails
 edit_uri: edit/main/docs/
