@@ -73,6 +73,7 @@ func TestFromCommand(t *testing.T) {
 		{"go get github.com/spf13/cobra@v1.10.2", []Request{r(Go, "github.com/spf13/cobra", "v1.10.2")}},
 		{"go get -u golang.org/x/tools/...@latest example.com/m@upgrade", []Request{r(Go, "golang.org/x/tools", ""), r(Go, "example.com/m", "")}},
 		{"go get ./... fmt mymod/pkg github.com/x/y@none", nil},
+		{`g\o get "github.com/spf13/cobra"`, []Request{r(Go, "github.com/spf13/cobra", "")}}, // quote removal: still go get
 		{"go install -modfile tools.mod honnef.co/go/tools/cmd/staticcheck@2024.1", []Request{r(Go, "honnef.co/go/tools/cmd/staticcheck", "2024.1")}},
 		{"go build ./...", nil},
 		{"go", nil},
