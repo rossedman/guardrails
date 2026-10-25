@@ -30,6 +30,10 @@ jobs:
           version: v2.15.0
       - name: actionlint
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+      - name: One cobra command per file
+        run: tools/check-cmds.sh
+      - name: Doc comments
+        run: go run ./tools/doccheck ./...
 
   test:
     name: Test (${{ matrix.os }})
@@ -48,9 +52,27 @@ jobs:
           go-version-file: go.mod
       - name: Test
         run: go test -race -count=1 -coverprofile=coverage.out ./...
-      - name: Coverage summary
+      - name: Coverage gate (hand-written code, 90%)
         if: runner.os == 'Linux'
-        run: go tool cover -func=coverage.out | tail -n 1
+        run: tools/cover.sh coverage.out 90
+
+  bench-fuzz:
+    name: Benchmarks and fuzzing (smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Benchmarks, one iteration each
+        run: go test -run='^$' -bench=. -benchtime=1x ./...
+      - name: Fuzz every target for 30s
+        env:
+          FUZZTIME: 30s
+        run: tools/fuzz.sh
 
   gate:
     # Dogfood: the binary holds itself to its own gate (build, race tests,
