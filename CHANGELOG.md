@@ -16,6 +16,13 @@ generated from Conventional Commit messages.
   and every archive a build provenance attestation. See
   [verifying releases](SECURITY.md#verifying-releases).
 
+### Fixed
+
+- The report Claude sees could run past its character cap when issues were
+  capped and the "full report" pointer was added, and a cut with no line
+  break could split a multi-byte character. Both were found by the new
+  `FuzzRender`.
+
 ## 0.7.0
 
 ### Added

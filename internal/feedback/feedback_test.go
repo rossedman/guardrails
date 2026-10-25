@@ -208,3 +208,23 @@ func TestCut(t *testing.T) {
 		}
 	}
 }
+
+func TestCutKeepsWholeRunes(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		in   string
+		n    int
+		want string
+	}{
+		{"ab€cd", 3, "ab"},
+		{"ab€cd", 4, "ab"},
+		{"ab€cd", 5, "ab€"},
+		{"€€", 6, "€€"},
+		{"€€x", 6, "€€"},
+		{"ab\n€€", 6, "ab\n"},
+	} {
+		if got := cut(tc.in, tc.n); got != tc.want {
+			t.Errorf("cut(%q, %d) = %q, want %q", tc.in, tc.n, got, tc.want)
+		}
+	}
+}
