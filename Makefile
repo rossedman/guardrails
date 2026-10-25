@@ -48,12 +48,16 @@ harden: build ## Mutation-test and fuzz the Go changed on this branch
 	$(BIN) harden --base origin/main
 
 .PHONY: docs
-docs: ## Serve the docs locally
+docs: gendocs ## Serve the docs locally
 	pip install -q -r docs/requirements.txt
 	mkdocs serve
 
+.PHONY: gendocs
+gendocs: ## Regenerate the command reference in docs/reference/commands
+	go run ./tools/gendocs
+
 .PHONY: docs-build
-docs-build: ## Build the docs site strictly, as CI does
+docs-build: gendocs ## Build the docs site strictly, as CI does
 	mkdocs build --strict
 
 .PHONY: check

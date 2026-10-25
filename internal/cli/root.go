@@ -90,6 +90,13 @@ The same gate runs from your terminal, in CI and as a pre-commit hook.`,
 	return root
 }
 
+// Command returns the command tree with a fresh Viper, for tools that walk
+// it, like the reference-docs generator.
+func (a *App) Command() *cobra.Command {
+	a.V = newViper()
+	return NewRootCmd(a)
+}
+
 // Run executes args (without the program name) through fang and returns the
 // exit code: 0 on success, 1 when a command fails, 2 for usage errors.
 func (a *App) Run(ctx context.Context, args []string) int {

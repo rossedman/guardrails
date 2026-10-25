@@ -110,6 +110,23 @@ nav:
       - CI and pre-commit: ci.md
   - Reference:
       - CLI: cli.md
+      - Commands:
+          - guardrails: reference/commands/guardrails.md
+          - status: reference/commands/guardrails_status.md
+          - gate: reference/commands/guardrails_gate.md
+          - harden: reference/commands/guardrails_harden.md
+          - learn: reference/commands/guardrails_learn.md
+          - init: reference/commands/guardrails_init.md
+          - doctor: reference/commands/guardrails_doctor.md
+          - tools: reference/commands/guardrails_tools.md
+          - tools install: reference/commands/guardrails_tools_install.md
+          - tools list: reference/commands/guardrails_tools_list.md
+          - tools path: reference/commands/guardrails_tools_path.md
+          - config: reference/commands/guardrails_config.md
+          - schema: reference/commands/guardrails_schema.md
+          - hook: reference/commands/guardrails_hook.md
+          - statusline: reference/commands/guardrails_statusline.md
+          - version: reference/commands/guardrails_version.md
       - Hook events: hooks.md
       - How it works: how-it-works.md
       - Companion tools: companion-tools.md

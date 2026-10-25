@@ -167,3 +167,14 @@ func TestErrorsAreColoredInATerminal(t *testing.T) {
 		t.Errorf("forced color, but the error is plain: %q", out)
 	}
 }
+
+func TestCommandBuildsTheTree(t *testing.T) {
+	t.Parallel()
+	root := New().Command()
+	if root.Name() != "guardrails" {
+		t.Errorf("root = %q", root.Name())
+	}
+	if c, _, err := root.Find([]string{"tools", "path"}); err != nil || c.Name() != "path" {
+		t.Errorf("tools path = %v, %v", c, err)
+	}
+}
