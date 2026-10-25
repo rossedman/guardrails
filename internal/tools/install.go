@@ -39,6 +39,7 @@ func NewInstaller(m *Manager) *Installer {
 	}
 }
 
+// execEnv runs a command with env added to the current environment and returns its combined output.
 func execEnv(ctx context.Context, env []string, name string, args ...string) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Env = append(os.Environ(), env...)
@@ -113,6 +114,7 @@ func (in *Installer) Install(ctx context.Context, name string) error {
 	return os.WriteFile(filepath.Join(m.Dir(name), ".complete"), []byte(t.Version+"\n"), 0o644)
 }
 
+// installArtifact downloads the tool's artifact for this platform into stage and extracts the executable as stage/name.
 func (in *Installer) installArtifact(ctx context.Context, name string, t Tool, stage string) error {
 	a, ok := t.Platforms[in.m.platform()]
 	if !ok {

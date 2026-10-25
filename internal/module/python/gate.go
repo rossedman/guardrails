@@ -64,6 +64,7 @@ type projectResult struct {
 	covered, statements int
 }
 
+// gateProject runs the full gate for one Python project: ruff, tests with coverage, the type check and the uv.lock check.
 func (m *Module) gateProject(ctx context.Context, env module.Env, proj string, files []string, in module.GateInput) projectResult {
 	out := projectResult{coverage: map[string]float64{}, total: -1}
 	var want map[string]bool
@@ -140,6 +141,8 @@ func (m *Module) testCommand(ctx context.Context, env module.Env, proj string) (
 	}
 }
 
+// testAndCover runs pytest with coverage in the project and records the results in out.
+// It adds checks for failing tests or a missing report, then hands the coverage report to coverageChecks.
 func (m *Module) testAndCover(ctx context.Context, env module.Env, proj string, files []string, in module.GateInput, out *projectResult) {
 	cmd, prefix, err := m.testCommand(ctx, env, proj)
 	if err != nil {
@@ -215,6 +218,8 @@ func (m *Module) testAndCover(ctx context.Context, env module.Env, proj string, 
 	m.coverageChecks(ctx, env, proj, files, cov, in, out)
 }
 
+// coverageChecks measures total, per-package and patch coverage from cov against the configured bars.
+// It records the numbers in out and adds a failed Check for each bar that is missed.
 func (m *Module) coverageChecks(ctx context.Context, env module.Env, proj string, files []string, cov *covReport, in module.GateInput, out *projectResult) {
 	cfg := env.Config
 	type stats struct{ covered, total int }
@@ -374,6 +379,7 @@ func changedLines(ctx context.Context, env module.Env, base string, files []stri
 	return out
 }
 
+// allLines returns every line number of the file at path, or nil if it cannot be read.
 func allLines(path string) map[int]bool {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -460,6 +466,7 @@ func ranges(ls []int) string {
 	return strings.Join(parts, ",")
 }
 
+// capList keeps the first n items and adds a "+N more" entry for the rest.
 func capList(items []string, n int) []string {
 	if len(items) <= n {
 		return items
@@ -467,6 +474,7 @@ func capList(items []string, n int) []string {
 	return append(items[:n:n], fmt.Sprintf("+%d more", len(items)-n))
 }
 
+// appendUnique appends each of items to dst that it does not already hold.
 func appendUnique(dst []string, items ...string) []string {
 	for _, it := range items {
 		found := false

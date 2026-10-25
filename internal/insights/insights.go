@@ -177,6 +177,7 @@ func turns(gates []runlog.Record, rep *Report) {
 	}
 }
 
+// percentiles returns the median and 95th percentile gate time in milliseconds.
 func percentiles(gates []runlog.Record) (p50, p95 int64) {
 	if len(gates) == 0 {
 		return 0, 0
@@ -193,6 +194,8 @@ func percentiles(gates []runlog.Record) (p50, p95 int64) {
 	return at(0.50), at(0.95)
 }
 
+// rules groups gate failures by check and rule into rep.
+// It keeps the ten most common as TopRules, and those seen in at least minSessions sessions as RuleCandidates.
 func rules(gates []runlog.Record, minSessions int, rep *Report) {
 	type agg struct {
 		Rule

@@ -103,6 +103,8 @@ func (v *verdict) add(action, reason string) {
 	v.reasons = append(v.reasons, reason)
 }
 
+// check decides whether one package request is allowed, needs confirmation, or is denied.
+// check looks the package up on deps.dev and OSV and applies the age, deprecation, license and vulnerability rules in cfg.
 func (c *Checker) check(ctx context.Context, cfg config.Deps, r Request) Finding {
 	allow := Finding{Request: r, Action: hook.Allow}
 	if glob.Any(cfg.Allow, r.Name) {
@@ -194,6 +196,7 @@ func (c *Checker) check(ctx context.Context, cfg config.Deps, r Request) Finding
 	return v.finding(r)
 }
 
+// finding turns the collected verdict into a Finding for r; no action means allow.
 func (v verdict) finding(r Request) Finding {
 	if v.action == "" {
 		return Finding{Request: r, Action: hook.Allow}
@@ -225,6 +228,7 @@ type versionDoc struct {
 	} `json:"advisoryKeys"`
 }
 
+// firstPublished returns the earliest publish time across the package's versions, or zero if none is known.
 func (p *packageDoc) firstPublished() time.Time {
 	var t time.Time
 	for _, v := range p.Versions {
@@ -286,6 +290,7 @@ func (c *Checker) lookupPackage(ctx context.Context, r Request) (string, *packag
 	return r.Name, nil, nil
 }
 
+// lookupVersion fetches one version's record from deps.dev. It errors if deps.dev has no such version.
 func (c *Checker) lookupVersion(ctx context.Context, system, name, version string) (versionDoc, error) {
 	var doc versionDoc
 	u := fmt.Sprintf("%s/v3/systems/%s/packages/%s/versions/%s", c.DepsDevURL, depsDevSystem(system), escape(name), escape(version))
@@ -374,6 +379,7 @@ func (c *Checker) getJSON(ctx context.Context, method, u string, body []byte, v 
 	return true, nil
 }
 
+// now returns the checker's clock, falling back to time.Now when none is set.
 func (c *Checker) now() time.Time {
 	if c.Now == nil {
 		return time.Now()
@@ -514,6 +520,7 @@ func alternatives(expr string) [][]string {
 	return out
 }
 
+// depsDevSystem maps a registry to the system name deps.dev uses.
 func depsDevSystem(system string) string {
 	switch system {
 	case NPM:
@@ -527,6 +534,7 @@ func depsDevSystem(system string) string {
 	}
 }
 
+// osvEcosystem maps a registry to the ecosystem name OSV uses.
 func osvEcosystem(system string) string {
 	switch system {
 	case NPM:
@@ -545,8 +553,10 @@ func escape(s string) string {
 	return strings.ReplaceAll(url.QueryEscape(s), "+", "%20")
 }
 
+// quote returns the request as a quoted string for messages.
 func quote(r Request) string { return fmt.Sprintf("%q", r.String()) }
 
+// first returns at most the first n items of s.
 func first(s []string, n int) []string {
 	if len(s) > n {
 		return s[:n]

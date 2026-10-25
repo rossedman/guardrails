@@ -19,6 +19,8 @@ import (
 	"github.com/rossedman/guardrails/internal/state"
 )
 
+// sessionStart records the repo and base commit for the session and resets the gate on a fresh start.
+// It then reports the active standards, any missing or installing tools, and pending lessons.
 func (e *Engine) sessionStart(ctx context.Context, in hook.Input) (hook.Output, error) {
 	repo := e.RepoRoot(ctx, in.Cwd)
 	cfg, cfgErr := e.loadConfig(repo)
@@ -150,6 +152,7 @@ func Bar(cfg config.Config, name string) string {
 	return "lint and format"
 }
 
+// coverageBar describes a coverage bar: the total, or "may not drop" when it is 0, plus the patch percentage.
 func coverageBar(total, patch float64) string {
 	cov := fmt.Sprintf("%g%% coverage", total)
 	if total == 0 {
@@ -194,6 +197,7 @@ func present(repo string, m module.Module) bool {
 	return false
 }
 
+// standardsSummary is the context shown to the agent at session start: the mode, each module's standards, and the coverage baseline.
 func standardsSummary(cfg config.Config, active []module.Module, rc *state.RepoCache) string {
 	var b strings.Builder
 	mode := "enforced: failures block"
@@ -222,6 +226,7 @@ func standardsSummary(cfg config.Config, active []module.Module, rc *state.RepoC
 	return strings.TrimSpace(b.String())
 }
 
+// passFail returns "passed" or "failed".
 func passFail(ok bool) string {
 	if ok {
 		return "passed"
@@ -229,6 +234,8 @@ func passFail(ok bool) string {
 	return "failed"
 }
 
+// preToolUse runs the file and Bash guards, and the dependency check, before a tool call.
+// It returns a permission decision, or empty output to let the call through.
 func (e *Engine) preToolUse(ctx context.Context, in hook.Input) (hook.Output, error) {
 	t, err := in.Tool()
 	if err != nil {
@@ -280,6 +287,7 @@ func (e *Engine) preToolUse(ctx context.Context, in hook.Input) (hook.Output, er
 	return hook.Permission(d.Action, d.Message()), nil
 }
 
+// isTestFile reports whether p is a Go or Python test file or lives under testdata.
 func isTestFile(p string) bool {
 	base := filepath.Base(p)
 	return strings.HasSuffix(base, "_test.go") ||
@@ -288,10 +296,12 @@ func isTestFile(p string) bool {
 		strings.Contains(filepath.ToSlash(p), "/testdata/")
 }
 
+// gitOutput runs git in dir and returns trimmed stdout, or "" on failure.
 func (e *Engine) gitOutput(ctx context.Context, dir string, args ...string) string {
 	return e.cmdOutput(ctx, dir, "git", args...)
 }
 
+// cmdOutput runs a command in dir and returns trimmed stdout, or "" if it fails or exits non-zero.
 func (e *Engine) cmdOutput(ctx context.Context, dir, name string, args ...string) string {
 	res, err := e.Runner.Run(ctx, dir, name, args...)
 	if err != nil || res.ExitCode != 0 {
@@ -300,6 +310,8 @@ func (e *Engine) cmdOutput(ctx context.Context, dir, name string, args ...string
 	return strings.TrimSpace(res.Stdout)
 }
 
+// postToolUse fixes and checks a file after an edit and records it as touched.
+// Failures block the agent when enforcing, and are only reported otherwise.
 func (e *Engine) postToolUse(ctx context.Context, in hook.Input) (hook.Output, error) {
 	t, err := in.Tool()
 	if err != nil {
@@ -379,6 +391,8 @@ func (e *Engine) postToolUse(ctx context.Context, in hook.Input) (hook.Output, e
 	return out, err
 }
 
+// stop runs the gate over the files this agent touched when it tries to finish.
+// When enforcing, a failed gate blocks the stop until the block limit is reached, then hands off.
 func (e *Engine) stop(ctx context.Context, in hook.Input, agent string) (hook.Output, error) {
 	started := e.Now()
 	sess, err := e.Store.Load(in.SessionID)
@@ -494,6 +508,7 @@ func (e *Engine) RecordGate(repo, reportPath string, passed bool, total float64,
 	_ = e.Store.SaveRepo(repo, rc)
 }
 
+// sessionEnd appends a summary record of the session to the run log.
 func (e *Engine) sessionEnd(in hook.Input) (hook.Output, error) {
 	sess, err := e.Store.Load(in.SessionID)
 	if err != nil {
@@ -508,6 +523,7 @@ func (e *Engine) sessionEnd(in hook.Input) (hook.Output, error) {
 	return hook.Output{}, err
 }
 
+// displayRel returns p relative to repo with forward slashes, or p unchanged if that fails.
 func displayRel(repo, p string) string {
 	if rel, err := filepath.Rel(repo, p); err == nil {
 		return filepath.ToSlash(rel)
@@ -515,6 +531,7 @@ func displayRel(repo, p string) string {
 	return p
 }
 
+// writeFile writes content to path, creating its directory. Only the owner can read it.
 func writeFile(path, content string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
@@ -522,6 +539,7 @@ func writeFile(path, content string) error {
 	return os.WriteFile(path, []byte(content), 0o600)
 }
 
+// copyMap returns a copy of m, keeping nil as nil.
 func copyMap(m map[string]float64) map[string]float64 {
 	if m == nil {
 		return nil

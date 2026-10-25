@@ -30,6 +30,7 @@ var (
 	pep503re = regexp.MustCompile(`[-_.]+`)
 )
 
+// main regenerates the popular-package lists, exiting 1 on any error.
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	err := run(ctx, npmURL, pypiURL, outDir)
@@ -72,6 +73,7 @@ func run(ctx context.Context, npmSrc, pypiSrc, dir string) error {
 	return write(filepath.Join(dir, "pypi.txt"), pypi)
 }
 
+// fetch GETs url and returns the response body, failing on any non-200 status.
 func fetch(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -88,6 +90,8 @@ func fetch(ctx context.Context, url string) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
+// write saves the first limit unique, non-empty names to path, one per line.
+// write refuses to overwrite the file when fewer than half of limit names came back.
 func write(path string, names []string) error {
 	seen := map[string]bool{}
 	var out []string

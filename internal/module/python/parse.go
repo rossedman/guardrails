@@ -118,6 +118,7 @@ type covFile struct {
 	} `json:"summary"`
 }
 
+// parseCoverage decodes the JSON report written by pytest-cov.
 func parseCoverage(data []byte) (*covReport, error) {
 	var r covReport
 	if err := json.Unmarshal(data, &r); err != nil {

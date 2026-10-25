@@ -56,6 +56,7 @@ func extract(src, format, member, dst string) error {
 	}
 }
 
+// extractTar copies the regular file member from a tar stream to dst as an executable.
 func extractTar(r io.Reader, member, dst string) error {
 	tr := tar.NewReader(r)
 	for {
@@ -72,6 +73,7 @@ func extractTar(r io.Reader, member, dst string) error {
 	}
 }
 
+// extractZip copies the file member from the zip at src to dst as an executable.
 func extractZip(src, member, dst string) error {
 	zr, err := zip.OpenReader(src)
 	if err != nil {
@@ -92,6 +94,7 @@ func extractZip(src, member, dst string) error {
 	return fmt.Errorf("%s not found in archive", member)
 }
 
+// writeExecutable writes r to dst, owner-only and executable, and fails if it is over the maxBinary size limit.
 func writeExecutable(dst string, r io.Reader) error {
 	f, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {

@@ -162,6 +162,7 @@ func ParseLocations(out, rule string) []feedback.Issue {
 	return issues
 }
 
+// splitLines splits s on newlines without a trailing empty line.
 func splitLines(s string) []string {
 	var out []string
 	start := 0

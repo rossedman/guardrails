@@ -311,6 +311,7 @@ func (c Config) TerraformEnabled() bool { return on(c.Terraform.Enabled) }
 // DockerEnabled reports whether the Docker module is on.
 func (c Config) DockerEnabled() bool { return on(c.Docker.Enabled) }
 
+// on reports whether an optional toggle is enabled; nil means on.
 func on(b *bool) bool { return b == nil || *b }
 
 // DepsEnabled reports whether the dependency check runs.
@@ -370,6 +371,7 @@ func Load(globalPath, repoRoot string) (Config, error) {
 	return cfg, nil
 }
 
+// mergeFile merges the YAML file at path into cfg. A missing file is not an error.
 func mergeFile(cfg *Config, path string) error {
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {

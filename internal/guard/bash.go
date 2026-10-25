@@ -156,6 +156,7 @@ func positional(args []string) []string {
 	return out
 }
 
+// hasFlag reports whether args has any of names, either bare or as name=value.
 func hasFlag(args []string, names ...string) bool {
 	for _, a := range args {
 		for _, n := range names {
@@ -167,6 +168,7 @@ func hasFlag(args []string, names ...string) bool {
 	return false
 }
 
+// flagValue returns the value of the flag name, given as "name value" or "name=value".
 func flagValue(args []string, name string) (string, bool) {
 	for i, a := range args {
 		if a == name && i+1 < len(args) {
@@ -179,6 +181,7 @@ func flagValue(args []string, name string) (string, bool) {
 	return "", false
 }
 
+// terraformGuard denies terraform, tofu and terragrunt commands that apply or change state; plan and read-only state commands pass.
 func terraformGuard(args []string) Decision {
 	if args[0] != "terraform" && args[0] != "tofu" && args[0] != "terragrunt" {
 		return Allowed
@@ -206,6 +209,7 @@ func terraformGuard(args []string) Decision {
 	return Allowed
 }
 
+// registryGuard asks before a container image is pushed to a registry by docker, podman, crane and similar tools.
 func registryGuard(args []string) Decision {
 	const reason = "pushing images to a registry is the human's call. Build and test locally; ask before `%s`."
 	pos := positional(args[1:])
@@ -231,6 +235,7 @@ func registryGuard(args []string) Decision {
 	return Allowed
 }
 
+// hasOutputPush reports whether an --output or -o flag sends a build to a registry.
 func hasOutputPush(args []string) bool {
 	for _, flag := range []string{"--output", "-o"} {
 		if v, ok := flagValue(args, flag); ok && (strings.Contains(v, "type=registry") || strings.Contains(v, "push=true")) {
@@ -240,6 +245,7 @@ func hasOutputPush(args []string) bool {
 	return false
 }
 
+// gitGuard denies force pushes, hard resets, --no-verify and pushes to protected branches, and asks before git clean -f.
 func gitGuard(g config.Guards, args []string, env Env) Decision {
 	if args[0] != "git" {
 		return Allowed
@@ -294,6 +300,8 @@ func hasShortFlag(args []string, c rune) bool {
 	return false
 }
 
+// pushTarget denies a push to a protected branch or with a +refspec.
+// With no explicit refspec it checks the current branch.
 func pushTarget(g config.Guards, pos []string, env Env) Decision {
 	protected := func(ref string) bool {
 		ref = strings.TrimPrefix(ref, "+")
@@ -336,6 +344,7 @@ func pushTarget(g config.Guards, pos []string, env Env) Decision {
 	return Allowed
 }
 
+// kubectlGuard asks before a write command by kubectl, oc or helm against a context not listed as safe.
 func kubectlGuard(g config.Guards, args []string, env Env) Decision {
 	if args[0] != "kubectl" && args[0] != "oc" && args[0] != "helm" {
 		return Allowed
@@ -370,6 +379,7 @@ func kubectlGuard(g config.Guards, args []string, env Env) Decision {
 	return ask("cluster-write", fmt.Sprintf("`%s %s` against context %q, which is not a dev cluster. Non-dev clusters need the human.", args[0], pos[0], ctx))
 }
 
+// thresholdGuard denies a --cov-fail-under value below the configured Python coverage total.
 func thresholdGuard(cfg config.Config, args []string) Decision {
 	for i, a := range args {
 		var raw string
@@ -403,6 +413,7 @@ func protectedWriteGuard(seg []string) Decision {
 	return Allowed
 }
 
+// hasInPlace reports whether args ask for in-place editing, such as --in-place or -i.
 func hasInPlace(args []string) bool {
 	for _, a := range args[1:] {
 		if a == "--in-place" || strings.HasPrefix(a, "--in-place=") {

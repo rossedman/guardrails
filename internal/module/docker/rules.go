@@ -29,6 +29,7 @@ type Finding struct {
 	Message string
 }
 
+// always is the Enabled func for rules that apply under any config.
 func always(config.Docker) bool { return true }
 
 // Rules are the native checks, in report order.
@@ -85,6 +86,7 @@ func Lint(cfg config.Docker, file, content string) []feedback.Check {
 	return lintParsed(cfg, file, ParseFile(content))
 }
 
+// lintParsed runs every enabled rule over a parsed Dockerfile and returns one failed Check per rule that found issues.
 func lintParsed(cfg config.Docker, file string, df Dockerfile) []feedback.Check {
 	var checks []feedback.Check
 	for _, r := range Rules {
@@ -123,6 +125,7 @@ func externalImages(df Dockerfile, fn func(st Stage, expanded string)) {
 	}
 }
 
+// digestFindings flags external base images that are not pinned by digest.
 func digestFindings(df Dockerfile) []Finding {
 	var out []Finding
 	externalImages(df, func(st Stage, expanded string) {
@@ -137,6 +140,7 @@ func digestFindings(df Dockerfile) []Finding {
 	return out
 }
 
+// tagFindings flags external base images with no tag or the latest tag.
 func tagFindings(df Dockerfile) []Finding {
 	var out []Finding
 	externalImages(df, func(st Stage, expanded string) {
@@ -203,6 +207,7 @@ func effectiveUser(df Dockerfile, i int) (user string, line int, base string) {
 	return "", 0, base
 }
 
+// isRoot reports whether a USER value, ignoring any group, names root or UID 0.
 func isRoot(user string) bool {
 	name, _, _ := strings.Cut(user, ":")
 	name = strings.TrimSpace(name)
@@ -220,6 +225,7 @@ func instructions(df Dockerfile, fn func(Instruction)) {
 
 var archiveRe = regexp.MustCompile(`(?i)\.(tar|tar\.gz|tgz|tar\.bz2|tbz2?|tar\.xz|txz|tar\.zst)$`)
 
+// addFindings flags ADD of local files, where COPY would do. URLs, git sources and archives are fine.
 func addFindings(df Dockerfile) []Finding {
 	var out []Finding
 	instructions(df, func(in Instruction) {
@@ -251,6 +257,7 @@ var (
 	apkAddRe     = regexp.MustCompile(`\bapk\s+(\S+\s+)*add\b`)
 )
 
+// aptRecommendsFindings flags apt-get install without --no-install-recommends.
 func aptRecommendsFindings(df Dockerfile) []Finding {
 	var out []Finding
 	instructions(df, func(in Instruction) {
@@ -261,6 +268,7 @@ func aptRecommendsFindings(df Dockerfile) []Finding {
 	return out
 }
 
+// aptCleanupFindings flags apt-get install that leaves /var/lib/apt/lists in the layer, unless it uses a cache mount.
 func aptCleanupFindings(df Dockerfile) []Finding {
 	var out []Finding
 	instructions(df, func(in Instruction) {
@@ -275,6 +283,7 @@ func aptCleanupFindings(df Dockerfile) []Finding {
 	return out
 }
 
+// apkFindings flags apk add without --no-cache, unless it uses a cache mount.
 func apkFindings(df Dockerfile) []Finding {
 	var out []Finding
 	instructions(df, func(in Instruction) {
@@ -301,6 +310,7 @@ func secretName(name string) bool {
 	return secretNameRe.MatchString(name)
 }
 
+// secretFindings flags ARG and ENV names that look like secrets, since they persist in the image history.
 func secretFindings(df Dockerfile) []Finding {
 	var out []Finding
 	check := func(in Instruction) {

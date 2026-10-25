@@ -122,6 +122,7 @@ func rel(repo, p string) string {
 	return filepath.ToSlash(p)
 }
 
+// plural returns "s" unless n is 1.
 func plural(n int) string {
 	if n == 1 {
 		return ""
@@ -129,6 +130,7 @@ func plural(n int) string {
 	return "s"
 }
 
+// firstLines returns up to n non-blank lines of s.
 func firstLines(s string, n int) []string {
 	var out []string
 	for _, l := range strings.Split(strings.TrimSpace(s), "\n") {

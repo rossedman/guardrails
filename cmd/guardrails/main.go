@@ -10,6 +10,7 @@ import (
 	"github.com/rossedman/guardrails/internal/cli"
 )
 
+// main runs the CLI and exits with its status code; Ctrl-C cancels the context.
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	code := cli.New().Run(ctx, os.Args[1:])

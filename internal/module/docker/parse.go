@@ -143,6 +143,7 @@ func ParseFile(content string) Dockerfile {
 	return df
 }
 
+// parseFrom reads a FROM instruction into a Stage with its image and optional AS name, ignoring flags like --platform.
 func parseFrom(in Instruction) Stage {
 	st := Stage{Line: in.Line}
 	var fields []string

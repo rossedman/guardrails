@@ -143,6 +143,7 @@ func (m *Module) run(ctx context.Context, env module.Env, files []string, gate b
 	return res
 }
 
+// tool returns the module's declared tool called name, or a bare one if there is none.
 func (m *Module) tool(name string) module.Tool {
 	for _, t := range m.Tools() {
 		if t.Name == name {
@@ -154,6 +155,8 @@ func (m *Module) tool(name string) module.Tool {
 
 var parsableRe = regexp.MustCompile(`^(.+?):(\d+):(\d+): \[(error|warning)\] (.*?)(?: \(([\w-]+)\))?$`)
 
+// yamllint lints files with yamllint, using the repo's config or the relaxed preset when it has none.
+// It returns a failed Check with the errors, and true, if there are any.
 func (m *Module) yamllint(ctx context.Context, env module.Env, files []string) (feedback.Check, bool) {
 	args := []string{"-f", "parsable"}
 	if !hasYamllintConfig(env.Repo) {
@@ -198,6 +201,7 @@ type actionlintError struct {
 	Kind     string `json:"kind"`
 }
 
+// actionlint lints GitHub Actions workflow files and returns a failed Check, and true, if it finds errors or fails to run.
 func (m *Module) actionlint(ctx context.Context, env module.Env, files []string) (feedback.Check, bool) {
 	out, err := env.RunTool(ctx, env.Repo, "actionlint", append([]string{"-format", "{{json .}}"}, rel(env.Repo, files)...)...)
 	if err != nil {
@@ -249,6 +253,8 @@ type kubeconformReport struct {
 	} `json:"resources"`
 }
 
+// kubeconform validates Kubernetes manifests against their API schemas.
+// It returns a failed Check, and true, for violations, plus notes when schemas could not be downloaded.
 func (m *Module) kubeconform(ctx context.Context, env module.Env, files []string) (feedback.Check, bool, []string) {
 	args := []string{
 		"-strict", "-summary=false", "-output", "json", "-ignore-missing-schemas",
@@ -351,6 +357,7 @@ func isManifest(f string) bool {
 	}
 }
 
+// hasYamllintConfig reports whether repo has a yamllint config file.
 func hasYamllintConfig(repo string) bool {
 	for _, n := range []string{".yamllint", ".yamllint.yaml", ".yamllint.yml"} {
 		if _, err := os.Stat(filepath.Join(repo, n)); err == nil {
@@ -404,6 +411,7 @@ func skipUnreadable(d os.DirEntry) error {
 	return nil
 }
 
+// rel returns display paths for files, relative to repo.
 func rel(repo string, files []string) []string {
 	out := make([]string, len(files))
 	for i, f := range files {
@@ -412,6 +420,7 @@ func rel(repo string, files []string) []string {
 	return out
 }
 
+// display returns p relative to repo with forward slashes when it is an absolute path inside repo.
 func display(repo, p string) string {
 	if filepath.IsAbs(p) {
 		if r, err := filepath.Rel(repo, p); err == nil && !strings.HasPrefix(r, "..") {
@@ -421,10 +430,12 @@ func display(repo, p string) string {
 	return filepath.ToSlash(p)
 }
 
+// toolError is the failed Check for a tool that could not run.
 func toolError(name string, err error) feedback.Check {
 	return feedback.Check{Name: name, Failed: true, Summary: "could not run: " + err.Error()}
 }
 
+// countSummary formats a count with its noun, adding "s" unless n is 1.
 func countSummary(n int, noun string) string {
 	if n == 1 {
 		return "1 " + noun
@@ -432,6 +443,7 @@ func countSummary(n int, noun string) string {
 	return fmt.Sprintf("%d %ss", n, noun)
 }
 
+// orDefault returns s, or def if s is empty.
 func orDefault(s, def string) string {
 	if s == "" {
 		return def
@@ -439,6 +451,7 @@ func orDefault(s, def string) string {
 	return s
 }
 
+// firstLines returns up to n non-blank lines of s.
 func firstLines(s string, n int) []string {
 	var out []string
 	for _, l := range strings.Split(strings.TrimSpace(s), "\n") {

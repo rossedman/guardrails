@@ -55,6 +55,7 @@ func (*Module) Tools() []module.Tool {
 	}
 }
 
+// tool returns the module's declared tool called name, or a required one with a default install hint.
 func (m *Module) tool(name string) module.Tool {
 	for _, t := range m.Tools() {
 		if t.Name == name {
@@ -126,6 +127,7 @@ func (m *Module) Check(ctx context.Context, env module.Env, files []string) []fe
 	return []feedback.Check{lintCheck(issues)}
 }
 
+// lintCheck is the failed tflint Check for issues.
 func lintCheck(issues []feedback.Issue) feedback.Check {
 	return feedback.Check{
 		Name: "tflint", Failed: true,
@@ -392,6 +394,7 @@ type validateReport struct {
 	} `json:"diagnostics"`
 }
 
+// parseValidate reads the JSON from terraform validate and returns an Issue for each error diagnostic, in file terms relative to repo.
 func parseValidate(out, repo, dir string) ([]feedback.Issue, error) {
 	start := strings.Index(out, "{")
 	if start < 0 {
@@ -437,6 +440,8 @@ type trivyReport struct {
 	} `json:"Results"`
 }
 
+// trivy scans dir for HIGH and CRITICAL misconfigurations.
+// It returns the issues found, or a note when trivy could not run or its output could not be read.
 func (m *Module) trivy(ctx context.Context, env module.Env, dir string) ([]feedback.Issue, string) {
 	res, err := env.RunTool(ctx, dir, "trivy", "config", "--format", "json", "--quiet",
 		"--severity", "HIGH,CRITICAL", "--cache-dir", filepath.Join(env.DataDir, "trivy"), ".")
@@ -514,6 +519,7 @@ func scope(issues []feedback.Issue, repo string, files []string, all bool) []fee
 	return only(issues, repo, files)
 }
 
+// display returns p relative to repo with forward slashes when it is inside repo.
 func display(repo, p string) string {
 	if rel, err := filepath.Rel(repo, p); err == nil && !strings.HasPrefix(rel, "..") {
 		return filepath.ToSlash(rel)
@@ -521,6 +527,7 @@ func display(repo, p string) string {
 	return filepath.ToSlash(p)
 }
 
+// allTerraformFiles walks repo and returns every Terraform file, skipping dot directories and node_modules.
 func allTerraformFiles(repo string) []string {
 	var out []string
 	m := New()
@@ -571,6 +578,7 @@ func errorLines(out string, n int) []string {
 	return errs
 }
 
+// prefixed returns lines with "prefix: " added to the front of each.
 func prefixed(prefix string, lines []string) []string {
 	out := make([]string, len(lines))
 	for i, l := range lines {
@@ -579,6 +587,7 @@ func prefixed(prefix string, lines []string) []string {
 	return out
 }
 
+// firstSentence returns s on one line, cut after its first sentence.
 func firstSentence(s string) string {
 	s = strings.TrimSpace(strings.ReplaceAll(s, "\n", " "))
 	if i := strings.Index(s, ". "); i > 0 {
@@ -587,6 +596,7 @@ func firstSentence(s string) string {
 	return s
 }
 
+// plural returns "s" unless n is 1.
 func plural(n int) string {
 	if n == 1 {
 		return ""
@@ -594,6 +604,7 @@ func plural(n int) string {
 	return "s"
 }
 
+// appendUnique appends each of items to dst that it does not already hold.
 func appendUnique(dst []string, items ...string) []string {
 	for _, it := range items {
 		found := false

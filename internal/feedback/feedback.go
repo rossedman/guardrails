@@ -187,6 +187,7 @@ func Render(r Report, opts Options) Rendered {
 	return out
 }
 
+// orDash returns s, or "-" if it is empty.
 func orDash(s string) string {
 	if s == "" {
 		return "-"

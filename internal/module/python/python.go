@@ -247,6 +247,7 @@ func resolve(ctx context.Context, env module.Env, proj, name string) (tools.Comm
 	return env.Tool(ctx, name)
 }
 
+// run runs cmd in dir, with its own arguments first and then args.
 func run(ctx context.Context, env module.Env, dir string, cmd tools.Command, args ...string) (runner.Result, error) {
 	return env.Runner.Run(ctx, dir, cmd.Path, append(append([]string(nil), cmd.Args...), args...)...)
 }
@@ -262,11 +263,13 @@ func venvPython(repo, proj string) string {
 	return ""
 }
 
+// isExecutable reports whether p is a file with an execute bit set.
 func isExecutable(p string) bool {
 	info, err := os.Stat(p)
 	return err == nil && !info.IsDir() && info.Mode()&0o111 != 0
 }
 
+// uniq returns the non-empty dirs, dropping repeats and keeping order.
 func uniq(dirs ...string) []string {
 	var out []string
 	seen := map[string]bool{}
@@ -301,6 +304,7 @@ func projectRoot(repo, file string) string {
 	}
 }
 
+// within reports whether p is inside repo.
 func within(repo, p string) bool {
 	rel, err := filepath.Rel(repo, p)
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
@@ -331,11 +335,13 @@ func pyFiles(files []string) []string {
 	return out
 }
 
+// isTestFile reports whether p is a pytest test file or conftest.py.
 func isTestFile(p string) bool {
 	base := filepath.Base(p)
 	return strings.HasPrefix(base, "test_") || strings.HasSuffix(base, "_test.py") || base == "conftest.py"
 }
 
+// fileSet returns the cleaned paths in files as a lookup set.
 func fileSet(files []string) map[string]bool {
 	m := map[string]bool{}
 	for _, f := range files {
@@ -353,6 +359,7 @@ func relIssues(repo, proj string, issues []feedback.Issue) []feedback.Issue {
 	return issues
 }
 
+// absTo makes p absolute by joining it to dir.
 func absTo(dir, p string) string {
 	if filepath.IsAbs(p) {
 		return filepath.Clean(p)
@@ -360,6 +367,7 @@ func absTo(dir, p string) string {
 	return filepath.Join(dir, p)
 }
 
+// only keeps the issues whose files are in want, where want holds absolute paths.
 func only(issues []feedback.Issue, repo string, want map[string]bool) []feedback.Issue {
 	var out []feedback.Issue
 	for _, is := range issues {
@@ -370,6 +378,7 @@ func only(issues []feedback.Issue, repo string, want map[string]bool) []feedback
 	return out
 }
 
+// displayPath returns p relative to repo with forward slashes when it is inside repo.
 func displayPath(repo, p string) string {
 	if rel, err := filepath.Rel(repo, p); err == nil && !strings.HasPrefix(rel, "..") {
 		return filepath.ToSlash(rel)
@@ -377,6 +386,7 @@ func displayPath(repo, p string) string {
 	return filepath.ToSlash(p)
 }
 
+// toolError is the failed Check for a tool that could not run.
 func toolError(name string, err error) feedback.Check {
 	return feedback.Check{Name: name, Failed: true, Summary: "could not run: " + err.Error()}
 }
@@ -390,6 +400,7 @@ func (m *Module) unavailableCheck(name string, err error) feedback.Check {
 	}
 }
 
+// plural returns "s" unless n is 1.
 func plural(n int) string {
 	if n == 1 {
 		return ""
@@ -397,6 +408,7 @@ func plural(n int) string {
 	return "s"
 }
 
+// firstLines returns up to n non-blank lines of s.
 func firstLines(s string, n int) []string {
 	var out []string
 	for _, l := range strings.Split(strings.TrimSpace(s), "\n") {
@@ -411,6 +423,7 @@ func firstLines(s string, n int) []string {
 	return out
 }
 
+// lastLines returns the last n non-blank lines of s.
 func lastLines(s string, n int) []string {
 	all := firstLines(s, 1<<30)
 	if len(all) > n {

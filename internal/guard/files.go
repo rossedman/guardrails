@@ -101,6 +101,7 @@ func IsProtected(rel string) bool {
 	return false
 }
 
+// protectedConfig denies edits to guardrail config files, and to the lint, type and coverage sections of pyproject.toml.
 func protectedConfig(fc FileChange) Decision {
 	const reason = "%s holds standards owned by the human. Propose the change in chat instead of editing it."
 	if IsProtected(fc.Rel) {
@@ -141,6 +142,7 @@ var lockfiles = map[string]string{
 	".terraform.lock.hcl": "terraform init -upgrade",
 }
 
+// lockfile denies hand edits to lockfiles, naming the command that regenerates them.
 func lockfile(fc FileChange) Decision {
 	if cmd, ok := lockfiles[filepath.Base(fc.Rel)]; ok {
 		return deny("lockfile", fmt.Sprintf("%s is generated. Run `%s` instead of editing it.", fc.Rel, cmd))
@@ -160,6 +162,7 @@ func IsGenerated(content string) bool {
 	return generatedHeader.MatchString(head)
 }
 
+// generated denies edits to a file that is marked as generated.
 func generated(fc FileChange) Decision {
 	if fc.Exists && IsGenerated(fc.Before) {
 		return deny("generated-file", fmt.Sprintf("%s is generated. Edit its source and regenerate.", fc.Rel))
@@ -167,6 +170,7 @@ func generated(fc FileChange) Decision {
 	return Allowed
 }
 
+// envFile denies writing .env files, except .example, .sample and .template ones.
 func envFile(fc FileChange) Decision {
 	base := filepath.Base(fc.Rel)
 	if !strings.HasPrefix(base, ".env") {
@@ -196,6 +200,7 @@ var secretPatterns = []struct {
 	{"OpenAI API key", regexp.MustCompile(`\bsk-(proj-)?[A-Za-z0-9]{32,}\b`)},
 }
 
+// secrets denies an edit that adds a line matching a known secret pattern.
 func secrets(fc FileChange) Decision {
 	for i, l := range addedLines(fc.Before, fc.After) {
 		for _, p := range secretPatterns {
@@ -223,6 +228,7 @@ var suppressionPatterns = []struct {
 	{"// coverage:ignore", regexp.MustCompile(`//\s*coverage:ignore\b`)},
 }
 
+// suppressions denies an edit that adds a lint or type suppression comment, or the human-only allow and opt-out tags.
 func suppressions(g config.Guards, fc FileChange) Decision {
 	tag := g.AllowSuppressionTag
 	// Allow tags the human already wrote; Claude adding one is itself a
@@ -282,6 +288,7 @@ var (
 	shortMode    = regexp.MustCompile(`testing\.Short\(\)`)
 )
 
+// skippedTests denies an edit that adds a skipped test, or an xfail with no issue link.
 func skippedTests(fc FileChange) Decision {
 	const reason = "new skipped test in %s: %q. Skipping tests to pass the gate isn't allowed; fix the test or the code."
 	afterLines := lines(fc.After)
@@ -313,6 +320,7 @@ func guardedByShort(content []string, target string) bool {
 
 var failUnder = regexp.MustCompile(`(?:--cov-fail-under[= ]|fail_under\s*=\s*|-coverage-threshold[= ])(\d+(?:\.\d+)?)`)
 
+// loweredThresholds denies an edit that lowers or removes a coverage threshold, or sets one below the configured Python total.
 func loweredThresholds(cfg config.Config, fc FileChange) Decision {
 	before := maxThreshold(fc.Before)
 	after := maxThreshold(fc.After)

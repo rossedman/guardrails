@@ -24,6 +24,7 @@ func Any(patterns []string, name string) bool {
 	return false
 }
 
+// split breaks s into its slash-separated segments, ignoring leading and trailing slashes.
 func split(s string) []string {
 	s = strings.Trim(s, "/")
 	if s == "" {
@@ -32,6 +33,8 @@ func split(s string) []string {
 	return strings.Split(s, "/")
 }
 
+// match reports whether the name segments match the pattern segments.
+// Each segment uses path.Match rules, and "**" matches any number of segments.
 func match(pat, name []string) bool {
 	for len(pat) > 0 {
 		if pat[0] == "**" {
