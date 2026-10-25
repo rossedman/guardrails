@@ -6,6 +6,7 @@ import (
 	"github.com/rossedman/guardrails/internal/config"
 )
 
+// newSchemaCmd builds the schema command, which prints the config JSON Schema.
 func newSchemaCmd(a *App) *cobra.Command {
 	return &cobra.Command{
 		Use:   "schema",

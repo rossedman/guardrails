@@ -9,6 +9,7 @@ import (
 	"github.com/rossedman/guardrails/internal/lessons"
 )
 
+// newLearnCmd builds the learn command.
 func newLearnCmd(a *App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "learn",

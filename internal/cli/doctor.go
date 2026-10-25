@@ -9,6 +9,7 @@ import (
 	"github.com/rossedman/guardrails/internal/tools"
 )
 
+// newDoctorCmd builds the doctor command, which checks config, runtimes and tools.
 func newDoctorCmd(a *App) *cobra.Command {
 	return &cobra.Command{
 		Use:   "doctor",

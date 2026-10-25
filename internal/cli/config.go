@@ -6,6 +6,7 @@ import (
 	"github.com/rossedman/guardrails/internal/config"
 )
 
+// newConfigCmd builds the config command, which prints the effective configuration.
 func newConfigCmd(a *App) *cobra.Command {
 	return &cobra.Command{
 		Use:   "config",

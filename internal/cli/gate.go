@@ -16,6 +16,7 @@ import (
 	"github.com/rossedman/guardrails/internal/state"
 )
 
+// newGateCmd builds the gate command.
 func newGateCmd(a *App) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gate",
@@ -47,6 +48,8 @@ It exits 1 when a check fails and prints the same short report Claude sees;
 	return cmd
 }
 
+// gate runs the quality gate on staged, changed or all files, as the flags
+// select, and prints its report.
 func (a *App) gate(ctx context.Context) error {
 	all, base, staged := a.V.GetBool("gate.all"), a.V.GetString("gate.base"), a.V.GetBool("gate.staged")
 	if staged && all {
@@ -126,6 +129,7 @@ func (a *App) gate(ctx context.Context) error {
 	return nil
 }
 
+// passFail describes a gate result: how many checks ran, or how many failed.
 func passFail(passed bool, failed, ran int) string {
 	if passed {
 		return fmt.Sprintf("passed (%d checks)", ran)

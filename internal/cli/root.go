@@ -139,12 +139,16 @@ func printError(root *cobra.Command, args []string) fang.ErrorHandler {
 // like a gate that failed.
 type exitCode int
 
+// Error reports the exit status.
 func (c exitCode) Error() string { return fmt.Sprintf("exit status %d", int(c)) }
 
 // usageError is a mistake in how a command was called; it exits 2.
 type usageError struct{ err error }
 
+// Error returns the wrapped error's message.
 func (e usageError) Error() string { return e.err.Error() }
+
+// Unwrap returns the wrapped error.
 func (e usageError) Unwrap() error { return e.err }
 
 // usageArgs makes an argument check's failure a usage error.

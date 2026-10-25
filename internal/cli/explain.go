@@ -10,6 +10,7 @@ import (
 	"github.com/rossedman/guardrails/internal/state"
 )
 
+// newExplainCmd builds the hidden explain command, the older name for gate --explain.
 func newExplainCmd(a *App) *cobra.Command {
 	return &cobra.Command{
 		Use:   "explain",

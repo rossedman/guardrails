@@ -8,6 +8,7 @@ import (
 	"github.com/rossedman/guardrails/internal/tools"
 )
 
+// newToolsListCmd builds the tools list command.
 func newToolsListCmd(a *App) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
@@ -43,6 +44,7 @@ your PATH, the managed copy, or not installed yet.`,
 	}
 }
 
+// onPath returns where name resolves on PATH, or "" when it doesn't.
 func onPath(m *tools.Manager, name string) string {
 	p, err := m.LookPath(name)
 	if err != nil {
