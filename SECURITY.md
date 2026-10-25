@@ -13,8 +13,9 @@ Please **do not** open a public issue. Report privately through
 [GitHub security advisories](https://github.com/rossedman/guardrails/security/advisories/new).
 Include steps to reproduce and the impact you observed.
 
-You can expect an acknowledgement within a few days and a fix or mitigation
-plan within two weeks for confirmed issues.
+You can expect an acknowledgement within 3 business days and a fix or
+mitigation plan within two weeks for confirmed issues. Reporters are
+credited in the published advisory unless they ask not to be.
 
 ## Verifying releases
 
