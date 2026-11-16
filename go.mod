@@ -1,19 +1,19 @@
 module github.com/rossedman/guardrails
 
-go 1.26.0
+go 1.26.7
 
 toolchain go1.26.10
 
 require (
 	charm.land/fang/v2 v2.0.1
-	charm.land/lipgloss/v2 v2.0.6
+	charm.land/lipgloss/v2 v2.1.0
 	github.com/hashicorp/hcl/v2 v2.25.0
 	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/spf13/cobra v1.10.2
-	github.com/spf13/pflag v1.0.10
+	github.com/spf13/pflag v1.1.0
 	github.com/spf13/viper v1.21.0
 	github.com/ulikunitz/xz v0.5.17
-	github.com/zclconf/go-cty v1.19.0
+	github.com/zclconf/go-cty v1.20.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
